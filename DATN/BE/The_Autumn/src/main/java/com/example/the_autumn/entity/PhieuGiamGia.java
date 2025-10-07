@@ -37,7 +37,7 @@ public class PhieuGiamGia {
     private String tenChuongTrinh;
 
     @Column(name = "loai_giam_gia", length = 50)
-    private String loaiGiamGia;
+    private Boolean loaiGiamGia;
 
     @Column(name = "gia_tri_giam_gia", precision = 18, scale = 2)
     private BigDecimal giaTriGiamGia;
@@ -50,6 +50,9 @@ public class PhieuGiamGia {
 
     @Column(name = "mo_ta", length = 500)
     private String moTa;
+
+    @Column(name = "kieu", length = 50)
+    private Integer kieu;
 
     @Column(name = "so_luong")
     private Integer soLuong;
