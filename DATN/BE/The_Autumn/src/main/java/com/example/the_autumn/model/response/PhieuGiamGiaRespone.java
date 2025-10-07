@@ -34,13 +34,13 @@ public class PhieuGiamGiaRespone {
         this.id = p.getId();
         this.maGiamGia = p.getMaGiamGia();
         this.tenChuongTrinh = p.getTenChuongTrinh();
-//        this.loaiGiamGia = p.getLoaiGiamGia();
+        this.loaiGiamGia = p.getLoaiGiamGia();
         this.giaTriGiamGia = p.getGiaTriGiamGia();
         this.mucGiaGiamToiDa = p.getMucGiaGiamToiDa();
         this.giaTriDonHangToiThieu = p.getGiaTriDonHangToiThieu();
         this.moTa = p.getMoTa();
         this.soLuong = p.getSoLuong();
-//        this.kieu = p.getKieu();
+        this.kieu = p.getKieu();
         this.ngayTao = p.getNgayTao();
         this.ngayBatDau = p.getNgayBatDau();
         this.ngayKetThuc = p.getNgayKetThuc();
