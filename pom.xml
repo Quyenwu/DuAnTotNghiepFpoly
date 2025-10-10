@@ -1,16 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
     <modelVersion>4.0.0</modelVersion>
+
+    <!-- 🔹 Kế thừa cấu hình từ Spring Boot -->
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.5.6</version>
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
+
+    <!-- 🔹 Thông tin project -->
     <groupId>com.example</groupId>
     <artifactId>WebAoThu</artifactId>
     <version>0.0.1-SNAPSHOT</version>
+<<<<<<< Updated upstream:pom.xml
     <name>WebAoThu</name>
     <description>Demo project for Spring Boot</description>
     <url/>
@@ -26,12 +33,21 @@
         <tag/>
         <url/>
     </scm>
+=======
+    <name>The_Autumn</name>
+    <description>Project The Autumn - Spring Boot REST API</description>
+
+>>>>>>> Stashed changes:DATN/BE/The_Autumn/pom.xml
     <properties>
         <java.version>17</java.version>
     </properties>
+
     <dependencies>
+
+        <!-- 1️⃣ Spring Web: Dùng để xây dựng ứng dụng web (REST API, MVC) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
+<<<<<<< Updated upstream:pom.xml
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
         <dependency>
@@ -39,21 +55,126 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+=======
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- 2️⃣ Spring Data JPA: ORM (Hibernate) để làm việc với CSDL -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- 3️⃣ SQL Server JDBC Driver: Kết nối CSDL SQL Server -->
+        <dependency>
+            <groupId>com.microsoft.sqlserver</groupId>
+            <artifactId>mssql-jdbc</artifactId>
+            <version>12.2.0.jre11</version>
+        </dependency>
+
+        <!-- 4️⃣ Lombok: Tự sinh getter/setter/constructor, giảm code -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.34</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- 5️⃣ Validation: Dùng cho @Valid, @NotNull, @Email,... -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- 6️⃣ Spring Security: Bảo mật API, login, phân quyền -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <!-- 7️⃣ JWT: Xử lý token đăng nhập -->
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>9.30.1</version>
+        </dependency>
+
+        <!-- 8️⃣ OAuth2 Resource Server: Hỗ trợ xác thực JWT trong filter -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+
+        <!-- 9️⃣ MapStruct: Mapper cho Entity ↔ DTO -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct</artifactId>
+            <version>1.5.5.Final</version>
+        </dependency>
+
+        <!-- MapStruct Processor (Annotation Processor cho MapStruct) -->
+        <dependency>
+            <groupId>org.mapstruct</groupId>
+            <artifactId>mapstruct-processor</artifactId>
+            <version>1.5.5.Final</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- 🔟 ModelMapper: Mapper cũ, bạn có thể bỏ nếu dùng MapStruct -->
+        <dependency>
+            <groupId>org.modelmapper</groupId>
+            <artifactId>modelmapper</artifactId>
+            <version>3.1.1</version>
+        </dependency>
+
+        <!-- 11️⃣ Commons BeanUtils: Hỗ trợ copy thuộc tính JavaBean -->
+        <dependency>
+            <groupId>commons-beanutils</groupId>
+            <artifactId>commons-beanutils</artifactId>
+            <version>1.9.4</version>
+        </dependency>
+
+        <!-- 12️⃣ DevTools: Tự reload khi code thay đổi (chỉ dùng dev) -->
+>>>>>>> Stashed changes:DATN/BE/The_Autumn/pom.xml
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
             <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
+<<<<<<< Updated upstream:pom.xml
+=======
+
+        <!-- 13️⃣ Starter Test: JUnit, Mockito (dành cho test) -->
+>>>>>>> Stashed changes:DATN/BE/The_Autumn/pom.xml
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
+<<<<<<< Updated upstream:pom.xml
+=======
+
+        <!-- 14️⃣ JSTL (nếu bạn có dùng JSP, còn nếu chỉ là REST API thì có thể bỏ) -->
+        <!--
+        <dependency>
+            <groupId>jakarta.servlet.jsp.jstl</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl-api</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.web</groupId>
+            <artifactId>jakarta.servlet.jsp.jstl</artifactId>
+            <version>3.0.1</version>
+        </dependency>
+        -->
+
+>>>>>>> Stashed changes:DATN/BE/The_Autumn/pom.xml
     </dependencies>
 
     <build>
         <plugins>
+            <!-- 🔹 Plugin giúp chạy và build Spring Boot -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
