@@ -59,8 +59,6 @@ public class NhanVien {
     @Column(name = "hinh_anh", length = 254)
     private String hinhAnh;
 
-    @Column(name = "tai_khoan", length = 50, nullable = false)
-    private String taiKhoan;
 
     @Column(name = "mat_khau", length = 50, nullable = false)
     private String matKhau;

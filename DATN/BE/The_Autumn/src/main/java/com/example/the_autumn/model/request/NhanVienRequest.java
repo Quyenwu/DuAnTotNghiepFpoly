@@ -39,7 +39,6 @@ public class NhanVienRequest {
     private String sdt;
     private String diaChi;
     private String hinhAnh;
-    private String taiKhoan;
     private String matKhau;
     private Date ngayTao;
     private Date ngaySua;
