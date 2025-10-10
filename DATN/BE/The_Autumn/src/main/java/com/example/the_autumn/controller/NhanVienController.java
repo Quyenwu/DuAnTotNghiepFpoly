@@ -44,7 +44,7 @@ public class NhanVienController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public ResponseObject<?> deletePhieuGiamGia(@PathVariable("id") Integer id){
+    public ResponseObject<?> deleteNhanVien(@PathVariable("id") Integer id){
         nhanVienService.delete(id);
         return new ResponseObject<>(null,"Xoa thành công");
     }
