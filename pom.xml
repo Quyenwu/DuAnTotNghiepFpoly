@@ -17,7 +17,6 @@
     <groupId>com.example</groupId>
     <artifactId>WebAoThu</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-<<<<<<< Updated upstream:pom.xml
     <name>WebAoThu</name>
     <description>Demo project for Spring Boot</description>
     <url/>
@@ -33,11 +32,6 @@
         <tag/>
         <url/>
     </scm>
-=======
-    <name>The_Autumn</name>
-    <description>Project The Autumn - Spring Boot REST API</description>
-
->>>>>>> Stashed changes:DATN/BE/The_Autumn/pom.xml
     <properties>
         <java.version>17</java.version>
     </properties>
@@ -47,7 +41,6 @@
         <!-- 1️⃣ Spring Web: Dùng để xây dựng ứng dụng web (REST API, MVC) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-<<<<<<< Updated upstream:pom.xml
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
         <dependency>
@@ -55,7 +48,6 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-=======
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
@@ -135,25 +127,19 @@
         </dependency>
 
         <!-- 12️⃣ DevTools: Tự reload khi code thay đổi (chỉ dùng dev) -->
->>>>>>> Stashed changes:DATN/BE/The_Autumn/pom.xml
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
             <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
-<<<<<<< Updated upstream:pom.xml
-=======
 
         <!-- 13️⃣ Starter Test: JUnit, Mockito (dành cho test) -->
->>>>>>> Stashed changes:DATN/BE/The_Autumn/pom.xml
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-<<<<<<< Updated upstream:pom.xml
-=======
 
         <!-- 14️⃣ JSTL (nếu bạn có dùng JSP, còn nếu chỉ là REST API thì có thể bỏ) -->
         <!--
@@ -169,7 +155,6 @@
         </dependency>
         -->
 
->>>>>>> Stashed changes:DATN/BE/The_Autumn/pom.xml
     </dependencies>
 
     <build>
