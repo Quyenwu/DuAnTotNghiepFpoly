@@ -66,12 +66,9 @@ public class NhanVienService {
 
     public void add(NhanVienRequest nhanVienRequest) {
         NhanVien nv = MapperUtils.map(nhanVienRequest, NhanVien.class);
-        String uid =  UUID.randomUUID().toString().substring(0, 5).toUpperCase();
-
         ChucVu chucVu = chucVuRepository.findById(2)
                 .orElseThrow(() -> new ApiException("Không tìm thấy chức vụ Nhân viên ", "404"));
         nv.setTrangThai(true);
-        nv.setMaNhanVien(uid);
         nv.setChucVu(chucVu);
         nv.setMatKhau("123456");
         nv.setNgayTao(new Date());
