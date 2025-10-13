@@ -20,8 +20,6 @@ public class ChucVuController {
     public ResponseObject<?> getAllChucVu(){
         return new ResponseObject<>(chucVuService.getAllChucVu());
     }
-    
-
 
 
 }

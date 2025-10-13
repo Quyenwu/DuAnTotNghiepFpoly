@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -64,9 +66,13 @@ public class NhanVienService {
 
     public void add(NhanVienRequest nhanVienRequest) {
         NhanVien nv = MapperUtils.map(nhanVienRequest, NhanVien.class);
-        ChucVu chucVu = chucVuRepository.findById(nhanVienRequest.getChucVuId()).orElse(null);
+        ChucVu chucVu = chucVuRepository.findById(2)
+                .orElseThrow(() -> new ApiException("Không tìm thấy chức vụ Nhân viên ", "404"));
         nv.setTrangThai(true);
         nv.setChucVu(chucVu);
+        nv.setMatKhau("123456");
+        nv.setNgayTao(new Date());
+        nv.setNgaySua(new Date());
         nhanVienRepository.save(nv);
     }
 
@@ -76,6 +82,7 @@ public class NhanVienService {
         ChucVu chucVu = chucVuRepository.findById(nhanVienRequest.getChucVuId()).orElse(null);
         nv.setChucVu(chucVu);
         nv.setId(id);
+        nv.setNgaySua(new Date());
         nhanVienRepository.save(nv);
     }
 
