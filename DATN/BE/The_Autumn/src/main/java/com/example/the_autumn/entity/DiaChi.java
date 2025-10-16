@@ -30,9 +30,6 @@ public class DiaChi {
     @JoinColumn(name = "id_khach_hang",referencedColumnName = "id", nullable = false)
     private KhachHang khachHang;
 
-    @Column(name = "ma_dia_chi", length = 50, unique = true)
-    private String maDiaChi;
-
     @Column(name = "ten_dia_chi", length = 200)
     private String tenDiaChi;
 
