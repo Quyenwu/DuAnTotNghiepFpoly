@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -24,11 +25,11 @@ public class PhieuGiamGiaRequesst {
     private BigDecimal mucGiaGiamToiDa;
     private BigDecimal giaTriDonHangToiThieu;
     private String moTa;
-    private Integer soLuong;
+    private Integer soLuongDung;
     private Integer kieu;
     private Date ngayTao;
-    private Date ngayBatDau;
-    private Date ngayKetThuc;
+    private LocalDate ngayBatDau;
+    private LocalDate ngayKetThuc;
     private Boolean trangThai;
     private List<Integer> idKhachHangs;
 }

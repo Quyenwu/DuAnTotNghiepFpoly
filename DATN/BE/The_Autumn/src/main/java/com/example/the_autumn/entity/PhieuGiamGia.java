@@ -15,6 +15,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -30,7 +31,7 @@ public class PhieuGiamGia {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_giam_ga", unique = true, nullable = false, length = 20)
+    @Column(name = "ma_giam_gia", insertable = false, updatable = false)
     private String maGiamGia;
 
     @Column(name = "ten_chuong_trinh", length = 200)
@@ -54,17 +55,17 @@ public class PhieuGiamGia {
     @Column(name = "kieu", length = 50)
     private Integer kieu;
 
-    @Column(name = "so_luong")
-    private Integer soLuong;
+    @Column(name = "so_luong_dung")
+    private Integer soLuongDung;
 
-    @Column(name = "ngay_tao")
+    @Column(name = "ngay_tao", insertable = false, updatable = false)
     private Date ngayTao;
 
     @Column(name = "ngay_bat_dau")
-    private Date ngayBatDau;
+    private LocalDate ngayBatDau;
 
     @Column(name = "ngay_ket_thuc")
-    private Date ngayKetThuc;
+    private LocalDate ngayKetThuc;
 
     @Column(name = "trang_thai")
     private Boolean trangThai;
