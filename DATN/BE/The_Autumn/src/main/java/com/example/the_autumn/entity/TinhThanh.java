@@ -18,35 +18,24 @@ import lombok.Setter;
 
 import java.util.List;
 
-@NoArgsConstructor
+@Entity
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
-@Entity
-@Table(name = "dia_chi")
-public class DiaChi {
+@Table(name = "tinh_thanh")
+public class TinhThanh {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_khach_hang",referencedColumnName = "id", nullable = false)
-    private KhachHang khachHang;
+    @Column(name = "ten_tinh")
+    private String tenTinh;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_tinh",referencedColumnName = "id", nullable = false)
-    private TinhThanh tinhThanh;
+    @OneToMany(mappedBy = "tinhThanh", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<QuanHuyen> quanHuyens;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_quan",referencedColumnName = "id", nullable = false)
-    private QuanHuyen quanHuyen;
-
-    @Column(name = "dia_chi_cu_the", length = 200)
-    private String diaChiCuThe;
-
-    @Column(name = "trang_thai", nullable = false)
-    private Boolean trangThai = true;
-
-
+    @OneToMany(mappedBy = "tinhThanh", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<DiaChi> diaChis;
 }

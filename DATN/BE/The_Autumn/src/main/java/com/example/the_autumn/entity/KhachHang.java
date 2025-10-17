@@ -40,7 +40,7 @@ public class KhachHang {
     @Column(name = "mat_khau", length = 100, nullable = false)
     private String matKhau;
 
-    @Column(name = "ngay_tao")
+    @Column(name = "ngay_tao",insertable = false, updatable = false )
     private Date ngayTao;
 
     @Column(name = "ngay_sua")
