@@ -31,7 +31,6 @@ public class NhanVienRequest {
 
     private Integer id;
     private Integer chucVuId;
-    private String maNhanVien;
     private String hoTen;
     private Boolean gioiTinh;
     private Date ngaySinh;
@@ -39,7 +38,6 @@ public class NhanVienRequest {
     private String sdt;
     private String diaChi;
     private String hinhAnh;
-    private String taiKhoan;
     private String matKhau;
     private Date ngayTao;
     private Date ngaySua;

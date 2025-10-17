@@ -35,7 +35,7 @@ public class NhanVien {
     @JoinColumn(name = "id_chuc_vu", referencedColumnName = "id", nullable = false)
     private ChucVu chucVu;
 
-    @Column(name = "ma_nhan_vien",length = 20, unique = true)
+    @Column(name = "ma_nhan_vien", insertable = false, updatable = false)
     private String maNhanVien;
 
     @Column(name = "ho_ten" , length = 100)
@@ -58,9 +58,6 @@ public class NhanVien {
 
     @Column(name = "hinh_anh", length = 254)
     private String hinhAnh;
-
-    @Column(name = "tai_khoan", length = 50, nullable = false)
-    private String taiKhoan;
 
     @Column(name = "mat_khau", length = 50, nullable = false)
     private String matKhau;
