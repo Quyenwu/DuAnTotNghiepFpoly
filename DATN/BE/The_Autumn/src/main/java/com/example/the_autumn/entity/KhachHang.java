@@ -34,8 +34,8 @@ public class KhachHang {
     @Column(name = "email", length = 100, unique = true)
     private String email;
 
-    @Column(name = "ten_tai_khoan", length = 50, unique = true)
-    private String tenTaiKhoan;
+    @Column(name = "ngay_sinh")
+    private Date ngaySinh;
 
     @Column(name = "mat_khau", length = 100, nullable = false)
     private String matKhau;

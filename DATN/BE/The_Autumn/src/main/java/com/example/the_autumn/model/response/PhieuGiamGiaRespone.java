@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 
 @AllArgsConstructor
@@ -23,11 +24,11 @@ public class PhieuGiamGiaRespone {
     private BigDecimal mucGiaGiamToiDa;
     private BigDecimal giaTriDonHangToiThieu;
     private String moTa;
-    private Integer soLuong;
+    private Integer soLuongDung;
     private Integer kieu;
     private Date ngayTao;
-    private Date ngayBatDau;
-    private Date ngayKetThuc;
+    private LocalDate ngayBatDau;
+    private LocalDate ngayKetThuc;
     private Boolean trangThai;
 
     public PhieuGiamGiaRespone(PhieuGiamGia p) {
@@ -39,7 +40,7 @@ public class PhieuGiamGiaRespone {
         this.mucGiaGiamToiDa = p.getMucGiaGiamToiDa();
         this.giaTriDonHangToiThieu = p.getGiaTriDonHangToiThieu();
         this.moTa = p.getMoTa();
-        this.soLuong = p.getSoLuong();
+        this.soLuongDung = p.getSoLuongDung();
         this.kieu = p.getKieu();
         this.ngayTao = p.getNgayTao();
         this.ngayBatDau = p.getNgayBatDau();
