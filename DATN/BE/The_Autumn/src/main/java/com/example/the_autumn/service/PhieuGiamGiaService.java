@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -111,63 +112,55 @@ public class PhieuGiamGiaService {
 
 
     @Transactional
-    public void update(Integer id, PhieuGiamGiaRequesst phieuGiamGiaRequesst) {
+    public void update(Integer id, PhieuGiamGiaRequesst req) {
         PhieuGiamGia p = phieuGiamGiaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu giảm giá với ID: " + id));
-        List<Integer> existingCustomerIds = giamGiaKhachHangRepository
-                .findByPhieuGiamGia_Id(id)
-                .stream()
-                .map(ggkh -> ggkh.getKhachHang().getId())
-                .collect(Collectors.toList());
-        MapperUtils.mapToExisting(phieuGiamGiaRequesst, p);
+        List<GiamGiaKhachHang> existingList = giamGiaKhachHangRepository.findByPhieuGiamGia_Id(id);
+        Map<Integer, GiamGiaKhachHang> existingMap = existingList.stream()
+                .collect(Collectors.toMap(gg -> gg.getKhachHang().getId(), gg -> gg));
+        MapperUtils.mapToExisting(req, p);
         p.setId(id);
-        PhieuGiamGia savedPGG = phieuGiamGiaRepository.save(p);
+        PhieuGiamGia saved = phieuGiamGiaRepository.saveAndFlush(p);
+        em.refresh(saved);
         giamGiaKhachHangRepository.deleteByPhieuGiamGiaId(id);
-        AtomicInteger emailCount = new AtomicInteger(0);
-        AtomicInteger errorCount = new AtomicInteger(0);
-        if (phieuGiamGiaRequesst.getKieu() == 1 &&
-                phieuGiamGiaRequesst.getIdKhachHangs() != null &&
-                !phieuGiamGiaRequesst.getIdKhachHangs().isEmpty()) {
-            List<GiamGiaKhachHang> list = new ArrayList<>();
-            for (Integer khachHangId : phieuGiamGiaRequesst.getIdKhachHangs()) {
-                Optional<KhachHang> khachHangOpt = khachHangRepository.findById(khachHangId);
-                if (khachHangOpt.isPresent()) {
-                    KhachHang kh = khachHangOpt.get();
-                    GiamGiaKhachHang pgkh = new GiamGiaKhachHang();
-                    pgkh.setPhieuGiamGia(savedPGG);
-                    pgkh.setKhachHang(kh);
-                    list.add(pgkh);
-                    pgkh.setTrangThai(true);
-                    if (!existingCustomerIds.contains(khachHangId)) {
-                        if (kh.getEmail() != null && !kh.getEmail().isBlank()) {
-                            logger.info("Processing update email for new customer {}: {}", kh.getId(), kh.getEmail());
-
-                            try {
-                                emailService.sendDiscountEmail(kh.getEmail(), savedPGG);
-                                emailCount.incrementAndGet();
-                                logger.info("Update email sent successfully to: {}", kh.getEmail());
-                            } catch (Exception e) {
-                                errorCount.incrementAndGet();
-                                logger.error("Failed to send update email to {}: {}", kh.getEmail(), e.getMessage());
-                            }
-                        }
+        List<GiamGiaKhachHang> newList = new ArrayList<>();
+        if (req.getKieu() == 1 && req.getIdKhachHangs() != null) {
+            List<Integer> newIds = req.getIdKhachHangs();
+            for (Integer khId : newIds) {
+                KhachHang kh = khachHangRepository.findById(khId)
+                        .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại: " + khId));
+                GiamGiaKhachHang gg = new GiamGiaKhachHang();
+                gg.setPhieuGiamGia(saved);
+                gg.setKhachHang(kh);
+                gg.setTrangThai(true);
+                newList.add(gg);
+                if (existingMap.containsKey(khId)) {
+                    GiamGiaKhachHang old = existingMap.get(khId);
+                    if (!old.getPhieuGiamGia().getGiaTriGiamGia().equals(saved.getGiaTriGiamGia()) ||
+                            !old.getPhieuGiamGia().getLoaiGiamGia().equals(saved.getLoaiGiamGia())) {
+                        emailService.sendDiscountUpdateEmail(kh.getEmail(), saved);
+                        logger.info("Sent update email to {}", kh.getEmail());
                     }
+                } else {
+                    emailService.sendDiscountEmail(kh.getEmail(), saved);
+                    logger.info("Sent new discount email to {}", kh.getEmail());
                 }
             }
-            if (!list.isEmpty()) {
-                giamGiaKhachHangRepository.saveAll(list);
-                logger.info("Updated {} customer-discount relationships", list.size());
+            existingList.stream()
+                    .filter(gg -> !newIds.contains(gg.getKhachHang().getId()))
+                    .forEach(gg -> {
+                        emailService.sendDiscountCancelEmail(gg.getKhachHang().getEmail(), saved);
+                        logger.info("Sent cancel email to {}", gg.getKhachHang().getEmail());
+                    });
+            if (!newList.isEmpty()) {
+                giamGiaKhachHangRepository.saveAll(newList);
+                logger.info("Updated {} customer-discount relationships", newList.size());
             }
-            logger.info("Update email sending summary: {} sent, {} failed",
-                    emailCount.get(), errorCount.get());
-            List<Integer> newCustomerIds = phieuGiamGiaRequesst.getIdKhachHangs()
-                    .stream()
-                    .filter(customerId -> !existingCustomerIds.contains(customerId))
-                    .collect(Collectors.toList());
-            logger.info("Customer update summary: {} total, {} new customers",
-                    phieuGiamGiaRequesst.getIdKhachHangs().size(), newCustomerIds.size());
+        } else {
+            logger.info("Public discount - no specific customers assigned");
         }
     }
+
 
     public List<Integer> getKhachHangTheoPhieu(Integer phieuId) {
         return giamGiaKhachHangRepository.findByPhieuGiamGia_Id(phieuId)
