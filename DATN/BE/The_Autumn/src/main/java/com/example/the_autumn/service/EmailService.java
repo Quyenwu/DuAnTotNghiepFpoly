@@ -4,6 +4,7 @@ import com.example.the_autumn.entity.PhieuGiamGia;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import jakarta.mail.internet.MimeMessage;
@@ -20,13 +21,13 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
+    @Async
     public void sendDiscountEmail(String to, PhieuGiamGia phieu) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
             String subject = "🎉 Bạn nhận được phiếu giảm giá từ The Autumn!";
-
             String body = buildEmailBody(phieu);
 
             helper.setTo(to);
@@ -38,8 +39,7 @@ public class EmailService {
             logger.info("✅ Email sent successfully to: {}", to);
 
         } catch (Exception e) {
-            logger.error("Failed to send email to {}: {}", to, e.getMessage(), e);
-            throw new RuntimeException("Failed to send email: " + e.getMessage(), e);
+            logger.error("⚠️ Failed to send email to {}: {}", to, e.getMessage());
         }
     }
 
