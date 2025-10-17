@@ -2,6 +2,7 @@ package com.example.the_autumn.controller;
 
 import com.example.the_autumn.entity.KhachHang;
 import com.example.the_autumn.model.request.PhieuGiamGiaRequesst;
+import com.example.the_autumn.model.response.PhieuGiamGiaRespone;
 import com.example.the_autumn.model.response.ResponseObject;
 import com.example.the_autumn.service.PhieuGiamGiaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,12 +18,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/phieu-giam-gia")
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
+    @RequestMapping("/api/phieu-giam-gia")
+@CrossOrigin(origins = {"http://localhost:5173","http://localhost:5174/" , "http://localhost:3000"})
 public class PhieuGiamGiaController {
 
     @Autowired
@@ -61,36 +63,33 @@ public class PhieuGiamGiaController {
         return new ResponseObject<>(null,"Sửa thành công");
     }
 
+    @GetMapping("/khach-hang/{idPhieu}")
+    public ResponseObject<?> getKhachHangTheoPhieu(@PathVariable("idPhieu") Integer idPhieu) {
+        return new ResponseObject<>(phieuGiamGiaService.getKhachHangTheoPhieu(idPhieu));
+    }
+
+
     @PutMapping("/update-trang-thai/{id}")
-    public ResponseObject<?> updateTrangThai( @PathVariable Integer id, @RequestParam Boolean trangThai){
+    public ResponseObject<?> updateTrangThai(@PathVariable Integer id, @RequestParam Boolean trangThai) {
         phieuGiamGiaService.updateTrangThai(id, trangThai);
-        return new ResponseObject<>(null,"Cập nhập trạng thái thành công");
+        return new ResponseObject<>(null, "Cập nhập trạng thái thành công");
     }
-    @GetMapping("/search-all")
-    public ResponseObject<?> searchAllPhieuGiamGia(
-            @RequestParam(value = "keyword", required = false, defaultValue = "") String keyword
+
+
+    @GetMapping("/search")
+    public ResponseObject<?> search(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "tuNgay", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
+            @RequestParam(value = "denNgay", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
+            @RequestParam(value = "kieu", required = false) Integer kieu,
+            @RequestParam(value = "loaiGiamGia", required = false) Boolean loaiGiamGia,
+            @RequestParam(value = "trangThai", required = false) Boolean trangThai
     ) {
-        return new ResponseObject<>(phieuGiamGiaService.searchAllPhieuGiamGia(keyword));
+        List<PhieuGiamGiaRespone> result = phieuGiamGiaService.searchPhieuGiamGia(
+                keyword, tuNgay, denNgay, kieu, loaiGiamGia, trangThai
+        );
+        return new ResponseObject<>(result);
     }
 
-    @GetMapping("/search-by-date")
-    public ResponseObject<?> searchByDateRange(
-            @RequestParam("ngayBatDau") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date ngayBatDau,
-            @RequestParam("ngayKetThuc") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date ngayKetThuc
-    ) {
-        return new ResponseObject<>(phieuGiamGiaService.searchTheoNgay(ngayBatDau, ngayKetThuc));
-    }
-
-    @GetMapping("/khach-hang/{id}")
-    public ResponseObject<?> getKhachHangByPggId(@PathVariable Integer id) {
-        List<KhachHang> khachHangs = phieuGiamGiaService.getKhachHangByPhieuGiamGiaId(id);
-        return new ResponseObject<>(khachHangs);
-    }
-
-    @GetMapping("/khach-hang-id/{id}")
-    public ResponseObject<?> getKhachHangIdsByPggId(@PathVariable Integer id) {
-        List<Integer> khachHangIds = phieuGiamGiaService.getKhachHangIdsByPhieuGiamGiaId(id);
-        return new ResponseObject<>(khachHangIds);
-    }
 
 }

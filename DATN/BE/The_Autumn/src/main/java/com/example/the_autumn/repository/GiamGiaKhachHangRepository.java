@@ -12,15 +12,10 @@ import java.util.List;
 
 @Repository
 public interface GiamGiaKhachHangRepository extends JpaRepository<GiamGiaKhachHang, Integer> {
-    List<GiamGiaKhachHang> findByPhieuGiamGia_Id(Integer id);
+    List<GiamGiaKhachHang> findByPhieuGiamGia_Id(Integer phieuId);
 
     @Modifying
     @Query("DELETE FROM GiamGiaKhachHang g WHERE g.phieuGiamGia.id = :phieuGiamGiaId")
     void deleteByPhieuGiamGiaId(@Param("phieuGiamGiaId") Integer phieuGiamGiaId);
 
-    @Query("SELECT ggkh.khachHang FROM GiamGiaKhachHang ggkh WHERE ggkh.phieuGiamGia.id = :pggId")
-    List<KhachHang> findKhachHangByPhieuGiamGiaId(@Param("pggId") Integer pggId);
-
-    @Query("SELECT ggkh.khachHang.id FROM GiamGiaKhachHang ggkh WHERE ggkh.phieuGiamGia.id = :pggId")
-    List<Integer> findKhachHangIdsByPhieuGiamGiaId(@Param("pggId") Integer pggId);
 }
