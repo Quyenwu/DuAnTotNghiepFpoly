@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
+import java.util.Date;
 import java.util.List;
 
 @Data
@@ -16,12 +17,13 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CreateKhachHang {
- String tenTaiKhoan;
- String matKhau;
- String email;
-  String sdt;
-  String hoTen;
-  Boolean gioiTinh;
-  Boolean trangThai;
- List<DiaChiDTO> diaChi;
+    String tenTaiKhoan;
+    String matKhau;
+    String email;
+    String sdt;
+    String hoTen;
+    Boolean gioiTinh;
+    Boolean trangThai;
+    Date ngaySinh;
+    List<DiaChiDTO> diaChi;
 }
