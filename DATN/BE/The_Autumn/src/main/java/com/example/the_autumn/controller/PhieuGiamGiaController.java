@@ -23,7 +23,7 @@ import java.util.Date;
 import java.util.List;
 
 @RestController
-    @RequestMapping("/api/phieu-giam-gia")
+@RequestMapping("/api/phieu-giam-gia")
 @CrossOrigin(origins = {"http://localhost:5173","http://localhost:5174/" , "http://localhost:3000"})
 public class PhieuGiamGiaController {
 
