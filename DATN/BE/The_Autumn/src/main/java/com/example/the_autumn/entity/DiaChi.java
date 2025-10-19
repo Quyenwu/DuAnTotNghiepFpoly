@@ -42,6 +42,9 @@ public class DiaChi {
     @JoinColumn(name = "id_quan",referencedColumnName = "id", nullable = false)
     private QuanHuyen quanHuyen;
 
+    @Column(name = "ten_dia_chi", length = 200)
+    private String tenDiaChi;
+
     @Column(name = "dia_chi_cu_the", length = 200)
     private String diaChiCuThe;
 

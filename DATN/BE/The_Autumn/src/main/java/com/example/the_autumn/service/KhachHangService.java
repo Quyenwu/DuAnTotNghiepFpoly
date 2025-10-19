@@ -3,11 +3,15 @@ package com.example.the_autumn.service;
 import com.example.the_autumn.entity.DiaChi;
 import com.example.the_autumn.entity.KhachHang;
 import com.example.the_autumn.model.request.AddKhachHangRequest;
+import com.example.the_autumn.model.request.DiaChiRequest;
 import com.example.the_autumn.model.request.UpdateKhachHangRequest;
 import com.example.the_autumn.model.response.DiaChiResponse;
 import com.example.the_autumn.model.response.KhachHangResponse;
+import com.example.the_autumn.repository.DiaChiRepository;
 import com.example.the_autumn.repository.KhachHangRepository;
 import com.example.the_autumn.repository.LichSuHoaDonRepository;
+import com.example.the_autumn.repository.QuanHuyenRepository;
+import com.example.the_autumn.repository.TinhThanhRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +30,15 @@ public class KhachHangService {
 
     @Autowired
     private LichSuHoaDonRepository lichSuHoaDonRepository;
+
+    @Autowired
+    private DiaChiRepository diaChiRepository;
+
+    @Autowired
+    private TinhThanhRepository tinhThanhRepository;
+
+    @Autowired
+    private QuanHuyenRepository quanHuyenRepository;
 
     public List<KhachHangResponse> getAllKhachHang() {
         List<KhachHang> khachHangs = khachHangRepository.findAll();
@@ -65,40 +78,79 @@ public class KhachHangService {
         khachHang.setTrangThai(true);
         khachHang.setNgaySinh(request.getNgaySinh());
         khachHang.setNgayTao(new Date());
-
-        List<DiaChi> diaChis = request.getDiaChi();
-        if (diaChis != null) {
-            diaChis.forEach(d -> d.setKhachHang(khachHang));
-            khachHang.setDiaChi(new ArrayList<>(diaChis));
-        }
-
         // Lưu vào database
         KhachHang savedKhachHang = khachHangRepository.save(khachHang);
+        List<DiaChiRequest> diaChiRequests = request.getDiaChi();
+        if(diaChiRequests != null) {
+            for(DiaChiRequest d : diaChiRequests){
+                DiaChi dc = new DiaChi();
+                dc.setKhachHang(savedKhachHang);
+                dc.setTenDiaChi(d.getTenDiaChi());
+                dc.setDiaChiCuThe(d.getDiaChiCuThe());
+                dc.setTinhThanh(tinhThanhRepository.findById(d.getTinhThanhId()).orElseThrow(() -> new RuntimeException("Tỉnh không tồn tại")));
+                dc.setQuanHuyen(quanHuyenRepository.findById(d.getQuanHuyenId()).orElseThrow(() -> new RuntimeException("Quận/Huyện không tồn tại")));
+                dc.setTrangThai(true);
+                diaChiRepository.save(dc);
+            }
+        }
+        KhachHang savedKhachHangFull = khachHangRepository.findById(savedKhachHang.getId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng sau khi lưu"));
 
-        // Trả về response DTO
-        return new KhachHangResponse(savedKhachHang);
+        return new KhachHangResponse(savedKhachHangFull);
     }
 
     public KhachHangResponse updateKhachHang(Integer id, UpdateKhachHangRequest request) {
         KhachHang kh = khachHangRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Khach hàng không tồn tại"));
-        kh.setNgaySua(new Date());
-        kh.setMatKhau(request.getMatKhau());
-        kh.setEmail(request.getEmail());
-        kh.setTrangThai(request.getTrangThai());
-        kh.setGioiTinh(request.getGioiTinh());
+                .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại"));
+
         kh.setHoTen(request.getHoTen());
-        kh.setNgaySinh(request.getNgaySinh());
-
-        List<DiaChi> diaChis = request.getDiaChi();
-        if (diaChis != null) {
-            kh.getDiaChi().clear();
-            diaChis.forEach(d -> d.setKhachHang(kh));
-            kh.getDiaChi().addAll(diaChis);
+        kh.setEmail(request.getEmail());
+        kh.setSdt(request.getSdt());
+        kh.setGioiTinh(request.getGioiTinh());
+        if (request.getMatKhau() != null && !request.getMatKhau().isEmpty()) {
+            kh.setMatKhau(request.getMatKhau());
         }
-        KhachHang saveUpdate = khachHangRepository.save(kh);
-        return new KhachHangResponse(saveUpdate);
+        kh.setTrangThai(request.getTrangThai());
+        kh.setNgaySinh(request.getNgaySinh());
+        kh.setNgaySua(new Date());
 
+        List<DiaChiRequest> diaChiRequests = request.getDiaChi();
+        if (diaChiRequests != null) {
+            List<Integer> requestIds = diaChiRequests.stream()
+                    .map(DiaChiRequest::getId)
+                    .filter(dcId  -> dcId  != null)
+                    .toList();
+
+            List<DiaChi> existing = diaChiRepository.findByKhachHangId(kh.getId());
+            for (DiaChi old : existing) {
+                if (!requestIds.contains(old.getId())) {
+                    diaChiRepository.delete(old);
+                }
+            }
+            // Cập nhật hoặc thêm mới
+            for (DiaChiRequest d : diaChiRequests) {
+                DiaChi dc;
+                if (d.getId() != null) {
+                    dc = diaChiRepository.findById(d.getId())
+                            .orElseThrow(() -> new RuntimeException("Địa chỉ không tồn tại"));
+                } else {
+                    dc = new DiaChi();
+                    dc.setKhachHang(kh);
+                }
+                dc.setTenDiaChi(d.getTenDiaChi());
+                dc.setDiaChiCuThe(d.getDiaChiCuThe());
+                dc.setTinhThanh(tinhThanhRepository.findById(d.getTinhThanhId())
+                        .orElseThrow(() -> new RuntimeException("Tỉnh không tồn tại")));
+                dc.setQuanHuyen(quanHuyenRepository.findById(d.getQuanHuyenId())
+                        .orElseThrow(() -> new RuntimeException("Quận/Huyện không tồn tại")));
+                dc.setTrangThai(d.getTrangThai() != null ? d.getTrangThai() : false);
+                diaChiRepository.save(dc);
+            }
+        }
+
+        KhachHang savedKh = khachHangRepository.findById(kh.getId())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng sau khi cập nhật"));
+        return new KhachHangResponse(savedKh);
     }
 
     public void deleteKhachHang(Integer id) {
