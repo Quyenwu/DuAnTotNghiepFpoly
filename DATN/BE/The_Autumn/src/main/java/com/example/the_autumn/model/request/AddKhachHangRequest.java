@@ -19,5 +19,5 @@ public class AddKhachHangRequest {
     Boolean trangThai;
     Date ngayTao;
     Date ngaySinh;
-    List<DiaChi> diaChi;
+    List<DiaChiRequest> diaChi;
 }
