@@ -45,9 +45,6 @@ public class DiaChi {
     @Column(name = "dia_chi_cu_the", length = 200)
     private String diaChiCuThe;
 
-    @Column(name = "ten_dia_chi", length = 200)
-    private String tenDiaChi;
-
     @Column(name = "trang_thai", nullable = false)
     private Boolean trangThai = true;
 
