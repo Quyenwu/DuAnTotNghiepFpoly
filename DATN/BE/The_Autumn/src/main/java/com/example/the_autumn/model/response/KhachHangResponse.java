@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 public class KhachHangResponse {
 
     private Integer id;
+    private String maKhachHang;
     private String hoTen;
     private String sdt;
     private Date ngaySinh;
@@ -32,6 +33,7 @@ public class KhachHangResponse {
 
     public KhachHangResponse(KhachHang khachHang) {
         this.id = khachHang.getId();
+        this.maKhachHang=khachHang.getMaKhachHang();
         this.hoTen = khachHang.getHoTen();
         this.sdt = khachHang.getSdt();
         this.ngaySinh = khachHang.getNgaySinh();

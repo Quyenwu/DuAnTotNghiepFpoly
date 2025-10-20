@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -54,17 +55,21 @@ public class PhieuGiamGiaService {
     private static final Logger logger = LoggerFactory.getLogger(PhieuGiamGiaService.class);
 
     public List<PhieuGiamGiaRespone> getAllPhieuGiamGia() {
-        return phieuGiamGiaRepository.findAll().stream().map(PhieuGiamGiaRespone::new).collect(Collectors.toList());
+        return phieuGiamGiaRepository.findAll()
+                .stream()
+                .sorted((a, b) -> b.getNgayTao().compareTo(a.getNgayTao()))
+                .map(PhieuGiamGiaRespone::new)
+                .collect(Collectors.toList());
     }
 
     public PageableObject<PhieuGiamGiaRespone> phanTrang(Integer pageNo, Integer pageSize) {
-        Pageable pageable = PageRequest.of(pageNo,pageSize);
+        Pageable pageable = PageRequest.of(pageNo, pageSize);
         Page<PhieuGiamGia> page = phieuGiamGiaRepository.findAll(pageable);
         Page<PhieuGiamGiaRespone> phieuGiamGiaRespones = page.map(PhieuGiamGiaRespone::new);
         return new PageableObject<>(phieuGiamGiaRespones);
     }
 
-    public PhieuGiamGiaRespone getPhieuGiamGiaById(Integer id){
+    public PhieuGiamGiaRespone getPhieuGiamGiaById(Integer id) {
         PhieuGiamGia p = phieuGiamGiaRepository.findById(id).orElseThrow();
         return new PhieuGiamGiaRespone(p);
     }
@@ -181,8 +186,7 @@ public class PhieuGiamGiaService {
         }
         if (p.getNgayBatDau().isAfter(now) && Boolean.TRUE.equals(trangThai)) {
             p.setTrangThai(true);
-        }
-        else if (p.getNgayKetThuc().isBefore(now)) {
+        } else if (p.getNgayKetThuc().isBefore(now)) {
             p.setTrangThai(false);
         } else {
             p.setTrangThai(trangThai);
@@ -200,14 +204,61 @@ public class PhieuGiamGiaService {
     ) {
         Specification<PhieuGiamGia> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+
             if (keyword != null && !keyword.isBlank()) {
                 String kw = "%" + keyword.toLowerCase() + "%";
                 List<Predicate> keywordPredicates = new ArrayList<>();
+
                 keywordPredicates.add(cb.like(cb.lower(root.get("maGiamGia")), kw));
                 keywordPredicates.add(cb.like(cb.lower(root.get("tenChuongTrinh")), kw));
+                keywordPredicates.add(cb.like(cb.lower(root.get("moTa")), kw));
+
+                if (keyword.endsWith("%")) {
+                    try {
+                        String numberPart = keyword.substring(0, keyword.length() - 1).trim();
+                        BigDecimal value = new BigDecimal(numberPart);
+
+                        Predicate giaTriPredicate = cb.equal(root.get("giaTriGiamGia"), value);
+                        Predicate loaiGiamGiaPredicate = cb.equal(root.get("loaiGiamGia"), false);
+                        keywordPredicates.add(cb.and(giaTriPredicate, loaiGiamGiaPredicate));
+
+                    } catch (NumberFormatException e) {
+                    }
+                }
+                else if (keyword.toLowerCase().contains("vnd")) {
+                    try {
+                        String numberPart = keyword.replaceAll("[^0-9]", "").trim();
+                        if (!numberPart.isEmpty()) {
+                            BigDecimal value = new BigDecimal(numberPart);
+
+                            Predicate giaTriPredicate = cb.equal(root.get("giaTriGiamGia"), value);
+                            Predicate loaiGiamGiaPredicate = cb.equal(root.get("loaiGiamGia"), true);
+                            keywordPredicates.add(cb.and(giaTriPredicate, loaiGiamGiaPredicate));
+                        }
+                    } catch (NumberFormatException e) {
+                    }
+                }
+                else {
+                    try {
+                        BigDecimal value = new BigDecimal(keyword);
+
+                        keywordPredicates.add(cb.equal(root.get("giaTriGiamGia"), value));
+                        keywordPredicates.add(cb.equal(root.get("mucGiaGiamToiDa"), value));
+                        keywordPredicates.add(cb.equal(root.get("giaTriDonHangToiThieu"), value));
+
+                    } catch (NumberFormatException e) {
+                    }
+
+                    try {
+                        Integer soLuong = Integer.parseInt(keyword);
+                        keywordPredicates.add(cb.equal(root.get("soLuongDung"), soLuong));
+                    } catch (NumberFormatException e) {
+                    }
+                }
 
                 predicates.add(cb.or(keywordPredicates.toArray(new Predicate[0])));
             }
+
             if (kieu != null) {
                 predicates.add(cb.equal(root.get("kieu"), kieu));
             }
@@ -225,10 +276,12 @@ public class PhieuGiamGiaService {
             } else if (denNgay != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("ngayKetThuc"), denNgay));
             }
+
             return predicates.isEmpty()
                     ? cb.conjunction()
                     : cb.and(predicates.toArray(new Predicate[0]));
         };
+
         return phieuGiamGiaRepository.findAll(spec)
                 .stream()
                 .map(PhieuGiamGiaRespone::new)

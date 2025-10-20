@@ -21,14 +21,17 @@ public class EmailService {
     @Autowired
     private JavaMailSender mailSender;
 
+    @Async
     public void sendDiscountEmail(String to, PhieuGiamGia phieu) {
         sendEmail(to, "🎉 Bạn nhận được phiếu giảm giá từ The Autumn!", buildEmailBody(phieu));
     }
 
+    @Async
     public void sendDiscountUpdateEmail(String to, PhieuGiamGia phieu) {
         sendEmail(to, "🔔 Thay đổi giá trị phiếu giảm giá của bạn!", buildEmailBodyUpdate(phieu));
     }
 
+    @Async
     public void sendDiscountCancelEmail(String to, PhieuGiamGia phieu) {
         sendEmail(to, "⚠️ Phiếu giảm giá của bạn đã bị hủy", buildEmailBodyCancel(phieu));
     }

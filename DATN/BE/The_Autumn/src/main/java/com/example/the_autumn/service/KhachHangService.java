@@ -81,18 +81,23 @@ public class KhachHangService {
         // Lưu vào database
         KhachHang savedKhachHang = khachHangRepository.save(khachHang);
         List<DiaChiRequest> diaChiRequests = request.getDiaChi();
-        if(diaChiRequests != null) {
-            for(DiaChiRequest d : diaChiRequests){
+        if (diaChiRequests != null) {
+            boolean hasDefault = diaChiRequests.stream().anyMatch(DiaChiRequest::getTrangThai);
+            for (int i = 0; i < diaChiRequests.size(); i++) {
+                DiaChiRequest d = diaChiRequests.get(i);
                 DiaChi dc = new DiaChi();
                 dc.setKhachHang(savedKhachHang);
                 dc.setTenDiaChi(d.getTenDiaChi());
                 dc.setDiaChiCuThe(d.getDiaChiCuThe());
-                dc.setTinhThanh(tinhThanhRepository.findById(d.getTinhThanhId()).orElseThrow(() -> new RuntimeException("Tỉnh không tồn tại")));
-                dc.setQuanHuyen(quanHuyenRepository.findById(d.getQuanHuyenId()).orElseThrow(() -> new RuntimeException("Quận/Huyện không tồn tại")));
-                dc.setTrangThai(true);
+                dc.setTinhThanh(tinhThanhRepository.findById(d.getTinhThanhId())
+                        .orElseThrow(() -> new RuntimeException("Tỉnh không tồn tại")));
+                dc.setQuanHuyen(quanHuyenRepository.findById(d.getQuanHuyenId())
+                        .orElseThrow(() -> new RuntimeException("Quận/Huyện không tồn tại")));
+                dc.setTrangThai(hasDefault ? Boolean.TRUE.equals(d.getTrangThai()) : i == 0);
                 diaChiRepository.save(dc);
             }
         }
+
         KhachHang savedKhachHangFull = khachHangRepository.findById(savedKhachHang.getId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng sau khi lưu"));
 
@@ -116,9 +121,11 @@ public class KhachHangService {
 
         List<DiaChiRequest> diaChiRequests = request.getDiaChi();
         if (diaChiRequests != null) {
+            boolean hasDefault = diaChiRequests.stream().anyMatch(DiaChiRequest::getTrangThai);
+
             List<Integer> requestIds = diaChiRequests.stream()
                     .map(DiaChiRequest::getId)
-                    .filter(dcId  -> dcId  != null)
+                    .filter(dcId -> dcId != null)
                     .toList();
 
             List<DiaChi> existing = diaChiRepository.findByKhachHangId(kh.getId());
@@ -127,8 +134,10 @@ public class KhachHangService {
                     diaChiRepository.delete(old);
                 }
             }
-            // Cập nhật hoặc thêm mới
-            for (DiaChiRequest d : diaChiRequests) {
+
+            // ✅ Chỉ một địa chỉ mặc định
+            for (int i = 0; i < diaChiRequests.size(); i++) {
+                DiaChiRequest d = diaChiRequests.get(i);
                 DiaChi dc;
                 if (d.getId() != null) {
                     dc = diaChiRepository.findById(d.getId())
@@ -137,16 +146,19 @@ public class KhachHangService {
                     dc = new DiaChi();
                     dc.setKhachHang(kh);
                 }
+
                 dc.setTenDiaChi(d.getTenDiaChi());
                 dc.setDiaChiCuThe(d.getDiaChiCuThe());
                 dc.setTinhThanh(tinhThanhRepository.findById(d.getTinhThanhId())
                         .orElseThrow(() -> new RuntimeException("Tỉnh không tồn tại")));
                 dc.setQuanHuyen(quanHuyenRepository.findById(d.getQuanHuyenId())
                         .orElseThrow(() -> new RuntimeException("Quận/Huyện không tồn tại")));
-                dc.setTrangThai(d.getTrangThai() != null ? d.getTrangThai() : false);
+
+                dc.setTrangThai(hasDefault ? Boolean.TRUE.equals(d.getTrangThai()) : i == 0);
                 diaChiRepository.save(dc);
             }
         }
+
 
         KhachHang savedKh = khachHangRepository.findById(kh.getId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng sau khi cập nhật"));
