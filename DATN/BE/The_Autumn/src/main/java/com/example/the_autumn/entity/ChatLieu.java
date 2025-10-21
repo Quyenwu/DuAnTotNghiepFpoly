@@ -33,7 +33,7 @@ public class ChatLieu {
     @OneToMany(mappedBy = "chatLieu", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<SanPham> sanPhams;
 
-    @Column(name = "ma_chat_lieu")
+    @Column(name = "ma_chat_lieu", insertable = false, updatable = false)
     private String maChatLieu;
 
     @Column(name = "ten_chat_lieu")

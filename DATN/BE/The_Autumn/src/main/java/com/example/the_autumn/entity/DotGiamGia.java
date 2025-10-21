@@ -24,7 +24,7 @@ public class DotGiamGia {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_giam_gia", unique = true, length = 20, nullable = false)
+    @Column(name = "ma_dot_giam_gia", insertable = false, updatable = false)
     private String maGiamGia;
 
     @Column(name = "ten_dot", length = 500)

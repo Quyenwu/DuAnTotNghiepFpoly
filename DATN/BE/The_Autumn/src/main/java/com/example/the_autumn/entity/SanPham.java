@@ -46,7 +46,7 @@ public class SanPham {
     @JoinColumn(name = "id_tay_ao",referencedColumnName = "id", nullable = false)
     private TayAo tayAo;
 
-    @Column(name = "ma_san_pham", length = 20, unique = true)
+    @Column(name = "ma_san_pham", insertable = false, updatable = false)
     private String maSanPham;
 
     @Column(name = "ten_san_pham", length = 200)
