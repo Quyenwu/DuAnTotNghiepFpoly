@@ -22,6 +22,9 @@ public class KhachHang {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(name = "ma_khach_hang",insertable = false, updatable = false)
+    private String maKhachHang;
+
     @Column(name = "ho_ten", length = 100)
     private String hoTen;
 
@@ -34,13 +37,13 @@ public class KhachHang {
     @Column(name = "email", length = 100, unique = true)
     private String email;
 
-    @Column(name = "ten_tai_khoan", length = 50, unique = true)
-    private String tenTaiKhoan;
+    @Column(name = "ngay_sinh")
+    private Date ngaySinh;
 
     @Column(name = "mat_khau", length = 100, nullable = false)
     private String matKhau;
 
-    @Column(name = "ngay_tao")
+    @Column(name = "ngay_tao",insertable = false, updatable = false )
     private Date ngayTao;
 
     @Column(name = "ngay_sua")

@@ -38,5 +38,5 @@ public class TayAo {
     private Boolean trangThai;
 
     @OneToMany(mappedBy = "tayAo",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<ChiTietSanPham> chiTietSanPham;
+    private List<SanPham> sanPham;
 }
