@@ -39,7 +39,7 @@ public class DotGiamGia {
     @Column(name = "gia_tri_toi_thieu", precision = 18, scale = 2, nullable = false)
     private BigDecimal giaTriToiThieu;
 
-    @Column(name = "ngay_tao")
+    @Column(name = "ngay_tao", insertable = false, updatable = false)
     private Date ngayTao;
 
     @Column(name = "ngay_bat_dau")
