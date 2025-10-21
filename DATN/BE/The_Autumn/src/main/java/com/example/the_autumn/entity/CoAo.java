@@ -38,5 +38,5 @@ public class CoAo {
     private Boolean trangThai;
 
     @OneToMany(mappedBy = "coAo",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<ChiTietSanPham> chiTietSanPham;
+    private List<SanPham> sanPham;
 }

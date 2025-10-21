@@ -38,6 +38,14 @@ public class SanPham {
     @JoinColumn(name = "id_kieu_dang",referencedColumnName = "id", nullable = false)
     private KieuDang kieuDang;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_co_ao",referencedColumnName = "id", nullable = false)
+    private CoAo coAo;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_tay_ao",referencedColumnName = "id", nullable = false)
+    private TayAo tayAo;
+
     @Column(name = "ma_san_pham", length = 20, unique = true)
     private String maSanPham;
 
@@ -47,7 +55,7 @@ public class SanPham {
     @Column(name = "gia", precision = 18, scale = 2, nullable = false)
     private BigDecimal gia;
 
-    @Column(name = "ngay_tao")
+    @Column(name = "ngay_tao", insertable = false, updatable = false)
     private Date ngayTao;
 
     @Column(name = "ngay_sua")
