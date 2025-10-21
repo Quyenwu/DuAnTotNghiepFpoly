@@ -48,8 +48,10 @@ public class DiaChi {
     @Column(name = "dia_chi_cu_the", length = 200)
     private String diaChiCuThe;
 
+
     @Column(name = "trang_thai", nullable = false)
     private Boolean trangThai = true;
 
 
 }
+

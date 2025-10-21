@@ -4,32 +4,24 @@ import com.example.the_autumn.entity.ChucVu;
 import com.example.the_autumn.entity.GiamGiaKhachHang;
 import com.example.the_autumn.entity.KhachHang;
 import com.example.the_autumn.entity.NhanVien;
-import com.example.the_autumn.entity.PhieuGiamGia;
 import com.example.the_autumn.expection.ApiException;
 import com.example.the_autumn.model.request.NhanVienRequest;
-import com.example.the_autumn.model.request.PhieuGiamGiaRequesst;
 import com.example.the_autumn.model.response.NhanVienResponse;
-import com.example.the_autumn.model.response.PageableObject;
-import com.example.the_autumn.model.response.NhanVienResponse;
-import com.example.the_autumn.model.response.PhieuGiamGiaRespone;
+
 import com.example.the_autumn.repository.ChucVuRepository;
-import com.example.the_autumn.repository.GiamGiaKhachHangRepository;
-import com.example.the_autumn.repository.KhachHangRepository;
+
 import com.example.the_autumn.repository.NhanVienRepository;
 import com.example.the_autumn.util.MapperUtils;
-import jakarta.transaction.Transactional;
+import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 
 @Service
@@ -45,12 +37,6 @@ public class NhanVienService {
         return nhanVienRepository.findAll().stream().map(NhanVienResponse::new).collect(Collectors.toList());
     }
 
-    public PageableObject<NhanVienResponse> phanTrang(Integer pageNo, Integer pageSize) {
-        Pageable pageable = PageRequest.of(pageNo, pageSize);
-        Page<NhanVien> page = nhanVienRepository.findAll(pageable);
-        Page<NhanVienResponse> phieuGiamGiaRespones = page.map(NhanVienResponse::new);
-        return new PageableObject<>(phieuGiamGiaRespones);
-    }
 
     public NhanVienResponse getNhanVienById(Integer id) {
         NhanVien p = nhanVienRepository.findById(id).orElseThrow();
@@ -71,8 +57,6 @@ public class NhanVienService {
         nv.setTrangThai(true);
         nv.setChucVu(chucVu);
         nv.setMatKhau("123456");
-        nv.setNgayTao(new Date());
-        nv.setNgaySua(new Date());
         nhanVienRepository.save(nv);
     }
 
@@ -92,6 +76,40 @@ public class NhanVienService {
         );
         nv.setTrangThai(trangThai);
         nhanVienRepository.save(nv);
+    }
+
+    public List<NhanVienResponse> searchNhanVien(
+            String hoTen,
+            String sdt,
+            String diaChi,
+            String email,
+            Boolean trangThai
+    ) {
+        Specification<NhanVien> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (hoTen != null ) {
+                predicates.add(cb.like(cb.lower(root.get("hoTen")), "%" + hoTen.toLowerCase().toUpperCase() + "%"));
+            }
+            if (sdt != null) {
+                predicates.add(cb.like(cb.lower(root.get("sdt")), "%" + sdt.toLowerCase() + "%"));
+            }
+            if (diaChi != null) {
+                predicates.add(cb.like(cb.lower(root.get("diaChi")), "%" + diaChi.toLowerCase() + "%"));
+            }
+            if (email != null) {
+                predicates.add(cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
+            } if (trangThai != null) {
+                predicates.add(cb.equal(root.get("trangThai"), trangThai));
+            }
+            if (predicates.isEmpty()) return cb.conjunction();
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return nhanVienRepository.findAll(spec)
+                .stream()
+                .map(NhanVienResponse::new)
+                .collect(Collectors.toList());
     }
 }
 
