@@ -28,7 +28,7 @@ public class ChucVu {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_chuc_vu")
+    @Column(name = "ma_chuc_vu", insertable = false, updatable = false)
     private String maChucVu;
 
     @Column(name = "ten_chuc_vu")

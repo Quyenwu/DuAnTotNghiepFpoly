@@ -20,7 +20,7 @@ public class PhuongThucThanhToan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_phuong_thuc_thanh_toan", unique = true, length = 20, nullable = false)
+    @Column(name = "ma_phuong_thuc_thanh_toan", insertable = false, updatable = false)
     private String maPhuongThucThanhToan;
 
     @Column(name = "ten_phuong_thuc_thanh_toan", length = 100)

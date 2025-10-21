@@ -31,7 +31,7 @@ public class XuatXu {
     @OneToMany(mappedBy = "xuatXu", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<SanPham> sanPhams;
 
-    @Column(name = "ma_xuat_xu")
+    @Column(name = "ma_xuat_xu", insertable = false, updatable = false)
     private String maXuatXu;
 
     @Column(name = "ten_xuat_xu")

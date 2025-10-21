@@ -28,7 +28,7 @@ public class CoAo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_co_ao")
+    @Column(name = "ma_co_ao", insertable = false, updatable = false)
     private String maCoAo;
 
     @Column(name = "ten_co_ao")

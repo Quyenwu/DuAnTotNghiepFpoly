@@ -30,7 +30,7 @@ public class Anh {
     @JoinColumn(name = "id_ctsp", referencedColumnName = "id", nullable = false)
     private ChiTietSanPham chiTietSanPham;
 
-    @Column(name = "ma_anh")
+    @Column(name = "ma_anh", insertable = false, updatable = false)
     private String maAnh;
 
     @Column(name = "duong_dan_anh", length = 250)

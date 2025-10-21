@@ -79,38 +79,46 @@ public class NhanVienService {
     }
 
     public List<NhanVienResponse> searchNhanVien(
-            String hoTen,
-            String sdt,
-            String diaChi,
-            String email,
+            String keyword,
+            Boolean gioiTinh,
+            String chucVuId,
             Boolean trangThai
     ) {
         Specification<NhanVien> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
-            if (hoTen != null ) {
-                predicates.add(cb.like(cb.lower(root.get("hoTen")), "%" + hoTen.toLowerCase().toUpperCase() + "%"));
+            if (keyword != null && !keyword.isEmpty()) {
+                String likePattern = "%" + keyword.toLowerCase() + "%";
+                Predicate pHoTen = cb.like(cb.lower(root.get("hoTen")), likePattern);
+                Predicate pSdt = cb.like(cb.lower(root.get("sdt")), likePattern);
+                Predicate pDiaChi = cb.like(cb.lower(root.get("diaChi")), likePattern);
+                Predicate pEmail = cb.like(cb.lower(root.get("email")), likePattern);
+                predicates.add(cb.or(pHoTen, pSdt, pDiaChi, pEmail));
             }
-            if (sdt != null) {
-                predicates.add(cb.like(cb.lower(root.get("sdt")), "%" + sdt.toLowerCase() + "%"));
+
+            if (gioiTinh != null) {
+                predicates.add(cb.equal(root.get("gioiTinh"), gioiTinh));
             }
-            if (diaChi != null) {
-                predicates.add(cb.like(cb.lower(root.get("diaChi")), "%" + diaChi.toLowerCase() + "%"));
+
+            if (chucVuId != null && !chucVuId.isEmpty()) {
+                predicates.add(cb.equal(root.get("chucVu").get("id"), Integer.parseInt(chucVuId)));
             }
-            if (email != null) {
-                predicates.add(cb.like(cb.lower(root.get("email")), "%" + email.toLowerCase() + "%"));
-            } if (trangThai != null) {
+
+            if (trangThai != null) {
                 predicates.add(cb.equal(root.get("trangThai"), trangThai));
             }
-            if (predicates.isEmpty()) return cb.conjunction();
 
+            if (predicates.isEmpty()) return cb.conjunction();
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+
         return nhanVienRepository.findAll(spec)
                 .stream()
                 .map(NhanVienResponse::new)
                 .collect(Collectors.toList());
     }
+
+
 }
 
 

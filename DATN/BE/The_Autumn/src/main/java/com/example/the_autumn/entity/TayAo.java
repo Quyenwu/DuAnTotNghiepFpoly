@@ -28,7 +28,7 @@ public class TayAo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_tay_ao")
+    @Column(name = "ma_tay_ao", insertable = false, updatable = false)
     private String maTayAo;
 
     @Column(name = "ten_tay_ao")

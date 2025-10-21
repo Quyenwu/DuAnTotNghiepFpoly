@@ -68,17 +68,17 @@ public class NhanVienController {
 
     @GetMapping("/search")
     public ResponseObject<?> search(
-            @RequestParam(value = "hoTen", required = false) String hoTen,
-            @RequestParam(value = "sdt", required = false) String sdt,
-            @RequestParam(value = "diaChi", required = false) String diaChi,
-            @RequestParam(value = "email", required = false) String email,
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "gioiTinh", required = false) Boolean gioiTinh,
+            @RequestParam(value = "chucVu", required = false) String chucVu,
             @RequestParam(value = "trangThai", required = false) Boolean trangThai
     ) {
         List<NhanVienResponse> result = nhanVienService.searchNhanVien(
-                hoTen, sdt, diaChi, email, trangThai
+                keyword, gioiTinh, chucVu, trangThai
         );
         return new ResponseObject<>(result);
     }
+
 
 
 }

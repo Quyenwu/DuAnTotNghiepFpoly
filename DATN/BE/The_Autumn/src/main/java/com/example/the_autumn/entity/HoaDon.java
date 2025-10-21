@@ -30,7 +30,7 @@ public class HoaDon {
     @JoinColumn(name = "id_phieu_giam_gia",referencedColumnName = "id", nullable = false)
     private PhieuGiamGia phieuGiamGia;
 
-    @Column(name = "ma_hoa_don", unique = true, length = 20)
+    @Column(name = "ma_hoa_don", insertable = false, updatable = false)
     private String maHoaDon;
 
     @Column(name = "loai_hoa_don", length = 100)
