@@ -8,6 +8,7 @@ import com.example.the_autumn.expection.ApiException;
 import com.example.the_autumn.model.request.NhanVienRequest;
 import com.example.the_autumn.model.response.NhanVienResponse;
 
+import com.example.the_autumn.model.response.PhieuGiamGiaRespone;
 import com.example.the_autumn.repository.ChucVuRepository;
 
 import com.example.the_autumn.repository.NhanVienRepository;
@@ -32,9 +33,15 @@ public class NhanVienService {
     @Autowired
     private ChucVuRepository chucVuRepository;
 
+    @Autowired
+    private EmailService mailService;
+
 
     public List<NhanVienResponse> getAllNhanVien() {
-        return nhanVienRepository.findAll().stream().map(NhanVienResponse::new).collect(Collectors.toList());
+        return nhanVienRepository.findAll() .stream()
+                .sorted((a, b) -> b.getNgayTao().compareTo(a.getNgayTao()))
+                .map(NhanVienResponse::new)
+                .collect(Collectors.toList());
     }
 
 
@@ -52,12 +59,36 @@ public class NhanVienService {
 
     public void add(NhanVienRequest nhanVienRequest) {
         NhanVien nv = MapperUtils.map(nhanVienRequest, NhanVien.class);
+
         ChucVu chucVu = chucVuRepository.findById(2)
-                .orElseThrow(() -> new ApiException("Không tìm thấy chức vụ Nhân viên ", "404"));
+                .orElseThrow(() -> new ApiException("Không tìm thấy chức vụ Nhân viên", "404"));
+
         nv.setTrangThai(true);
         nv.setChucVu(chucVu);
-        nv.setMatKhau("123456");
+
+
         nhanVienRepository.save(nv);
+
+        String subject = "Thông báo tài khoản nhân viên mới";
+        String body = """
+                <div style="font-family:Arial, sans-serif;">
+                    <h3>Xin chào %s,</h3>
+                    <p>Bạn đã được thêm vào hệ thống với vai trò <b>Nhân viên</b>.</p>
+                    <p>Dưới đây là thông tin đăng nhập của bạn:</p>
+                    <ul>
+                        <li><b>Tài khoản:</b> %s</li>
+                        <li><b>Mật khẩu:</b> %s</li>
+                    </ul>
+                    <p>Vui lòng đăng nhập và thay đổi mật khẩu sau khi truy cập hệ thống lần đầu.</p>
+                    <p style="color:#E67E22;">Trân trọng,<br/>Hệ thống quản lý The Autumn</p>
+                </div>
+                """.formatted(nv.getHoTen(), nv.getEmail(), nv.getMatKhau());
+
+        try {
+            mailService.sendMailNhanVien(nv.getEmail(), subject, body);
+        } catch (Exception e) {
+            System.err.println("Gửi email thất bại: " + e.getMessage());
+        }
     }
 
     public void update(Integer id, NhanVienRequest nhanVienRequest) {
