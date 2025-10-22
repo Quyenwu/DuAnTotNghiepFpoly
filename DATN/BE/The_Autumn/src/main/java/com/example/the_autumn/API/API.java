@@ -12,7 +12,7 @@ public class API {
 
     public static void main(String[] args) {
         String apiUrl = "https://provinces.open-api.vn/api/v2/?depth=2";
-        String connectionUrl = "jdbc:sqlserver://localhost:1433;databaseName=TheAutumn1;encrypt=false;user=sa;password=123456";
+        String connectionUrl = "jdbc:sqlserver://localhost:1433;databaseName=TheAutumn2;encrypt=false;user=sa;password=123456";
 
         try (Connection conn = DriverManager.getConnection(connectionUrl)) {
 

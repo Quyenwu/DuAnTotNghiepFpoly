@@ -32,16 +32,19 @@ public class KhachHangController {
         List<KhachHangResponse> danhSachKhachHang = khachHangService.getAllKhachHang();
         return new ResponseObject<>(danhSachKhachHang);
     }
+
     @GetMapping("/all")
     public ResponseEntity<List<KhachHangResponse>> getData() {
         List<KhachHangResponse> data = khachHangService.getAllKhachHang();
         return ResponseEntity.ok(data);
     }
+
     @PostMapping("/add")
     public ResponseEntity<KhachHangResponse> addKhachHang(@RequestBody AddKhachHangRequest request) {
         KhachHangResponse response = khachHangService.createKhachHang(request);
         return ResponseEntity.ok(response);
     }
+
     @PutMapping("/update/{id}")
     public ResponseEntity<KhachHangResponse> updateKhachHang(
             @PathVariable Integer id,
@@ -50,16 +53,19 @@ public class KhachHangController {
         KhachHangResponse response = khachHangService.updateKhachHang(id, request);
         return ResponseEntity.ok(response);
     }
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<String> deleteKhachHang(@PathVariable Integer id) {
         khachHangService.deleteKhachHang(id);
         return ResponseEntity.ok("Khách hàng và chi tiết liên quan đã được xóa");
     }
+
     @GetMapping("/detail/{id}")
     public ResponseEntity<KhachHangResponse> getKhachHangDetail(@PathVariable Integer id) {
         KhachHangResponse response = khachHangService.detailKhachHang(id);
         return ResponseEntity.ok(response);
     }
+
     @GetMapping("/search")
     public List<KhachHangResponse> searchKhachHang(@RequestParam String keyword) {
         return khachHangService.searchKhachHang(keyword);
@@ -72,4 +78,13 @@ public class KhachHangController {
     ) {
         return khachHangService.filterKhachHang(gioiTinh, trangThai);
     }
+
+    @GetMapping("/check")
+    public ResponseEntity<Boolean> checkExists(
+            @RequestParam(required = false) String email,
+            @RequestParam(required = false) String sdt) {
+        boolean exists = khachHangService.checkExistsByEmailAndSdt(email, sdt);
+        return ResponseEntity.ok(exists);
+    }
+
 }
