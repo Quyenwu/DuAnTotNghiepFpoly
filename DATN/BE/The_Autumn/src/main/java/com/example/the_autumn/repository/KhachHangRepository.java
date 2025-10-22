@@ -30,4 +30,8 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
             @Param("gioiTinh") Boolean gioiTinh,
             @Param("trangThai") Boolean trangThai
     );
+    boolean existsByEmail(String email);
+    boolean existsBySdt(String sdt);
+    boolean existsByEmailAndSdt(String email, String sdt);
+
 }

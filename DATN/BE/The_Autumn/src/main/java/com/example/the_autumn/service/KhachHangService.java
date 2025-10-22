@@ -207,4 +207,15 @@ public class KhachHangService {
                 .collect(Collectors.toList());
     }
 
+    public boolean checkExistsByEmailAndSdt(String email, String sdt) {
+        if (email != null && sdt != null) {
+            return khachHangRepository.existsByEmailAndSdt(email, sdt);
+        } else if (email != null) {
+            return khachHangRepository.existsByEmail(email);
+        } else if (sdt != null) {
+            return khachHangRepository.existsBySdt(sdt);
+        }
+        return false;
+    }
+
 }
