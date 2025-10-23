@@ -37,6 +37,22 @@ public class EmailService {
         sendEmail(to, "⚠️ Phiếu giảm giá của bạn đã bị hủy", buildEmailBodyCancel(phieu));
     }
 
+    @Async
+    public void sendMailKhachHang(String to, String subject, String body) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setTo(to);
+            helper.setSubject(subject);
+            helper.setText(body, true);
+            mailSender.send(message);
+        } catch (MessagingException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Lỗi khi gửi email: " + e.getMessage());
+        }
+    }
+
     private void sendEmail(String to, String subject, String body) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
