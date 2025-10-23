@@ -1,6 +1,7 @@
 package com.example.the_autumn.repository;
 
 import com.example.the_autumn.entity.ChiTietSanPham;
+
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -40,4 +41,18 @@ public interface ChiTietSanPhamRepository extends JpaRepository<ChiTietSanPham, 
     @Modifying
     @Transactional
     void deleteBySanPham_Id(Integer idSanPham);
+
+
+    @Query("SELECT ctsp FROM ChiTietSanPham ctsp " +
+            "LEFT JOIN FETCH ctsp.sanPham " +
+            "LEFT JOIN FETCH ctsp.mauSac " +
+            "LEFT JOIN FETCH ctsp.kichThuoc " +
+            "LEFT JOIN FETCH ctsp.trongLuong")
+    List<ChiTietSanPham> findAllWithRelations();
+
+
+
+    @Query("SELECT ctsp FROM ChiTietSanPham ctsp " +
+            "WHERE ctsp.sanPham.id = :sanPhamId")
+    List<ChiTietSanPham> findBySanPhamId(@Param("sanPhamId") Integer sanPhamId);
 }
