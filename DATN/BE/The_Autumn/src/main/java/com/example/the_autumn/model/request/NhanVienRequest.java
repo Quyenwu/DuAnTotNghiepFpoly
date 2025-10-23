@@ -39,7 +39,6 @@ public class NhanVienRequest {
     private String diaChi;
     private String hinhAnh;
     private String matKhau;
-    private Date ngayTao;
     private Date ngaySua;
     private Boolean trangThai;
 //    private List<HoaDon> hoaDons;

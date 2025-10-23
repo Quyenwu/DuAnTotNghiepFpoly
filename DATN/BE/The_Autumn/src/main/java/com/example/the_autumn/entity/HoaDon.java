@@ -30,7 +30,7 @@ public class HoaDon {
     @JoinColumn(name = "id_phieu_giam_gia",referencedColumnName = "id", nullable = false)
     private PhieuGiamGia phieuGiamGia;
 
-    @Column(name = "ma_hoa_don", unique = true, length = 20)
+    @Column(name = "ma_hoa_don", insertable = false, updatable = false)
     private String maHoaDon;
 
     @Column(name = "loai_hoa_don", length = 100)
@@ -57,7 +57,7 @@ public class HoaDon {
     @Column(name = "ngay_thanh_toan")
     private Date ngayThanhToan;
 
-    @Column(name = "ngay_tao")
+    @Column(name = "ngay_tao", insertable = false, updatable = false)
     private Date ngayTao;
 
     @Column(name = "ngay_sua")
@@ -70,7 +70,7 @@ public class HoaDon {
     private Integer nguoiSua;
 
     @Column(name = "trang_thai")
-    private Boolean trangThai;
+    private Integer trangThai;
 
     @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<HinhThucThanhToan> hinhThucThanhToans;

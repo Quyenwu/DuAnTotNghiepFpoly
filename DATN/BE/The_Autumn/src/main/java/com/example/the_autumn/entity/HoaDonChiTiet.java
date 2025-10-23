@@ -24,7 +24,7 @@ public class HoaDonChiTiet {
     @JoinColumn(name = "id_ctsp",referencedColumnName = "id", nullable = false)
     private ChiTietSanPham chiTietSanPham;
 
-    @Column(name = "ma_hoa_don_chi_tiet", length = 20, unique = true)
+    @Column(name = "ma_hoa_don_chi_tiet", insertable = false, updatable = false)
     private String maHoaDonChiTiet;
 
     @Column(name = "so_luong")

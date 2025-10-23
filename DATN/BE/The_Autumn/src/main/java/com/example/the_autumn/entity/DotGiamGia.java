@@ -24,14 +24,14 @@ public class DotGiamGia {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_giam_gia", unique = true, length = 20, nullable = false)
+    @Column(name = "ma_dot_giam_gia", insertable = false, updatable = false)
     private String maGiamGia;
 
     @Column(name = "ten_dot", length = 500)
     private String tenDot;
 
     @Column(name = "loai_giam_gia", length = 50)
-    private String loaiGiamGia;
+    private Boolean loaiGiamGia;
 
     @Column(name = "gia_tri_giam", precision = 18, scale = 2, nullable = false)
     private BigDecimal giaTriGiam;
@@ -39,7 +39,7 @@ public class DotGiamGia {
     @Column(name = "gia_tri_toi_thieu", precision = 18, scale = 2, nullable = false)
     private BigDecimal giaTriToiThieu;
 
-    @Column(name = "ngay_tao")
+    @Column(name = "ngay_tao", insertable = false, updatable = false)
     private Date ngayTao;
 
     @Column(name = "ngay_bat_dau")

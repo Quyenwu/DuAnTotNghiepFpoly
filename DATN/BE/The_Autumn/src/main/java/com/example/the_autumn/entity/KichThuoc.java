@@ -28,7 +28,7 @@ public class KichThuoc {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_kich_thuoc")
+    @Column(name = "ma_kich_thuoc", insertable = false, updatable = false)
     private String maKichThuoc;
 
     @Column(name = "ten_kich_thuoc")
