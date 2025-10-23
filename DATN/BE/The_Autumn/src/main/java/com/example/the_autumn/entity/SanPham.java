@@ -52,9 +52,6 @@ public class SanPham {
     @Column(name = "ten_san_pham", length = 200)
     private String tenSanPham;
 
-    @Column(name = "gia", precision = 18, scale = 2, nullable = false)
-    private BigDecimal gia;
-
     @Column(name = "ngay_tao", insertable = false, updatable = false)
     private Date ngayTao;
 
