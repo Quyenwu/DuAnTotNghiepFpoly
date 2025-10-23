@@ -31,7 +31,7 @@ public class DotGiamGia {
     private String tenDot;
 
     @Column(name = "loai_giam_gia", length = 50)
-    private String loaiGiamGia;
+    private Boolean loaiGiamGia;
 
     @Column(name = "gia_tri_giam", precision = 18, scale = 2, nullable = false)
     private BigDecimal giaTriGiam;
