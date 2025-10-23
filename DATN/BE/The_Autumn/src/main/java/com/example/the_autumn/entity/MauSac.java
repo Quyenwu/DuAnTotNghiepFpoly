@@ -29,7 +29,7 @@ public class MauSac {
     private Integer id;
 
     @Column(name = "ma_mau_sac", insertable = false, updatable = false)
-    private String mauMauSac;
+    private String maMauSac;
 
     @Column(name = "ten_mau_sac")
     private String tenMauSac;
