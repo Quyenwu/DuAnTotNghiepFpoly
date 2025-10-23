@@ -1,7 +1,10 @@
 package com.example.the_autumn.controller;
 
+import com.example.the_autumn.entity.ChiTietSanPham;
 import com.example.the_autumn.model.request.TaoBienTheRequest;
 import com.example.the_autumn.model.response.ChiTietSanPhamResponse;
+import com.example.the_autumn.model.response.ResponseObject;
+import com.example.the_autumn.repository.ChiTietSanPhamRepository;
 import com.example.the_autumn.service.ChiTietSanPhamService;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
@@ -23,6 +26,11 @@ public class ChiTietSanPhamController {
 
     @Autowired
     private ChiTietSanPhamService chiTietSanPhamService;
+
+    @Autowired
+    private  ChiTietSanPhamRepository chiTietSanPhamRepository;
+
+
 
     @Transactional
     @PostMapping("/tao-bien-the")
@@ -195,4 +203,61 @@ public class ChiTietSanPhamController {
             ));
         }
     }
+
+    @GetMapping
+    public ResponseObject<?> getAllChucVu(){
+        return new ResponseObject<>(chiTietSanPhamService.findAll());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getById(@PathVariable Integer id) {
+        try {
+            ChiTietSanPham chiTiet = chiTietSanPhamRepository.findById(id)
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết sản phẩm với ID: " + id));
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Lấy thông tin thành công!",
+                    "data", chiTiet
+            ));
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(404).body(Map.of(
+                    "success", false,
+                    "message", e.getMessage(),
+                    "data", null
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of(
+                    "success", false,
+                    "message", "Lỗi: " + e.getMessage(),
+                    "data", null
+            ));
+        }
+    }
+
+    /**
+     * LẤY CHI TIẾT SẢN PHẨM THEO ID SẢN PHẨM
+     * Endpoint: GET /api/chi-tiet-san-pham/san-pham/{sanPhamId}
+     */
+    @GetMapping("/san-pham/{sanPhamId}")
+    public ResponseEntity<?> getBySanPhamId(@PathVariable Integer sanPhamId) {
+        try {
+            List<ChiTietSanPham> list = chiTietSanPhamRepository.findBySanPhamId(sanPhamId);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Lấy danh sách thành công!",
+                    "data", list
+            ));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of(
+                    "success", false,
+                    "message", "Lỗi: " + e.getMessage(),
+                    "data", null
+            ));
+        }
+    }
+
 }
