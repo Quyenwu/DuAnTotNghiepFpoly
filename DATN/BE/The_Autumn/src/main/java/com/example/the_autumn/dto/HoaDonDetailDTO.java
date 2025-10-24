@@ -1,5 +1,7 @@
 package com.example.the_autumn.dto;
 
+import com.example.the_autumn.entity.HoaDon;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Date;
@@ -107,7 +109,7 @@ public class HoaDonDetailDTO {
 
 
         public Integer getIdChiTietSanPham() { return idChiTietSanPham; }
-        public void setId(Integer idChiTietSanPham) { this.idChiTietSanPham = idChiTietSanPham; }
+        public void setIdChiTietSanPham(Integer idChiTietSanPham) { this.idChiTietSanPham = idChiTietSanPham; }
 
         public String getTenSanPham() { return tenSanPham; }
         public void setTenSanPham(String tenSanPham) { this.tenSanPham = tenSanPham; }
@@ -132,7 +134,13 @@ public class HoaDonDetailDTO {
 
         public List<String> getAnhUrls() { return anhUrls; }
         public void setAnhUrls(List<String> anhUrls) { this.anhUrls = anhUrls; }
+
+
     }
+
+
+
+
 
 
 }

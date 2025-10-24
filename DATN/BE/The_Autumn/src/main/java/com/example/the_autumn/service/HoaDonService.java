@@ -6,6 +6,7 @@ import com.example.the_autumn.dto.PageResponseDTO;
 import com.example.the_autumn.entity.HoaDon;
 import com.example.the_autumn.model.request.UpdateHoaDonRequest;
 import com.example.the_autumn.model.response.UpdateHoaDonResponse;
+import jakarta.mail.MessagingException;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
@@ -39,7 +40,6 @@ public interface HoaDonService {
 
     Optional<HoaDon> findById(Integer id);
     HoaDon save(HoaDon hoaDon);
-
 
 
 //    void sendInvoiceEmail(Integer idHoaDon, String email) throws MessagingException;

@@ -4,6 +4,7 @@ import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
 import com.example.the_autumn.dto.*;
 import com.example.the_autumn.entity.ChiTietSanPham;
+import com.example.the_autumn.entity.HinhThucThanhToan;
 import com.example.the_autumn.entity.HoaDon;
 import com.example.the_autumn.entity.HoaDonChiTiet;
 import com.example.the_autumn.model.request.UpdateHoaDonRequest;
@@ -65,6 +66,8 @@ public  class HoaDonServiceImpl implements HoaDonService {
     private Cloudinary cloudinary;
 
 
+
+
     @Override
     public PageResponseDTO<HoaDonDTO> getAll(Pageable pageable) {
         Page<HoaDon> page = hoaDonRepository.findAll(pageable);
@@ -121,6 +124,22 @@ public  class HoaDonServiceImpl implements HoaDonService {
             nvDTO.setSdt(hd.getNhanVien().getSdt());
             nvDTO.setEmail(hd.getNhanVien().getEmail());
             dto.setNhanVien(nvDTO);
+
+            dto.setLoaiHoaDonText(hd.getLoaiHoaDon() != null && hd.getLoaiHoaDon() ? "Online" : "Tại quầy");
+
+            // ⭐ Thêm hình thức thanh toán (nếu có quan hệ)
+            // ⭐ Thêm hình thức thanh toán (nếu có quan hệ)
+            if (hd.getHinhThucThanhToans() != null && !hd.getHinhThucThanhToans().isEmpty()) {
+                HinhThucThanhToan hinhThuc = hd.getHinhThucThanhToans().get(0);
+                if (hinhThuc.getPhuongThucThanhToan() != null) {
+                    dto.setHinhThucThanhToan(hinhThuc.getPhuongThucThanhToan().getTenPhuongThucThanhToan());
+                } else {
+                    dto.setHinhThucThanhToan("Không xác định");
+                }
+            } else {
+                dto.setHinhThucThanhToan("Chưa thanh toán");
+            }
+
         }
 
         return dto;
@@ -153,22 +172,22 @@ public  class HoaDonServiceImpl implements HoaDonService {
         // Tiêu đề
         Paragraph title = new Paragraph("DANH SÁCH HÓA ĐƠN", titleFont);
         title.setAlignment(Element.ALIGN_CENTER);
-        title.setSpacingAfter(20);
+        title.setSpacingAfter(10);
         document.add(title);
 
         // Tạo bảng
-        PdfPTable table = new PdfPTable(7); // 7 cột
+        PdfPTable table = new PdfPTable(9); // 7 cột
         table.setWidthPercentage(100);
         table.setSpacingBefore(10);
         table.setSpacingAfter(10);
 
         // Set độ rộng cột
-        float[] columnWidths = {1f, 2.5f, 2f, 2.5f, 2f, 1.5f, 2f};
+        float[] columnWidths = {0.8f, 1.5f, 2f, 1.8f, 1.5f, 1.2f, 1.2f, 1.2f, 1.8f};
         table.setWidths(columnWidths);
 
         // Header bảng
-        String[] headers = {"STT", "Mã HĐ", "Khách hàng", "Loại HĐ",
-                "Thanh toán", "Tổng tiền", "Trạng thái"};
+        String[] headers = {"STT", "Mã HĐ", "Khách hàng", "Nhân viên", "Trạng thái", "Dịch vụ", "Hình thức TT",
+                "Ngày tạo", "Tổng tiền"};
 
         for (String header : headers) {
             PdfPCell cell = new PdfPCell(new Phrase(header, headerFont));
@@ -186,27 +205,45 @@ public  class HoaDonServiceImpl implements HoaDonService {
             // STT
             PdfPCell cell1 = new PdfPCell(new Phrase(String.valueOf(stt++), normalFont));
             cell1.setHorizontalAlignment(Element.ALIGN_CENTER);
-            cell1.setPadding(5);
+            cell1.setPadding(20);
             table.addCell(cell1);
+
 
             // Mã hóa đơn
             table.addCell(new Phrase(hd.getMaHoaDon(), normalFont));
 
-            // Khách hàng
+// Khách hàng
             String tenKH = hd.getKhachHang() != null ? hd.getKhachHang().getHoTen() : "N/A";
             table.addCell(new Phrase(tenKH, normalFont));
 
-            // Loại hóa đơn
-            table.addCell(new Phrase(hd.getLoaiHoaDon() ? "Online" : "Tại quầy", normalFont));
+// Nhân viên
+            String tenNV = hd.getNhanVien() != null ? hd.getNhanVien().getHoTen() : "N/A";
+            table.addCell(new Phrase(tenNV, normalFont));
 
-            // Tổng tiền
+// Trạng thái
+            String trangThaiText = TrangThaiHoaDon.getText(hd.getTrangThai());
+            table.addCell(new Phrase(trangThaiText, normalFont));
+
+// Dịch vụ
+            String dichVu = hd.getLoaiHoaDon() ? "Tại quầy" : "Online";
+            table.addCell(new Phrase(dichVu, normalFont));
+
+// Hình thức thanh toán
+//            String hinhThuc = hd.getHinhThucThanhToan() != null ? hd.getHinhThucThanhToan() : "N/A";
+//            table.addCell(new Phrase(hinhThuc, normalFont));
+
+
+// Ngày tạo
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
+            String ngayTao = dateFormat.format(hd.getNgayTao());
+            table.addCell(new Phrase(ngayTao, normalFont));
+
+// Tổng tiền
             PdfPCell cellTien = new PdfPCell(new Phrase(
                     currencyFormat.format(hd.getTongTien()), normalFont));
             cellTien.setHorizontalAlignment(Element.ALIGN_RIGHT);
-            cellTien.setPadding(5);
+            cellTien.setPadding(10);
             table.addCell(cellTien);
-
-            String trangThaiText = TrangThaiHoaDon.getText(hd.getTrangThai());
         }
 
         document.add(table);
@@ -370,6 +407,17 @@ public  class HoaDonServiceImpl implements HoaDonService {
             dto.setSdtNhanVien(hoaDon.getNhanVien().getSdt());
         }
 
+        if (hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()) {
+            HinhThucThanhToan hinhThuc = hoaDon.getHinhThucThanhToans().get(0);
+            if (hinhThuc.getPhuongThucThanhToan() != null) {
+                dto.setHinhThucThanhToan(hinhThuc.getPhuongThucThanhToan().getTenPhuongThucThanhToan());
+            } else {
+                dto.setHinhThucThanhToan("Không xác định");
+            }
+        } else {
+            dto.setHinhThucThanhToan("Chưa thanh toán");
+        }
+
 
         dto.setLoaiHoaDon(hoaDon.getLoaiHoaDon());
         dto.setPhiVanChuyen(hoaDon.getPhiVanChuyen());
@@ -383,7 +431,7 @@ public  class HoaDonServiceImpl implements HoaDonService {
         List<HoaDonDetailDTO.ChiTietSanPhamDTO> chiTietDTOs = chiTietList.stream()
                 .map(ct -> {
                     HoaDonDetailDTO.ChiTietSanPhamDTO ctDTO = new HoaDonDetailDTO.ChiTietSanPhamDTO();
-                    ctDTO.setId(ct.getId());
+                    ctDTO.setIdChiTietSanPham(ct.getId());
                     ctDTO.setSoLuong(ct.getSoLuong());
                     ctDTO.setGiaBan(ct.getGiaBan());
                     ctDTO.setThanhTien(ct.getThanhTien());
@@ -435,8 +483,7 @@ public  class HoaDonServiceImpl implements HoaDonService {
         HoaDon hoaDon = hoaDonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn ID " + id));
 
-        // Cập nhật thông tin cơ bản
-        // 2. Nếu có cập nhật tên/sdt khách hàng → UPDATE bảng khach_hang
+        // ✅ 1. Cập nhật thông tin khách hàng (nếu có)
         if (hoaDon.getKhachHang() != null) {
             if (request.getHoTenKhachHang() != null && !request.getHoTenKhachHang().isEmpty()) {
                 hoaDon.getKhachHang().setHoTen(request.getHoTenKhachHang());
@@ -447,71 +494,27 @@ public  class HoaDonServiceImpl implements HoaDonService {
             if (request.getEmailKhachHang() != null && !request.getEmailKhachHang().isEmpty()) {
                 hoaDon.getKhachHang().setEmail(request.getEmailKhachHang());
             }
+
+            if (request.getDiaChiKhachHang() != null) {
+                hoaDon.setDiaChiKhachHang(request.getDiaChiKhachHang());
+            }
             khachHangRepository.save(hoaDon.getKhachHang());
         }
 
-        // 3. UPDATE các field của hóa đơn
-        if (request.getDiaChiKhachHang() != null) {
-            hoaDon.setDiaChiKhachHang(request.getDiaChiKhachHang());
-        }
-        if (request.getPhiVanChuyen() != null) {
-            hoaDon.setPhiVanChuyen(request.getPhiVanChuyen());
-        }
-        if (request.getIdPhieuGiamGia() != null) {
-            hoaDon.setId(request.getIdPhieuGiamGia());
-
-        }
+        // ✅ 2. Cập nhật ghi chú hóa đơn
         if (request.getGhiChu() != null) {
             hoaDon.setGhiChu(request.getGhiChu());
         }
-//
-//        hoaDon.setDiaChiKhachHang(request.getDiaChiKhachHang());
-//        hoaDon.setPhiVanChuyen(BigDecimal.valueOf(request.getPhiVanChuyen()));
-//        hoaDon.setGhiChu(request.getGhiChu());
+
+        // ✅ 3. Cập nhật ngày sửa
         hoaDon.setNgaySua(new Date());
 
-        // Cập nhật phiếu giảm giá (nếu có)
-        if (request.getIdPhieuGiamGia() != null) {
-            hoaDon.setPhieuGiamGia(
-                    phieuGiamGiaRepository.findById(request.getIdPhieuGiamGia()).orElse(null)
-            );
-        } else {
-            hoaDon.setPhieuGiamGia(null);
-        }
+        // 🚫 4. KHÔNG ĐỤNG TỚI giảm giá, chi tiết sản phẩm, phí vận chuyển, phiếu giảm giá
+        // → Giữ nguyên các phần đó
 
-        // ✅ Xóa danh sách chi tiết cũ (JPA tự xóa vì orphanRemoval = true)
-        hoaDon.getHoaDonChiTiets().clear();
-
-// ✅ Tạo mới danh sách chi tiết
-        List<HoaDonChiTiet> chiTietMoi = new ArrayList<>();
-
-        for (UpdateHoaDonRequest.ChiTietSanPhamRequest ctspReq : request.getChiTietSanPhams()) {
-            HoaDonChiTiet cthd = new HoaDonChiTiet();
-
-            // Gắn lại mối quan hệ 2 chiều
-            cthd.setHoaDon(hoaDon);
-            cthd.setChiTietSanPham(
-                    chiTietSanPhamRepository.findById(ctspReq.getIdChiTietSanPham()).orElseThrow(
-                            () -> new RuntimeException("Không tìm thấy sản phẩm ID " + ctspReq.getIdChiTietSanPham())
-                    )
-            );
-
-            cthd.setSoLuong(ctspReq.getSoLuong());
-            cthd.setGiaBan(ctspReq.getGiaBan());
-            cthd.setThanhTien(ctspReq.getGiaBan().multiply(BigDecimal.valueOf(ctspReq.getSoLuong())));
-            cthd.setGhiChu(ctspReq.getGhiChu());
-            cthd.setTrangThai(true);
-
-            // ✅ Thêm vào cả 2 bên (đảm bảo quan hệ 2 chiều được Hibernate hiểu)
-            chiTietMoi.add(cthd);
-        }
-
-        hoaDon.getHoaDonChiTiets().addAll(chiTietMoi); // <- Dùng addAll, không set() mới
-
-// ✅ Lưu hóa đơn (cascade = ALL)
         hoaDonRepository.save(hoaDon);
 
-        return new UpdateHoaDonResponse(true, "Cập nhật thành công");
+        return new UpdateHoaDonResponse(true, "Cập nhật khách hàng và ghi chú thành công");
     }
 
 
@@ -539,6 +542,11 @@ public  class HoaDonServiceImpl implements HoaDonService {
             throw new RuntimeException("Upload thất bại: " + e.getMessage());
         }
     }
+
+
+
+
+
 
 }
 

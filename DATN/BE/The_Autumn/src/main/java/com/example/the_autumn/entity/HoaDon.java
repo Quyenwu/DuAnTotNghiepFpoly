@@ -33,6 +33,7 @@ public class HoaDon {
     @JsonIgnoreProperties({"hoaDons", "hibernateLazyInitializer", "handler"})  // ✅ Thêm
     private NhanVien nhanVien;
 
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_phieu_giam_gia",referencedColumnName = "id", nullable = true)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})  // ✅ Thêm
@@ -94,6 +95,9 @@ public class HoaDon {
     @JsonManagedReference  // ✅ Thêm để tránh vòng lặp JSON
     private List<LichSuHoaDon> lichSuHoaDons;
 
+    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+    @JsonManagedReference
+    private List<HinhThucThanhToan> hinhThucThanhToans;
 
 
 }

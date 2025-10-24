@@ -132,8 +132,8 @@ public class HoaDonController {
                 currencyStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
 
                 Row headerRow = sheet.createRow(0);
-                String[] columns = {"STT", "Mã hóa đơn", "Tên khách hàng", "Loại hóa đơn",
-                        "Hình thức thanh toán", "Tổng tiền", "Trạng thái", "Ngày tạo"};
+                String[] columns = {"STT", "Mã hóa đơn", "Tên khách hàng", "Nhan vien","Trạng thái", "Dich vu",
+                        "Hình thức thanh toán",  "Ngày tạo","Tổng tiền" };
 
                 for (int i = 0; i < columns.length; i++) {
                     Cell cell = headerRow.createCell(i);
