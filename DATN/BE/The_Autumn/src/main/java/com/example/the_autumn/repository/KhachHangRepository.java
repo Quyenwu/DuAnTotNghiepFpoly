@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
@@ -30,4 +31,10 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
             @Param("gioiTinh") Boolean gioiTinh,
             @Param("trangThai") Boolean trangThai
     );
+    boolean existsByEmail(String email);
+    boolean existsBySdt(String sdt);
+    boolean existsByEmailAndSdt(String email, String sdt);
+
+    Optional<KhachHang> findByEmail(String email);
+
 }

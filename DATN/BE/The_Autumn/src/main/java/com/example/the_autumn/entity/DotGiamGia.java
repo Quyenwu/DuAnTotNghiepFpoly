@@ -32,7 +32,11 @@ public class DotGiamGia {
     @Column(name = "ten_dot", length = 500)
     private String tenDot;
 
-    @Column(name = "loai_giam_gia")
+
+ 
+
+    @Column(name = "loai_giam_gia", length = 50)
+
     private Boolean loaiGiamGia;
 
     @Column(name = "gia_tri_giam", precision = 18, scale = 2, nullable = false)
