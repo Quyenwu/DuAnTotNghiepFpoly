@@ -11,6 +11,9 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -55,6 +58,10 @@ public class NhanVien {
 
     @Column(name = "dia_chi", length = 500)
     private String diaChi;
+
+    @Column(name = "cccd")
+    @Size(min = 12, max = 15, message = "CCCD phải có từ 12 đến 15 ký tự")
+    private String cccd;
 
     @Column(name = "hinh_anh", length = 254)
     private String hinhAnh;
