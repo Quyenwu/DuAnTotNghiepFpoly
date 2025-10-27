@@ -34,9 +34,6 @@ public class ChiTietSanPham {
     @JoinColumn(name = "id_kich_thuoc",referencedColumnName = "id", nullable = false)
     private KichThuoc kichThuoc;
 
-    @Column(name = "trong_luong")
-    private String trongLuong;
-
     @Column(name = "ma_vach", length = 50, unique = true)
     private String maVach;
 

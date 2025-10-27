@@ -17,6 +17,9 @@ public class SanPhamRequest {
     @NotBlank(message = "Tên sản phẩm không được để trống")
     private String tenSanPham;
 
+    @NotBlank(message = "Trọng lượng sản phẩm không được để trống")
+    private String trongLuong;
+
     @NotNull(message = "Nhà sản xuất không được để trống")
     private Integer idNhaSanXuat;
 
