@@ -21,9 +21,6 @@ public class ChiTietSanPhamRequest {
     @NotNull(message = "Kích thước không được để trống")
     private Integer idKichThuoc;
 
-    @NotNull(message = "Trọng lượng không được để trống")
-    private Integer idTrongLuong;
-
     @NotNull(message = "Giá bán không được để trống")
     private BigDecimal giaBan;
 
