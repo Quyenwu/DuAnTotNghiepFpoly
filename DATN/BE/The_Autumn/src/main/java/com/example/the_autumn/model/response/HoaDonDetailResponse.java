@@ -1,13 +1,10 @@
-package com.example.the_autumn.dto;
-
-import com.example.the_autumn.entity.HoaDon;
+package com.example.the_autumn.model.response;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
-public class HoaDonDetailDTO {
+public class HoaDonDetailResponse {
     private Integer id;
     private String maHoaDon;
     private Date ngayTao;
@@ -33,7 +30,7 @@ public class HoaDonDetailDTO {
     private String ghiChu;
 
 
-    private List<ChiTietSanPhamDTO> chiTietSanPhams;
+    private List<ChiTietSanPhamResponse> chiTietSanPhams;
 
 
 
@@ -91,11 +88,11 @@ public class HoaDonDetailDTO {
     public String getGhiChu() { return ghiChu; }
     public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
 
-    public List<ChiTietSanPhamDTO> getChiTietSanPhams() { return chiTietSanPhams; }
-    public void setChiTietSanPhams(List<ChiTietSanPhamDTO> chiTietSanPhams) { this.chiTietSanPhams = chiTietSanPhams; }
+    public List<ChiTietSanPhamResponse> getChiTietSanPhams() { return chiTietSanPhams; }
+    public void setChiTietSanPhams(List<ChiTietSanPhamResponse> chiTietSanPhams) { this.chiTietSanPhams = chiTietSanPhams; }
 
 
-    public static class ChiTietSanPhamDTO {
+    public static class ChiTietSanPhamResponse {
         private Integer idChiTietSanPham;
         private String tenSanPham;
         private String mauSac;
