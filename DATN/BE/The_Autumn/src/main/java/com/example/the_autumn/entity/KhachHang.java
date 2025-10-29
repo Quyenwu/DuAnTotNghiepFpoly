@@ -22,6 +22,9 @@ public class KhachHang {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @Column(name = "ma_khach_hang",insertable = false, updatable = false)
+    private String maKhachHang;
+
     @Column(name = "ho_ten", length = 100)
     private String hoTen;
 

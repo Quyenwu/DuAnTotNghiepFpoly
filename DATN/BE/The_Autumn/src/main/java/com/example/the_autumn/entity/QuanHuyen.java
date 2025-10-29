@@ -7,6 +7,8 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -16,27 +18,25 @@ import lombok.Setter;
 
 import java.util.List;
 
-@NoArgsConstructor
+@Entity
 @AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
-@Entity
-@Table(name = "trong_luong")
-public class TrongLuong {
+@Table(name = "quan_huyen")
+public class QuanHuyen {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_trong_luong")
-    private String maTrongLuong;
+    @Column(name = "ten_quan", nullable = false, length = 100)
+    private String tenQuan;
 
-    @Column(name = "ten_trong_luong")
-    private String tenTrongLuong;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "id_tinh",referencedColumnName = "id", nullable = false)
+    private TinhThanh tinhThanh;
 
-    @Column(name = "trang_thai")
-    private Boolean trangThai;
-
-    @OneToMany(mappedBy = "trongLuong",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<ChiTietSanPham> chiTietSanPham;
+    @OneToMany(mappedBy = "quanHuyen", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<DiaChi> diaChis;
 }

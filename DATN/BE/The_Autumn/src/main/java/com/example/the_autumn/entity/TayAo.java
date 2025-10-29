@@ -28,7 +28,7 @@ public class TayAo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_tay_ao")
+    @Column(name = "ma_tay_ao", insertable = false, updatable = false)
     private String maTayAo;
 
     @Column(name = "ten_tay_ao")
@@ -38,5 +38,5 @@ public class TayAo {
     private Boolean trangThai;
 
     @OneToMany(mappedBy = "tayAo",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<ChiTietSanPham> chiTietSanPham;
+    private List<SanPham> sanPham;
 }

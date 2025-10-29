@@ -24,7 +24,9 @@ public class NhanVienResponse {
     private String sdt;
     private String diaChi;
     private String hinhAnh;
+    private String cccd;
     private String matKhau;
+
     private Date ngayTao;
     private Date ngaySua;
     private Boolean trangThai;
@@ -38,10 +40,11 @@ public class NhanVienResponse {
         this.gioiTinh = nhanVien.getGioiTinh();
         this.ngaySinh = nhanVien.getNgaySinh();
         this.email = nhanVien.getEmail();
+        this.cccd = nhanVien.getCccd();
+        this.matKhau = nhanVien.getMatKhau();
         this.sdt = nhanVien.getSdt();
         this.diaChi = nhanVien.getDiaChi();
         this.hinhAnh = nhanVien.getHinhAnh();
-        this.matKhau = nhanVien.getMatKhau();
         this.ngayTao = nhanVien.getNgayTao();
         this.ngaySua = nhanVien.getNgaySua();
         this.trangThai = nhanVien.getTrangThai();

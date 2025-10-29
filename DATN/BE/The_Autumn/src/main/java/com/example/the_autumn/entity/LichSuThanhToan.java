@@ -25,7 +25,7 @@ public class LichSuThanhToan {
     @JoinColumn(name = "id_phuong_thuc",referencedColumnName = "id",nullable = false)
     private PhuongThucThanhToan phuongThucThanhToan;
 
-    @Column(name = "ma_giao_dich", length = 100)
+    @Column(name = "ma_giao_dich", insertable = false, updatable = false)
     private String maGiaoDich;
 
     @Column(name = "so_tien", precision = 18, scale = 2)

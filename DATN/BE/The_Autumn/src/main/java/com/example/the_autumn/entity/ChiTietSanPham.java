@@ -34,18 +34,6 @@ public class ChiTietSanPham {
     @JoinColumn(name = "id_kich_thuoc",referencedColumnName = "id", nullable = false)
     private KichThuoc kichThuoc;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_trong_luong",referencedColumnName = "id", nullable = false)
-    private TrongLuong trongLuong;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_co_ao",referencedColumnName = "id", nullable = false)
-    private CoAo coAo;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_tay_ao",referencedColumnName = "id", nullable = false)
-    private TayAo tayAo;
-
     @Column(name = "ma_vach", length = 50, unique = true)
     private String maVach;
 
