@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/nhan-vien")
@@ -78,7 +79,15 @@ public class NhanVienController {
         );
         return new ResponseObject<>(result);
     }
-
-
+    @GetMapping("/check-email")
+    public ResponseObject<?> checkEmail(@RequestParam("email") String email) {
+        boolean exists = nhanVienService.checkEmailExists(email);
+        return new ResponseObject<>(Map.of("exists", exists));
+    }
+    @GetMapping("/check-sdt")
+    public ResponseObject<?> checkSdt(@RequestParam("sdt") String sdt) {
+        boolean exists = nhanVienService.checkSdtExists(sdt);
+        return new ResponseObject<>(Map.of("exists", exists));
+    }
 
 }
