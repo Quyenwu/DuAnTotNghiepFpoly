@@ -10,6 +10,7 @@ import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -32,11 +33,7 @@ public class DotGiamGia {
     @Column(name = "ten_dot", length = 500)
     private String tenDot;
 
-
- 
-
     @Column(name = "loai_giam_gia", length = 50)
-
     private Boolean loaiGiamGia;
 
     @Column(name = "gia_tri_giam", precision = 18, scale = 2, nullable = false)
@@ -45,17 +42,16 @@ public class DotGiamGia {
     @Column(name = "gia_tri_toi_thieu", precision = 18, scale = 2, nullable = false)
     private BigDecimal giaTriToiThieu;
 
-    @Column(name = "ngay_tao")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    @Column(name = "ngay_tao", insertable = false, updatable = false)
     private Date ngayTao;
 
     @Column(name = "ngay_bat_dau")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private Date ngayBatDau;
+    private LocalDate ngayBatDau;
 
     @Column(name = "ngay_ket_thuc")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private Date ngayKetThuc;
+    private LocalDate ngayKetThuc;
 
     @Column(name = "trang_thai")
     private Boolean trangThai;

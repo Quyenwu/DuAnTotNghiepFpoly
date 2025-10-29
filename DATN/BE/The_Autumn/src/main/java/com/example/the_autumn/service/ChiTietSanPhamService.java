@@ -296,4 +296,16 @@ public class ChiTietSanPhamService {
         }
     }
 
+    public List<ChiTietSanPhamResponse> findBySanPhamId(Integer idSanPham) {
+        List<ChiTietSanPham> list = ctspRepo.findBySanPhamId(idSanPham);
+
+        if (list == null || list.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return list.stream()
+                .map(ChiTietSanPhamResponse::new)
+                .collect(Collectors.toList());
+    }
+
 }

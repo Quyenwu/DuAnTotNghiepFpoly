@@ -260,4 +260,10 @@ public class ChiTietSanPhamController {
         }
     }
 
+    @GetMapping("/by-san-pham/{id}")
+    public ResponseObject<?> getBySanPham(@PathVariable("id") Integer id) {
+        List<ChiTietSanPhamResponse> list = chiTietSanPhamService.findBySanPhamId(id);
+        return new ResponseObject<>(list, "Lấy chi tiết sản phẩm thành công");
+    }
+
 }
