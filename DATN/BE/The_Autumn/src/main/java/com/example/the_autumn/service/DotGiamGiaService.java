@@ -117,6 +117,7 @@ public class DotGiamGiaService {
         logger.info("✅ Add DotGiamGia completed successfully with {} details", chiTietList.size());
     }
 
+
     public void update(Integer id, DotGiamGiaRequest dotGiamGiaRequest) {
         DotGiamGia dot = dotGiamGiaRepository.findById(id)
                 .orElseThrow(() -> new ApiException("Không tìm thấy đợt giảm giá với ID: " + id, "404"));

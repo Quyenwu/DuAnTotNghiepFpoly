@@ -35,6 +35,8 @@ public class NhanVienRequest {
     private Boolean gioiTinh;
     private Date ngaySinh;
     private String email;
+    private String cccd;
+
     private String sdt;
     private String diaChi;
     private String hinhAnh;

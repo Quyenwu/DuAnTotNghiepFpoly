@@ -14,4 +14,9 @@ public interface LichSuHoaDonRepository extends JpaRepository<LichSuHoaDon, Inte
             "FROM LichSuHoaDon l " +
             "GROUP BY l.khachHang.id")
     List<Object[]> getSoLanVaNgayMuaGanNhatCuaKhachHang();
+
+    List<LichSuHoaDon> findByHoaDon_IdOrderByNgayCapNhatDesc(Integer hoaDonId);
+
+    // Lấy lịch sử theo trạng thái
+    List<LichSuHoaDon> findByHoaDon_IdAndTrangThaiOrderByNgayCapNhatDesc(Integer hoaDonId, Boolean trangThai);
 }

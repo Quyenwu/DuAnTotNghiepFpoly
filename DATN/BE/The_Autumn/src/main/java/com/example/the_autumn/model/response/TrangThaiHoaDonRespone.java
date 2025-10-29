@@ -1,6 +1,6 @@
-package com.example.the_autumn.dto;
+package com.example.the_autumn.model.response;
 
-public class TrangThaiHoaDon {
+public class TrangThaiHoaDonRespone {
     public static final Integer CHO_XAC_NHAN = 0;
     public static final Integer CHO_GIAO_HANG = 1;
     public static final Integer DANG_VAN_CHUYEN = 2;

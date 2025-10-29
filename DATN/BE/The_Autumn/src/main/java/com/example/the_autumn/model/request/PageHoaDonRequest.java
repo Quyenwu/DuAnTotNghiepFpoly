@@ -1,4 +1,4 @@
-package com.example.the_autumn.dto;
+package com.example.the_autumn.model.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class PageResponseDTO<T> {
+public class PageHoaDonRequest<T> {
     private List<T> content;
     private int totalPages;
     private long totalElements;

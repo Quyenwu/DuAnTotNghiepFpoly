@@ -1,19 +1,19 @@
-package com.example.the_autumn.dto;
+package com.example.the_autumn.model.response;
 
-import com.example.the_autumn.entity.HinhThucThanhToan;
+import com.example.the_autumn.dto.KhachHangDTO;
+import com.example.the_autumn.dto.NhanVienDTO;
 import com.example.the_autumn.entity.HoaDon;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class HoaDonDTO {
+public class HoaDonRespone {
     private Integer id;
     private String maHoaDon;
     private Boolean loaiHoaDon;
@@ -35,7 +35,7 @@ public class HoaDonDTO {
     private NhanVienDTO nhanVien;
 
 
-    public HoaDonDTO(HoaDon hoaDon) {
+    public HoaDonRespone(HoaDon hoaDon) {
         if (hoaDon == null) {
             return;
         }
