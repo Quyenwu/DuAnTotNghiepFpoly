@@ -77,14 +77,6 @@ public class DotGiamGiaService {
 
     @Transactional
     public void add(DotGiamGiaRequest req) {
-        if (Boolean.TRUE.equals(req.getLoaiGiamGia())) { // true = phần trăm
-            if (req.getGiaTriGiam() == null ||
-                    req.getGiaTriGiam().compareTo(BigDecimal.ZERO) < 0 ||
-                    req.getGiaTriGiam().compareTo(BigDecimal.valueOf(100)) > 0) {
-                throw new ApiException("Giá trị giảm (%) phải từ 0 đến 100", "400");
-            }
-        }
-
         DotGiamGia dot = new DotGiamGia();
         dot.setMaGiamGia(req.getMaGiamGia());
         dot.setTenDot(req.getTenDot());
