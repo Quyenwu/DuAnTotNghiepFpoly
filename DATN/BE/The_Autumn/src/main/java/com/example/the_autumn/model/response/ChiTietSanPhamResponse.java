@@ -17,8 +17,6 @@ public class ChiTietSanPhamResponse {
 
     private Integer id;
 
-    private String trongLuong;
-
     private String maVach;
 
     private Integer soLuongTon;
@@ -33,6 +31,8 @@ public class ChiTietSanPhamResponse {
 
     private Boolean trangThai = true;
 
+    private String tenSanPham;
+
     private String maMauSac;
 
     private String tenMauSac;
@@ -43,30 +43,8 @@ public class ChiTietSanPhamResponse {
 
     private List<AnhResponse> anhs;
 
-//    public ChiTietSanPhamResponse(ChiTietSanPham ctsp) {
-//        this.id = ctsp.getId();
-//        this.trongLuong = ctsp.getTrongLuong();
-//        this.maVach = ctsp.getMaVach();
-//        this.soLuongTon = ctsp.getSoLuongTon();
-//        this.moTa = ctsp.getMoTa();
-//        this.giaBan = ctsp.getGiaBan();
-//        this.ngayTao = ctsp.getNgayTao();
-//        this.ngaySua = ctsp.getNgaySua();
-//        this.trangThai = ctsp.getTrangThai();
-//        this.maMauSac = ctsp.getMauSac().getMaMauSac();
-//        this.tenMauSac = ctsp.getMauSac().getTenMauSac();
-//        this.maKichThuoc = ctsp.getKichThuoc().getMaKichThuoc();
-//        this.tenKichThuoc = ctsp.getKichThuoc().getTenKichThuoc();
-//        if (ctsp.getAnhs() != null) {
-//            this.anhs = ctsp.getAnhs().stream()
-//                    .map(AnhResponse::new)
-//                    .toList();
-//        }
-//    }
-
     public ChiTietSanPhamResponse(ChiTietSanPham ctsp) {
         this.id = ctsp.getId();
-        this.trongLuong = ctsp.getTrongLuong();
         this.maVach = ctsp.getMaVach();
         this.soLuongTon = ctsp.getSoLuongTon();
         this.moTa = ctsp.getMoTa();
@@ -74,6 +52,7 @@ public class ChiTietSanPhamResponse {
         this.ngayTao = ctsp.getNgayTao();
         this.ngaySua = ctsp.getNgaySua();
         this.trangThai = ctsp.getTrangThai();
+        this.tenSanPham = ctsp.getSanPham().getTenSanPham();
         this.maMauSac = ctsp.getMauSac().getMaMauSac();
         this.tenMauSac = ctsp.getMauSac().getTenMauSac();
         this.maKichThuoc = ctsp.getKichThuoc().getMaKichThuoc();

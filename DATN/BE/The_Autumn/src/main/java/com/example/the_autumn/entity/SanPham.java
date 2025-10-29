@@ -52,6 +52,9 @@ public class SanPham {
     @Column(name = "ten_san_pham", length = 200)
     private String tenSanPham;
 
+    @Column(name = "trong_luong", length = 50)
+    private String trongLuong;
+
     @Column(name = "ngay_tao", insertable = false, updatable = false)
     private Date ngayTao;
 

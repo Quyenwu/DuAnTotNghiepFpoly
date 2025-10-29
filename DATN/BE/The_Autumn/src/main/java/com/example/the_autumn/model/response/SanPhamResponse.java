@@ -29,6 +29,7 @@ public class SanPhamResponse {
     private String tenChatLieu;
     private String maKieuDang;
     private String tenKieuDang;
+    private String trongLuong;
     private String maCoAo;
     private String tenCoAo;
     private String maTayAo;
@@ -44,6 +45,7 @@ public class SanPhamResponse {
         this.id = sp.getId();
         this.maSanPham = sp.getMaSanPham();
         this.tenSanPham = sp.getTenSanPham();
+        this.trongLuong = sp.getTrongLuong();
         this.ngayTao = sp.getNgayTao();
         this.ngaySua = sp.getNgaySua();
         this.nguoiTao = sp.getNguoiTao();

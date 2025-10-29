@@ -1,13 +1,16 @@
 package com.example.the_autumn.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -24,7 +27,7 @@ public class DotGiamGia {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(name = "ma_dot_giam_gia", insertable = false, updatable = false)
+    @Column(name = "ma_dot_giam_gia",  insertable = false, updatable = false)
     private String maGiamGia;
 
     @Column(name = "ten_dot", length = 500)
@@ -43,10 +46,12 @@ public class DotGiamGia {
     private Date ngayTao;
 
     @Column(name = "ngay_bat_dau")
-    private Date ngayBatDau;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate ngayBatDau;
 
     @Column(name = "ngay_ket_thuc")
-    private Date ngayKetThuc;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private LocalDate ngayKetThuc;
 
     @Column(name = "trang_thai")
     private Boolean trangThai;

@@ -2,6 +2,19 @@ package com.example.the_autumn.repository;
 
 import com.example.the_autumn.entity.ChiTietSanPham;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Repository;
+
+
+
+
+
+
+
+
+
+
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -14,10 +27,12 @@ import java.util.Optional;
 
 public interface ChiTietSanPhamRepository extends JpaRepository<ChiTietSanPham, Integer> {
 
-    boolean existsBySanPham_IdAndMauSac_IdAndKichThuoc_IdAndTrongLuong(
-            Integer idSanPham, Integer idMauSac, Integer idKichThuoc, String trongLuong
+    boolean existsBySanPham_IdAndMauSac_IdAndKichThuoc_Id(
+            Integer idSanPham, Integer idMauSac, Integer idKichThuoc
     );
-
+ @Query("select ct from ChiTietSanPham ct join ct.sanPham sp where (:q is null or lower(sp.tenSanPham) like lower(concat('%', :q, '%')) or lower(sp.maSanPham) like lower(concat('%', :q, '%')))")
+    Page<ChiTietSanPham> search(String q, Pageable pageable);
+  
     List<ChiTietSanPham> findBySanPham_Id(Integer idSanPham);
 
     List<ChiTietSanPham> findBySanPham_IdAndTrangThai(Integer idSanPham, Boolean trangThai);
@@ -46,8 +61,7 @@ public interface ChiTietSanPhamRepository extends JpaRepository<ChiTietSanPham, 
     @Query("SELECT ctsp FROM ChiTietSanPham ctsp " +
             "LEFT JOIN FETCH ctsp.sanPham " +
             "LEFT JOIN FETCH ctsp.mauSac " +
-            "LEFT JOIN FETCH ctsp.kichThuoc " +
-            "LEFT JOIN FETCH ctsp.trongLuong")
+            "LEFT JOIN FETCH ctsp.kichThuoc ")
     List<ChiTietSanPham> findAllWithRelations();
 
 
@@ -56,3 +70,4 @@ public interface ChiTietSanPhamRepository extends JpaRepository<ChiTietSanPham, 
             "WHERE ctsp.sanPham.id = :sanPhamId")
     List<ChiTietSanPham> findBySanPhamId(@Param("sanPhamId") Integer sanPhamId);
 }
+

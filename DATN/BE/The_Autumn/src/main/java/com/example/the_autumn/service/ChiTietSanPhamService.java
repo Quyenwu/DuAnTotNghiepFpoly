@@ -83,7 +83,7 @@ public class ChiTietSanPhamService {
             List<ChiTietSanPham> danhSachBienThe = new ArrayList<>();
 
             for (Integer idMauSac : request.getIdMauSacs()) {
-                if (kiemTraBienTheTrung(sanPham.getId(), idMauSac, request.getIdKichThuoc(), request.getTrongLuong())) {
+                if (kiemTraBienTheTrung(sanPham.getId(), idMauSac, request.getIdKichThuoc())) {
                     System.out.println("⚠️ Biến thể đã tồn tại, bỏ qua");
                     continue;
                 }
@@ -91,8 +91,7 @@ public class ChiTietSanPhamService {
                 ChiTietSanPham ctsp = taoBienTheOptimized(
                         sanPham,
                         mauSacMap.get(idMauSac),
-                        kichThuoc,
-                        request.getTrongLuong()
+                        kichThuoc
                 );
 
                 danhSachBienThe.add(ctsp);
@@ -156,8 +155,8 @@ public class ChiTietSanPhamService {
     }
 
     private ChiTietSanPham taoBienTheOptimized(SanPham sanPham, MauSac mauSac,
-                                               KichThuoc kichThuoc, String trongLuong) {
-        if (mauSac == null || kichThuoc == null || trongLuong == null) {
+                                               KichThuoc kichThuoc) {
+        if (mauSac == null || kichThuoc == null ) {
             throw new RuntimeException("Một trong các thuộc tính không tồn tại");
         }
 
@@ -166,8 +165,6 @@ public class ChiTietSanPhamService {
         ctsp.setSanPham(sanPham);
         ctsp.setMauSac(mauSac);
         ctsp.setKichThuoc(kichThuoc);
-        ctsp.setTrongLuong(trongLuong);
-
         ctsp.setGiaBan(BigDecimal.ZERO);
         ctsp.setSoLuongTon(0);
 
@@ -179,9 +176,9 @@ public class ChiTietSanPhamService {
     }
 
     private boolean kiemTraBienTheTrung(Integer idSanPham, Integer idMauSac,
-                                        Integer idKichThuoc, String trongLuong) {
-        return ctspRepo.existsBySanPham_IdAndMauSac_IdAndKichThuoc_IdAndTrongLuong(
-                idSanPham, idMauSac, idKichThuoc, trongLuong
+                                        Integer idKichThuoc) {
+        return ctspRepo.existsBySanPham_IdAndMauSac_IdAndKichThuoc_Id(
+                idSanPham, idMauSac, idKichThuoc
         );
     }
 
@@ -280,7 +277,6 @@ public class ChiTietSanPhamService {
             previewInfo.put("maSanPham", "SP" + System.currentTimeMillis()); // Tạm thời
             previewInfo.put("tenSanPham", request.getTenSanPham());
             previewInfo.put("totalVariants", totalVariants);
-            previewInfo.put("trongLuong", request.getTrongLuong());
             previewInfo.put("tenNhaSanXuat", tenNhaSanXuat);
             previewInfo.put("tenXuatXu", tenXuatXu);
             previewInfo.put("tenChatLieu", tenChatLieu);
@@ -298,6 +294,18 @@ public class ChiTietSanPhamService {
             System.err.println("❌ Lỗi preview: " + e.getMessage());
             throw new RuntimeException("Lỗi khi preview biến thể: " + e.getMessage());
         }
+    }
+
+    public List<ChiTietSanPhamResponse> findBySanPhamId(Integer idSanPham) {
+        List<ChiTietSanPham> list = ctspRepo.findBySanPhamId(idSanPham);
+
+        if (list == null || list.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return list.stream()
+                .map(ChiTietSanPhamResponse::new)
+                .collect(Collectors.toList());
     }
 
 }

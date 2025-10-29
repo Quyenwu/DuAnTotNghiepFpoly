@@ -63,11 +63,11 @@ public class HoaDon {
 
 
     @Column(name = "ngay_thanh_toan")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")  // ⭐ THÊM CHO DATE (nếu payload gửi full datetime)
-    private Date ngayThanhToan;  // ⭐ ĐỔI THÀNH LOCALDATETIME
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") 
+    private Date ngayThanhToan;  
 
     @Column(name = "ngay_tao")
-    @JsonFormat(pattern = "yyyy-MM-dd")  // ⭐ THÊM: Parse string "2025-10-13" thành LocalDateTime (default time 00:00:00)
+    @JsonFormat(pattern = "yyyy-MM-dd") 
     private Date ngayTao;
 
     @Column(name = "ngay_sua")
@@ -84,15 +84,15 @@ public class HoaDon {
     private Integer trangThai;
 
     @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY,cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference  // ✅ Thêm để tránh vòng lặp JSON
+    @JsonManagedReference
     private List<LichSuThanhToan> lichSuThanhToans;
 
     @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JsonManagedReference  // ✅ Thêm để tránh vòng lặp JSON
+    @JsonManagedReference
     private List<HoaDonChiTiet> hoaDonChiTiets;
 
     @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JsonManagedReference  // ✅ Thêm để tránh vòng lặp JSON
+    @JsonManagedReference  
     private List<LichSuHoaDon> lichSuHoaDons;
 
     @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
