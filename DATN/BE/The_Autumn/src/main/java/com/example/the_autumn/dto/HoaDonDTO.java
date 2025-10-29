@@ -1,5 +1,6 @@
 package com.example.the_autumn.dto;
 
+import com.example.the_autumn.entity.HinhThucThanhToan;
 import com.example.the_autumn.entity.HoaDon;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -26,6 +27,10 @@ public class HoaDonDTO {
     private Date ngaySua;
     private Integer trangThai;
 
+    private String loaiHoaDonText;
+    private String hinhThucThanhToan;
+
+
     private KhachHangDTO khachHang;
     private NhanVienDTO nhanVien;
 
@@ -47,6 +52,7 @@ public class HoaDonDTO {
         this.ngayTao = hoaDon.getNgayTao();
         this.ngaySua = hoaDon.getNgaySua();
         this.trangThai = hoaDon.getTrangThai();
+        this.loaiHoaDon = hoaDon.getLoaiHoaDon();
 
         // ⭐ Convert KhachHang entity → KhachHangDTO (đầy đủ fields từ DB: id, hoTen, maKhachHang, soDienThoai, email, trangThai)
         if (hoaDon.getKhachHang() != null) {
@@ -72,5 +78,15 @@ public class HoaDonDTO {
             // this.nhanVien.setEmail(hoaDon.getNhanVien().getEmail());
             // this.nhanVien.setTrangThai(hoaDon.getNhanVien().getTrangThai());
         }
+
+        if (hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()) {
+            this.hinhThucThanhToan = hoaDon.getHinhThucThanhToans().get(0)
+                    .getPhuongThucThanhToan()
+                    .getTenPhuongThucThanhToan();
+        }
+
+
     }
+
+
 }
