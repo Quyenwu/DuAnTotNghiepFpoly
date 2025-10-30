@@ -43,24 +43,15 @@ public class CapNhatBienTheRequest {
     @Setter
     public static class BienTheRequest {
 
-        // ✅ THÊM: ID biến thể đã tạo trước đó
         @NotNull(message = "ID biến thể không được để trống")
         private Integer idChiTietSanPham;
 
-        // ✅ GIỮ NGUYÊN: Các thuộc tính cần cập nhật
         @NotNull(message = "Giá bán không được để trống")
-        private BigDecimal donGia;  // Có thể đổi tên từ giaBan → donGia cho consistency
+        private BigDecimal donGia;
 
         @NotNull(message = "Số lượng không được để trống")
-        private Integer soLuong;    // Có thể đổi tên từ soLuongTon → soLuong
+        private Integer soLuong;
 
         private String moTa;
-
-        // ❌ BỎ: Các thuộc tính đã có từ trước (vì biến thể đã tồn tại)
-        // private Integer idMauSac;
-        // private Integer idKichThuoc;
-        // private Integer idCoAo;
-        // private Integer idTayAo;
-        // private Integer idTrongLuong;
     }
 }

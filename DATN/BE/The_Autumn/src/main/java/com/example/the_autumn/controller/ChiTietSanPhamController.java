@@ -2,6 +2,7 @@ package com.example.the_autumn.controller;
 
 import com.example.the_autumn.entity.ChiTietSanPham;
 import com.example.the_autumn.model.request.TaoBienTheRequest;
+import com.example.the_autumn.model.request.UpdateChiTietSanPhamRequest;
 import com.example.the_autumn.model.response.ChiTietSanPhamResponse;
 import com.example.the_autumn.model.response.ResponseObject;
 import com.example.the_autumn.repository.ChiTietSanPhamRepository;
@@ -236,10 +237,6 @@ public class ChiTietSanPhamController {
         }
     }
 
-    /**
-     * LẤY CHI TIẾT SẢN PHẨM THEO ID SẢN PHẨM
-     * Endpoint: GET /api/chi-tiet-san-pham/san-pham/{sanPhamId}
-     */
     @GetMapping("/san-pham/{sanPhamId}")
     public ResponseEntity<?> getBySanPhamId(@PathVariable Integer sanPhamId) {
         try {
@@ -260,10 +257,51 @@ public class ChiTietSanPhamController {
         }
     }
 
-    @GetMapping("/by-san-pham/{id}")
-    public ResponseObject<?> getBySanPham(@PathVariable("id") Integer id) {
-        List<ChiTietSanPhamResponse> list = chiTietSanPhamService.findBySanPhamId(id);
-        return new ResponseObject<>(list, "Lấy chi tiết sản phẩm thành công");
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateChiTietSanPham(
+            @PathVariable Integer id,
+            @Valid @RequestBody UpdateChiTietSanPhamRequest request,
+            BindingResult bindingResult) {
+
+        try {
+            System.out.println("🔄 UPDATE CHI TIẾT SẢN PHẨM - ID: " + id);
+
+            if (bindingResult.hasErrors()) {
+                Map<String, String> errors = bindingResult.getFieldErrors().stream()
+                        .collect(Collectors.toMap(
+                                error -> error.getField(),
+                                error -> error.getDefaultMessage()
+                        ));
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Dữ liệu không hợp lệ",
+                        "errors", errors
+                ));
+            }
+
+            ChiTietSanPhamResponse updated = chiTietSanPhamService.updateChiTietSanPham(id, request);
+
+            System.out.println("✅ Cập nhật biến thể thành công");
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Cập nhật biến thể thành công",
+                    "data", updated
+            ));
+
+        } catch (RuntimeException e) {
+            System.err.println("❌ Lỗi: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi cập nhật biến thể: " + e.getMessage()
+            ));
+        }
     }
 
 }
