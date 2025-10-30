@@ -2,6 +2,7 @@ package com.example.the_autumn.controller;
 
 import com.example.the_autumn.entity.ChiTietSanPham;
 import com.example.the_autumn.model.request.TaoBienTheRequest;
+import com.example.the_autumn.model.request.UpdateChiTietSanPhamRequest;
 import com.example.the_autumn.model.response.ChiTietSanPhamResponse;
 import com.example.the_autumn.model.response.ResponseObject;
 import com.example.the_autumn.repository.ChiTietSanPhamRepository;
@@ -13,12 +14,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import com.example.the_autumn.model.request.UpdateChiTietSanPhamRequest;
-import java.util.stream.Collectors;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/chi-tiet-san-pham")
@@ -303,4 +303,5 @@ public class ChiTietSanPhamController {
             ));
         }
     }
+
 }

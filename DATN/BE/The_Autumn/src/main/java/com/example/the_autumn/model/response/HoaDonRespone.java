@@ -1,18 +1,19 @@
-package com.example.the_autumn.dto;
+package com.example.the_autumn.model.response;
 
+import com.example.the_autumn.dto.KhachHangDTO;
+import com.example.the_autumn.dto.NhanVienDTO;
 import com.example.the_autumn.entity.HoaDon;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Date;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class HoaDonDTO {
+public class HoaDonRespone {
     private Integer id;
     private String maHoaDon;
     private Boolean loaiHoaDon;
@@ -26,11 +27,15 @@ public class HoaDonDTO {
     private Date ngaySua;
     private Integer trangThai;
 
+    private String loaiHoaDonText;
+    private String hinhThucThanhToan;
+
+
     private KhachHangDTO khachHang;
     private NhanVienDTO nhanVien;
 
 
-    public HoaDonDTO(HoaDon hoaDon) {
+    public HoaDonRespone(HoaDon hoaDon) {
         if (hoaDon == null) {
             return;
         }
@@ -47,6 +52,7 @@ public class HoaDonDTO {
         this.ngayTao = hoaDon.getNgayTao();
         this.ngaySua = hoaDon.getNgaySua();
         this.trangThai = hoaDon.getTrangThai();
+        this.loaiHoaDon = hoaDon.getLoaiHoaDon();
 
         // ⭐ Convert KhachHang entity → KhachHangDTO (đầy đủ fields từ DB: id, hoTen, maKhachHang, soDienThoai, email, trangThai)
         if (hoaDon.getKhachHang() != null) {
@@ -72,5 +78,15 @@ public class HoaDonDTO {
             // this.nhanVien.setEmail(hoaDon.getNhanVien().getEmail());
             // this.nhanVien.setTrangThai(hoaDon.getNhanVien().getTrangThai());
         }
+
+        if (hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()) {
+            this.hinhThucThanhToan = hoaDon.getHinhThucThanhToans().get(0)
+                    .getPhuongThucThanhToan()
+                    .getTenPhuongThucThanhToan();
+        }
+
+
     }
+
+
 }

@@ -1,11 +1,10 @@
-package com.example.the_autumn.dto;
+package com.example.the_autumn.model.response;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
-public class HoaDonDetailDTO {
+public class HoaDonDetailResponse {
     private Integer id;
     private String maHoaDon;
     private Date ngayTao;
@@ -31,7 +30,7 @@ public class HoaDonDetailDTO {
     private String ghiChu;
 
 
-    private List<ChiTietSanPhamDTO> chiTietSanPhams;
+    private List<ChiTietSanPhamResponse> chiTietSanPhams;
 
 
 
@@ -89,11 +88,11 @@ public class HoaDonDetailDTO {
     public String getGhiChu() { return ghiChu; }
     public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
 
-    public List<ChiTietSanPhamDTO> getChiTietSanPhams() { return chiTietSanPhams; }
-    public void setChiTietSanPhams(List<ChiTietSanPhamDTO> chiTietSanPhams) { this.chiTietSanPhams = chiTietSanPhams; }
+    public List<ChiTietSanPhamResponse> getChiTietSanPhams() { return chiTietSanPhams; }
+    public void setChiTietSanPhams(List<ChiTietSanPhamResponse> chiTietSanPhams) { this.chiTietSanPhams = chiTietSanPhams; }
 
 
-    public static class ChiTietSanPhamDTO {
+    public static class ChiTietSanPhamResponse {
         private Integer idChiTietSanPham;
         private String tenSanPham;
         private String mauSac;
@@ -107,7 +106,7 @@ public class HoaDonDetailDTO {
 
 
         public Integer getIdChiTietSanPham() { return idChiTietSanPham; }
-        public void setId(Integer idChiTietSanPham) { this.idChiTietSanPham = idChiTietSanPham; }
+        public void setIdChiTietSanPham(Integer idChiTietSanPham) { this.idChiTietSanPham = idChiTietSanPham; }
 
         public String getTenSanPham() { return tenSanPham; }
         public void setTenSanPham(String tenSanPham) { this.tenSanPham = tenSanPham; }
@@ -132,7 +131,13 @@ public class HoaDonDetailDTO {
 
         public List<String> getAnhUrls() { return anhUrls; }
         public void setAnhUrls(List<String> anhUrls) { this.anhUrls = anhUrls; }
+
+
     }
+
+
+
+
 
 
 }

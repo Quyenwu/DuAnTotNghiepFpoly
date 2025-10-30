@@ -31,6 +31,8 @@ public class ChiTietSanPhamResponse {
 
     private Boolean trangThai = true;
 
+    private String tenSanPham;
+
     private String maMauSac;
 
     private String tenMauSac;
@@ -50,6 +52,7 @@ public class ChiTietSanPhamResponse {
         this.ngayTao = ctsp.getNgayTao();
         this.ngaySua = ctsp.getNgaySua();
         this.trangThai = ctsp.getTrangThai();
+        this.tenSanPham = ctsp.getSanPham().getTenSanPham();
         this.maMauSac = ctsp.getMauSac().getMaMauSac();
         this.tenMauSac = ctsp.getMauSac().getTenMauSac();
         this.maKichThuoc = ctsp.getKichThuoc().getMaKichThuoc();

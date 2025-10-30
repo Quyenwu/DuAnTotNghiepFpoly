@@ -1,15 +1,27 @@
 package com.example.the_autumn.controller;
 
-import com.example.the_autumn.dto.*;
+
 import com.example.the_autumn.entity.HoaDon;
+import com.example.the_autumn.entity.LichSuHoaDon;
+import com.example.the_autumn.model.request.PageHoaDonRequest;
 import com.example.the_autumn.model.request.UpdateHoaDonRequest;
+import com.example.the_autumn.model.response.HoaDonDetailResponse;
+import com.example.the_autumn.model.response.HoaDonRespone;
+import com.example.the_autumn.model.response.TrangThaiHoaDonRespone;
 import com.example.the_autumn.model.response.UpdateHoaDonResponse;
-import com.example.the_autumn.repository.HoaDonChiTietRepository;
 import com.example.the_autumn.repository.HoaDonRepository;
+import com.example.the_autumn.service.AnhService;
 import com.example.the_autumn.service.HoaDonService;
-import com.example.the_autumn.service.HoaDonServiceImpl;
 import jakarta.servlet.http.HttpServletResponse;
-import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
@@ -40,6 +52,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/hoa-don")
@@ -47,14 +60,12 @@ import java.util.Optional;
 public class HoaDonController {
     @Autowired
     private HoaDonService hoaDonService;
+
     @Autowired
     private HoaDonRepository hoaDonRepository;
-    @Autowired
-    private HoaDonChiTietRepository hoaDonChiTietRepository;
 
     @Autowired
-    private HoaDonServiceImpl hoaDonServiceimpl;
-
+    private  AnhService anhService;
 
 
 
@@ -65,39 +76,30 @@ public class HoaDonController {
         return hoaDon.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-
-
-
     @GetMapping
-    public ResponseEntity<PageResponseDTO<HoaDonDTO>> getAllOrSearch(
-            @RequestParam(required = false) String maHoaDon,
-            @RequestParam(required = false) String tenKhachHang,
-            @RequestParam(required = false) String tenNhanVien,
+    public ResponseEntity<PageHoaDonRequest<HoaDonRespone>> getAllOrSearch(
+            @RequestParam(required = false) String searchText,  // ⭐ THAY: gộp 3 ô thành 1
             @RequestParam(required = false) Boolean loaiHoaDon,
             @RequestParam(required = false) Integer trangThai,
-            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate ngayTao, // ⭐ THÊM
-            @RequestParam(required = false) String priceRange,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate ngayTao,
+            @RequestParam(required = false) String hinhThucThanhToan,  // ⭐ THÊM: lọc hình thức thanh toán
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size
     ) {
-
-        if (maHoaDon != null || tenKhachHang != null || tenNhanVien != null ||
-                loaiHoaDon != null ||  trangThai != null || ngayTao != null ||  priceRange != null ) {
-
-            PageResponseDTO<HoaDonDTO> response = hoaDonService.timkiemVaLoc(
-                    maHoaDon, tenKhachHang, tenNhanVien,
-                    loaiHoaDon, trangThai, ngayTao, priceRange,
+        if (searchText != null || loaiHoaDon != null || trangThai != null ||
+                ngayTao != null || hinhThucThanhToan != null) {
+            PageHoaDonRequest<HoaDonRespone> response = hoaDonService.timkiemVaLoc(
+                    searchText,  // ⭐ THAY
+                    loaiHoaDon, trangThai, ngayTao, hinhThucThanhToan,  // ⭐ THAY & THÊM
                     page, size
             );
             return ResponseEntity.ok(response);
         }
-
-        PageResponseDTO<HoaDonDTO> response = hoaDonService.getAll(PageRequest.of(page, size));
+        PageHoaDonRequest<HoaDonRespone> response = hoaDonService.getAll(PageRequest.of(page, size));
         return ResponseEntity.ok(response);
     }
 
-
-
+    // Các method khác giữ nguyên...
     @GetMapping("/export")
     public void exportExcel(HttpServletResponse response) {
         try {
@@ -113,61 +115,51 @@ public class HoaDonController {
             if (list == null || list.isEmpty()) {
                 throw new RuntimeException("Không có dữ liệu để xuất");
             }
-
             try (Workbook workbook = new XSSFWorkbook()) {
                 Sheet sheet = workbook.createSheet("Danh sách hóa đơn");
-
                 CellStyle headerStyle = workbook.createCellStyle();
-
-                // ✅ DÙNG TÊN ĐẦY ĐỦ CHO EXCEL
-                org.apache.poi.ss.usermodel.Font headerFont = workbook.createFont();
+                Font headerFont = workbook.createFont();
                 headerFont.setBold(true);
                 headerFont.setColor(IndexedColors.WHITE.getIndex());
                 headerStyle.setFont(headerFont);
                 headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
                 headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
                 headerStyle.setAlignment(HorizontalAlignment.CENTER);
-
                 CellStyle currencyStyle = workbook.createCellStyle();
                 currencyStyle.setDataFormat(workbook.createDataFormat().getFormat("#,##0"));
-
                 Row headerRow = sheet.createRow(0);
-                String[] columns = {"STT", "Mã hóa đơn", "Tên khách hàng", "Loại hóa đơn",
-                        "Hình thức thanh toán", "Tổng tiền", "Trạng thái", "Ngày tạo"};
-
+                String[] columns = {"STT", "Mã hóa đơn", "Tên khách hàng", "Nhân viên", "Trạng thái", "Dịch vụ",
+                        "Hình thức thanh toán", "Ngày tạo", "Tổng tiền"};
                 for (int i = 0; i < columns.length; i++) {
                     Cell cell = headerRow.createCell(i);
                     cell.setCellValue(columns[i]);
                     cell.setCellStyle(headerStyle);
                 }
-
                 DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
                 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
                 int rowNum = 1;
-
                 for (HoaDon hd : list) {
                     Row row = sheet.createRow(rowNum++);
-
                     row.createCell(0).setCellValue(rowNum - 1);
                     row.createCell(1).setCellValue(hd.getMaHoaDon() != null ? hd.getMaHoaDon() : "");
                     row.createCell(2).setCellValue(hd.getKhachHang() != null ? hd.getKhachHang().getHoTen() : "Khách vãng lai");
-                    row.createCell(3).setCellValue(
-                            hd.getLoaiHoaDon() != null ? String.valueOf(hd.getLoaiHoaDon()) : ""
-                    );
+                    row.createCell(3).setCellValue(hd.getNhanVien() != null ? hd.getNhanVien().getHoTen() : "");
 
+                    String trangThaiText = TrangThaiHoaDonRespone.getText(hd.getTrangThai());
+                    row.createCell(4).setCellValue(trangThaiText);
 
-                    Cell cellTien = row.createCell(4);
-                    if (hd.getTongTien() != null) {
-                        cellTien.setCellValue(hd.getTongTien().doubleValue());
-                        cellTien.setCellStyle(currencyStyle);
-                    } else {
-                        cellTien.setCellValue(0);
+                    String dichVu = hd.getLoaiHoaDon() != null && hd.getLoaiHoaDon() ? "Tại quầy" : "Online";
+                    row.createCell(5).setCellValue(dichVu);
+
+                    // ⭐ THÊM: Hình thức thanh toán
+                    String hinhThuc = "";
+                    if (hd.getHinhThucThanhToans() != null && !hd.getHinhThucThanhToans().isEmpty()) {
+                        hinhThuc = hd.getHinhThucThanhToans().get(0)
+                                .getPhuongThucThanhToan()
+                                .getTenPhuongThucThanhToan();
                     }
+                    row.createCell(6).setCellValue(hinhThuc);
 
-                    String trangThaiText = TrangThaiHoaDon.getText(hd.getTrangThai());
-                    row.createCell(5).setCellValue(trangThaiText);
-
-                    // ✅ SỬA LẠI PHẦN NGÀY TẠO
                     String ngayTaoStr = "";
                     if (hd.getNgayTao() != null) {
                         try {
@@ -184,6 +176,14 @@ public class HoaDonController {
                         }
                     }
                     row.createCell(7).setCellValue(ngayTaoStr);
+
+                    Cell cellTien = row.createCell(8);
+                    if (hd.getTongTien() != null) {
+                        cellTien.setCellValue(hd.getTongTien().doubleValue());
+                        cellTien.setCellStyle(currencyStyle);
+                    } else {
+                        cellTien.setCellValue(0);
+                    }
                 }
 
                 for (int i = 0; i < columns.length; i++) {
@@ -204,7 +204,6 @@ public class HoaDonController {
             }
         }
     }
-
 
     @PostMapping("/print")
     public ResponseEntity<byte[]> printInvoices(@RequestBody List<Integer> invoiceIds) {
@@ -234,7 +233,7 @@ public class HoaDonController {
     public ResponseEntity<?> getHoaDonDetail(@PathVariable Integer id) {
         try {
             System.out.println("🔍 Đang tìm hóa đơn ID: " + id);  // ⭐ Log để debug
-            HoaDonDetailDTO detail = hoaDonService.getHoaDonDetail(id);
+            HoaDonDetailResponse detail = hoaDonService.getHoaDonDetail(id);
             System.out.println("✅ Tìm thấy hóa đơn: " + detail.getMaHoaDon());
             return ResponseEntity.ok(detail);
         } catch (RuntimeException e) {
@@ -260,7 +259,6 @@ public class HoaDonController {
     }
 
 
-
     @PutMapping("/{id}")
     public ResponseEntity<?> updateHoaDon(
             @PathVariable Integer id,
@@ -279,6 +277,39 @@ public class HoaDonController {
         }
     }
 
+
+//    @PostMapping
+//    public String upload(@RequestParam("file") MultipartFile file) {
+//        return hoaDonService.uploadFile(file);
+//    }
+
+
+    @GetMapping("/{id}/lich-su")
+    public ResponseEntity<?> getLichSuHoaDon(@PathVariable Integer id) {
+        try {
+            List<LichSuHoaDon> lichSu = hoaDonService.getLichSuHoaDon(id);
+
+            // Convert sang DTO để tránh vòng lặp JSON
+            List<Map<String, Object>> response = lichSu.stream()
+                    .map(ls -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", ls.getId());
+                        map.put("hanhDong", ls.getHanhDong());
+                        map.put("moTa", ls.getMoTa());
+                        map.put("ngayCapNhat", ls.getNgayCapNhat());
+                        map.put("nguoiThucHien", ls.getNhanVien() != null ? ls.getNhanVien().getHoTen() : "Hệ thống");
+                        return map;
+                    })
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Không thể tải lịch sử: " + e.getMessage()));
+        }
+    }
+
+
     @PutMapping("/{id}/trang-thai")
     public ResponseEntity<?> updateTrangThai(
             @PathVariable Integer id,
@@ -286,13 +317,18 @@ public class HoaDonController {
         try {
             HoaDon hoaDon = hoaDonService.findById(id)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
-            if (hoaDon == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("success", false, "message", "Không tìm thấy hóa đơn"));
-            }
 
+            Integer oldStatus = hoaDon.getTrangThai();
             hoaDon.setTrangThai(trangThai);
             hoaDonService.save(hoaDon);
+
+            // ⭐ LƯU LỊCH SỬ THAY ĐỔI TRẠNG THÁI
+            String oldStatusText = TrangThaiHoaDonRespone.getText(oldStatus);
+            String newStatusText = TrangThaiHoaDonRespone.getText(trangThai);
+            String moTa = String.format("Trạng thái: '%s' → '%s'", oldStatusText, newStatusText);
+
+            // ✅ SỬA: Gọi method luuLichSu với đầy đủ 4 tham số
+            hoaDonService.luuLichSu(hoaDon, "Cập nhật trạng thái đơn hàng", moTa, null);
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
@@ -305,10 +341,29 @@ public class HoaDonController {
         }
     }
 
-    @PostMapping
-    public String upload(@RequestParam("file") MultipartFile file) {
-        return hoaDonServiceimpl.uploadFile(file);
+
+    @PutMapping("/{id}/service")
+    public ResponseEntity<?> updateService(
+            @PathVariable Integer id,
+            @RequestBody Map<String, Boolean> request) {
+        try {
+            Boolean loaiHoaDon = request.get("loaiHoaDon");
+            String result = hoaDonService.updateService(id, loaiHoaDon);
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", result
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of(
+                            "success", false,
+                            "error", e.getMessage()
+                    ));
+        }
+
+
     }
+
 
 
 
@@ -318,4 +373,11 @@ public class HoaDonController {
 
 
 
-//
+
+
+
+
+
+
+
+

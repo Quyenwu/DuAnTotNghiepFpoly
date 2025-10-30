@@ -1,87 +1,91 @@
 package com.example.the_autumn.controller;
 
-import com.example.the_autumn.entity.DotGiamGia;
-import com.example.the_autumn.entity.DotGiamGiaChiTiet;
-import com.example.the_autumn.model.response.DotGiamGiaDTO;
+import com.example.the_autumn.model.request.DotGiamGiaRequest;
+import com.example.the_autumn.model.response.DotGiamGiaResponse;
+import com.example.the_autumn.model.response.ResponseObject;
 import com.example.the_autumn.service.DotGiamGiaService;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/dot-giam-gia")
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173","http://localhost:5174/" , "http://localhost:3000"})
 public class DotGiamGiaController {
 
-    private final DotGiamGiaService dotGiamGiaService;
+    @Autowired
+    private DotGiamGiaService dotGiamGiaService;
 
-    public DotGiamGiaController(DotGiamGiaService dotGiamGiaService) {
-        this.dotGiamGiaService = dotGiamGiaService;
-    }
-
-    // 🔹 Lấy danh sách tất cả đợt giảm giá
     @GetMapping
-    public List<DotGiamGiaDTO> getAll() {
-        return dotGiamGiaService.list();
+    public ResponseObject<?> getAllDotGiamGia() {
+        return new ResponseObject<>(dotGiamGiaService.getAllDotGiamGia());
     }
 
-    // 🔹 Lấy theo ID
-    @GetMapping("/{id}")
-    public ResponseEntity<DotGiamGia> getById(@PathVariable Integer id) {
-        Optional<DotGiamGia> found = dotGiamGiaService.findById(id);
-        return found.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    @GetMapping("/phan-trang")
+    public ResponseObject<?> phanTrang(@RequestParam(value = "pageNo",defaultValue = "0") Integer pageNo, @RequestParam(value = "pageSize",defaultValue = "5") Integer pageSize){
+        return new ResponseObject<>(dotGiamGiaService.phanTrang(pageNo,pageSize));
     }
 
-    // 🔹 Lấy theo mã giảm giá
-    @GetMapping("/ma/{ma}")
-    public ResponseEntity<DotGiamGia> getByMa(@PathVariable String ma) {
-        Optional<DotGiamGia> found = dotGiamGiaService.findByMa(ma);
-        return found.map(ResponseEntity::ok)
-                .orElseGet(() -> ResponseEntity.notFound().build());
+    @GetMapping("/detail/{id}")
+    public ResponseObject<?> detail(@PathVariable Integer id){
+        return new ResponseObject<>(dotGiamGiaService.getDotGiamGiaById(id));
     }
 
-    // 🔹 Lấy danh sách chi tiết theo đợt giảm giá ID
-    @GetMapping("/{id}/chi-tiet")
-    public ResponseEntity<List<DotGiamGiaChiTiet>> getDetails(@PathVariable Integer id) {
-        Optional<DotGiamGia> found = dotGiamGiaService.findById(id);
-        if (found.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(dotGiamGiaService.findDetailsByDot(found.get()));
+    @GetMapping("/san-pham/{idDot}")
+    public ResponseObject<?> getSanPhamByDot(@PathVariable Integer idDot) {
+        return new ResponseObject<>(dotGiamGiaService.getSanPhamByDot(idDot));
     }
 
-    // 🔹 Tạo mới
-    @PostMapping
-    public ResponseEntity<DotGiamGia> create(@RequestBody DotGiamGia body) {
-        DotGiamGia created = dotGiamGiaService.save(body);
-        return ResponseEntity.created(URI.create("/api/dot-giam-gia/" + created.getId()))
-                .body(created);
+    @DeleteMapping("/delete/{id}")
+    public ResponseObject<?> deletePhieuGiamGia(@PathVariable("id") Integer id){
+        dotGiamGiaService.delete(id);
+        return new ResponseObject<>(null,"Xoa thành công");
     }
 
-    // 🔹 Cập nhật theo ID
-    @PutMapping("/{id}")
-    public ResponseEntity<DotGiamGia> update(@PathVariable Integer id, @RequestBody DotGiamGia body) {
-        Optional<DotGiamGia> existing = dotGiamGiaService.findById(id);
-        if (existing.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        body.setId(id);
-        DotGiamGia updated = dotGiamGiaService.save(body);
-        return ResponseEntity.ok(updated);
+    @PostMapping("/add")
+    public ResponseObject<?> addDotGiamGia(@RequestBody DotGiamGiaRequest dotGiamGiaRequest){
+        dotGiamGiaService.add(dotGiamGiaRequest);
+        return new ResponseObject<>(null,"Thêm thành công");
     }
 
-    // 🔹 Xóa theo ID
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        Optional<DotGiamGia> existing = dotGiamGiaService.findById(id);
-        if (existing.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        dotGiamGiaService.deleteById(id);
-        return ResponseEntity.noContent().build();
+    @PutMapping("/update/{id}")
+    public ResponseObject<?> updateDotGiamGia(@PathVariable Integer id,@RequestBody DotGiamGiaRequest dotGiamGiaRequest){
+        dotGiamGiaService.update(id,dotGiamGiaRequest);
+        return new ResponseObject<>(null,"Sửa thành công");
     }
+
+    @PutMapping("/update-trang-thai/{id}")
+    public ResponseObject<?> updateTrangThai(@PathVariable Integer id, @RequestParam Boolean trangThai) {
+        dotGiamGiaService.updateTrangThai(id, trangThai);
+        return new ResponseObject<>(null, "Cập nhập trạng thái thành công");
+    }
+    @GetMapping("/search")
+    public ResponseObject<?> search(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "tuNgay", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tuNgay,
+            @RequestParam(value = "denNgay", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
+            @RequestParam(value = "loaiGiamGia", required = false) Boolean loaiGiamGia,
+            @RequestParam(value = "trangThai", required = false) Boolean trangThai
+    ) {
+        List<DotGiamGiaResponse> result = dotGiamGiaService.searchDotGiamGia(
+                keyword, tuNgay, denNgay, loaiGiamGia, trangThai
+        );
+        return new ResponseObject<>(result);
+    }
+
+
 }

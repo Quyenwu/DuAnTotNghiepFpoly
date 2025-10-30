@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,7 +39,7 @@ public class NhanVienService {
 
 
     public List<NhanVienResponse> getAllNhanVien() {
-        return nhanVienRepository.findAll() .stream()
+        return nhanVienRepository.findAll().stream()
                 .sorted((a, b) -> b.getNgayTao().compareTo(a.getNgayTao()))
                 .map(NhanVienResponse::new)
                 .collect(Collectors.toList());
@@ -58,14 +59,19 @@ public class NhanVienService {
     }
 
     public void add(NhanVienRequest nhanVienRequest) {
-        NhanVien nv = MapperUtils.map(nhanVienRequest, NhanVien.class);
+        // Kiểm tra email đã tồn tại chưa
+        if (nhanVienRepository.existsByEmail(nhanVienRequest.getEmail())) {
+            throw new ApiException("Email đã tồn tại trong hệ thống", "400");
+        }
 
+        NhanVien nv = MapperUtils.map(nhanVienRequest, NhanVien.class);
+        String randomPassword = UUID.randomUUID().toString().replace("-", "").substring(0, 6);
+        nv.setMatKhau(randomPassword);
         ChucVu chucVu = chucVuRepository.findById(2)
                 .orElseThrow(() -> new ApiException("Không tìm thấy chức vụ Nhân viên", "404"));
 
         nv.setTrangThai(true);
         nv.setChucVu(chucVu);
-
 
         nhanVienRepository.save(nv);
 
@@ -91,6 +97,7 @@ public class NhanVienService {
         }
     }
 
+
     public void update(Integer id, NhanVienRequest nhanVienRequest) {
         NhanVien nv = nhanVienRepository.findById(id).get();
         MapperUtils.mapToExisting(nhanVienRequest, nv);
@@ -110,6 +117,7 @@ public class NhanVienService {
     }
 
     public List<NhanVienResponse> searchNhanVien(
+
             String keyword,
             Boolean gioiTinh,
             String chucVuId,
@@ -120,11 +128,12 @@ public class NhanVienService {
 
             if (keyword != null && !keyword.isEmpty()) {
                 String likePattern = "%" + keyword.toLowerCase() + "%";
+                Predicate pMaNhanVien = cb.like(cb.lower(root.get("maNhanVien")), likePattern);
                 Predicate pHoTen = cb.like(cb.lower(root.get("hoTen")), likePattern);
                 Predicate pSdt = cb.like(cb.lower(root.get("sdt")), likePattern);
                 Predicate pDiaChi = cb.like(cb.lower(root.get("diaChi")), likePattern);
                 Predicate pEmail = cb.like(cb.lower(root.get("email")), likePattern);
-                predicates.add(cb.or(pHoTen, pSdt, pDiaChi, pEmail));
+                predicates.add(cb.or(pMaNhanVien,pHoTen, pSdt, pDiaChi, pEmail));
             }
 
             if (gioiTinh != null) {
@@ -149,7 +158,13 @@ public class NhanVienService {
                 .collect(Collectors.toList());
     }
 
+    public boolean checkEmailExists(String email) {
+        return nhanVienRepository.existsByEmail(email);
+    }
 
+    public boolean checkSdtExists(String sdt) {
+        return nhanVienRepository.existsBySdt(sdt);
+    }
 }
 
 

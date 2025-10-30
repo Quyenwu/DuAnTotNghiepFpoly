@@ -1,6 +1,6 @@
 package com.example.the_autumn.model.response;
 
-import com.example.the_autumn.dto.HoaDonDetailDTO;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -15,7 +15,7 @@ import java.math.BigDecimal;
 public class UpdateHoaDonResponse {
     private boolean success;
     private String message;
-    private HoaDonDetailDTO data;
+    private HoaDonDetailResponse data;
 
     // Thông tin tính toán
     private BigDecimal tongTienSanPham;
