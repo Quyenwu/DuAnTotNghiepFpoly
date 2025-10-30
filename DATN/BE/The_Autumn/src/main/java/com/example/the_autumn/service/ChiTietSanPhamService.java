@@ -437,4 +437,5 @@ public class ChiTietSanPhamService {
 
         System.out.println("✅ Đã cập nhật mô tả biến thể: " + idChiTietSanPham);
     }
+
 }
