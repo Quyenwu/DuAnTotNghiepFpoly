@@ -2,6 +2,7 @@ package com.example.the_autumn.service;
 
 import com.example.the_autumn.entity.*;
 import com.example.the_autumn.model.request.TaoBienTheRequest;
+import com.example.the_autumn.model.request.UpdateChiTietSanPhamRequest;
 import com.example.the_autumn.model.response.ChiTietSanPhamResponse;
 import com.example.the_autumn.model.response.PageableObject;
 import com.example.the_autumn.repository.*;
@@ -129,6 +130,8 @@ public class ChiTietSanPhamService {
         SanPham sanPham = new SanPham();
 
         sanPham.setTenSanPham(request.getTenSanPham());
+
+        sanPham.setTrongLuong(request.getTrongLuong());
 
         sanPham.setNhaSanXuat(nsxRepo.findById(request.getIdNhaSanXuat())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy nhà sản xuất ID: " + request.getIdNhaSanXuat())));
@@ -294,6 +297,67 @@ public class ChiTietSanPhamService {
             System.err.println("❌ Lỗi preview: " + e.getMessage());
             throw new RuntimeException("Lỗi khi preview biến thể: " + e.getMessage());
         }
+    }
+
+    @Transactional
+    public ChiTietSanPhamResponse updateChiTietSanPham(Integer id, UpdateChiTietSanPhamRequest request) {
+        System.out.println("🔄 Service: Update chi tiết sản phẩm ID=" + id);
+
+        ChiTietSanPham chiTiet = ctspRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy biến thể với ID: " + id));
+
+        KichThuoc kichThuoc = ktRepo.findById(request.getIdKichThuoc())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy kích thước với ID: " + request.getIdKichThuoc()));
+
+        MauSac mauSac = msRepo.findById(request.getIdMauSac())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy màu sắc với ID: " + request.getIdMauSac()));
+
+        boolean isChangedSizeOrColor = !chiTiet.getKichThuoc().getId().equals(request.getIdKichThuoc())
+                || !chiTiet.getMauSac().getId().equals(request.getIdMauSac());
+
+        if (isChangedSizeOrColor) {
+            boolean exists = ctspRepo.existsBySanPham_IdAndMauSac_IdAndKichThuoc_Id(
+                    chiTiet.getSanPham().getId(),
+                    request.getIdMauSac(),
+                    request.getIdKichThuoc()
+            );
+
+            if (exists) {
+                throw new RuntimeException("Biến thể với kích thước '" + kichThuoc.getTenKichThuoc()
+                        + "' và màu sắc '" + mauSac.getTenMauSac() + "' đã tồn tại");
+            }
+        }
+
+        if (request.getGiaBan().compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("Giá bán không được âm");
+        }
+
+        if (request.getSoLuongTon() < 0) {
+            throw new RuntimeException("Số lượng tồn không được âm");
+        }
+
+        chiTiet.setKichThuoc(kichThuoc);
+        chiTiet.setMauSac(mauSac);
+        chiTiet.setGiaBan(request.getGiaBan());
+        chiTiet.setSoLuongTon(request.getSoLuongTon());
+
+        if (request.getMaVach() != null && !request.getMaVach().trim().isEmpty()) {
+            chiTiet.setMaVach(request.getMaVach());
+        }
+
+        chiTiet.setMoTa(request.getMoTa());
+
+        if (request.getTrangThai() != null) {
+            chiTiet.setTrangThai(request.getTrangThai());
+        }
+
+        chiTiet.setNgaySua(LocalDate.now());
+
+        ChiTietSanPham saved = ctspRepo.save(chiTiet);
+
+        System.out.println("✅ Service: Đã cập nhật biến thể ID=" + id);
+
+        return new ChiTietSanPhamResponse(saved);
     }
 
 }

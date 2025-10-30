@@ -12,10 +12,8 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BienTheTamResponse {
-    // ✅ THÊM: ID tạm thời để frontend track
     private String id;
 
-    // ✅ Thông tin hiển thị
     private String tenSanPham;
     private String tenMauSac;
     private String tenKichThuoc;
@@ -23,18 +21,15 @@ public class BienTheTamResponse {
     private String tenCoAo;
     private String tenTayAo;
 
-    // ✅ QUAN TRỌNG: Các ID cần thiết để tạo sản phẩm
     private Integer idMauSac;
     private Integer idKichThuoc;
     private Integer idTrongLuong;
     private Integer idCoAo;
     private Integer idTayAo;
 
-    // ✅ Thông tin giá (optional)
     private BigDecimal giaBan;
     private Integer soLuong;
 
-    // Constructor để tạo nhanh
     public BienTheTamResponse(String tenSanPham,
                               String tenMauSac, Integer idMauSac,
                               String tenKichThuoc, Integer idKichThuoc,
