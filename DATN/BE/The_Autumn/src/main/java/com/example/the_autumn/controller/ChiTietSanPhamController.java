@@ -1,6 +1,7 @@
 package com.example.the_autumn.controller;
 
 import com.example.the_autumn.entity.ChiTietSanPham;
+import com.example.the_autumn.model.request.AddVariantRequest;
 import com.example.the_autumn.model.request.TaoBienTheRequest;
 import com.example.the_autumn.model.request.UpdateChiTietSanPhamRequest;
 import com.example.the_autumn.model.response.ChiTietSanPhamResponse;
@@ -300,6 +301,78 @@ public class ChiTietSanPhamController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "success", false,
                     "message", "Lỗi khi cập nhật biến thể: " + e.getMessage()
+            ));
+        }
+    }
+
+    @PostMapping("/tao-bien-the-cho-san-pham")
+    public ResponseEntity<?> taoBienTheChoSanPham(
+            @Valid @RequestBody AddVariantRequest request,
+            BindingResult bindingResult) {
+
+        try {
+            System.out.println("THÊM BIẾN THỂ CHO SẢN PHẨM CÓ SẴN");
+
+            if (bindingResult.hasErrors()) {
+                Map<String, String> errors = bindingResult.getFieldErrors().stream()
+                        .collect(Collectors.toMap(
+                                error -> error.getField(),
+                                error -> error.getDefaultMessage()
+                        ));
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Dữ liệu không hợp lệ",
+                        "errors", errors
+                ));
+            }
+
+            List<ChiTietSanPhamResponse> savedVariants = chiTietSanPhamService.taoBienTheChoSanPham(request);
+
+            System.out.println("Đã thêm " + savedVariants.size() + " biến thể mới");
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "success", true,
+                    "message", "Thêm biến thể thành công",
+                    "data", savedVariants,
+                    "total", savedVariants.size()
+            ));
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi thêm biến thể: " + e.getMessage()
+            ));
+        }
+    }
+
+    @PatchMapping("/{idChiTietSanPham}/mo-ta")
+    public ResponseEntity<?> capNhatMoTa(
+            @PathVariable Integer idChiTietSanPham,
+            @RequestBody Map<String, Object> updates) {
+        try {
+            if (!updates.containsKey("moTa")) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Thiếu trường moTa"
+                ));
+            }
+
+            String moTa = updates.get("moTa").toString();
+            chiTietSanPhamService.capNhatMoTaBienThe(idChiTietSanPham, moTa);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Cập nhật mô tả thành công"
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
             ));
         }
     }
