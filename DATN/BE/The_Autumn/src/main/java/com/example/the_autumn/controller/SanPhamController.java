@@ -8,6 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.the_autumn.model.request.UpdateSanPhamRequest;
+import jakarta.validation.Valid;
+import org.springframework.validation.BindingResult;
+import java.util.stream.Collectors;
 
 import java.util.List;
 import java.util.Map;
@@ -101,5 +105,78 @@ public class SanPhamController {
     public ResponseObject<?> updateTrangThai(@PathVariable Integer id, @RequestParam Boolean trangThai) {
         spService.updateTrangThai(id, trangThai);
         return new ResponseObject<>(null, "Cập nhập trạng thái thành công");
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateSanPham(
+            @PathVariable Integer id,
+            @Valid @RequestBody UpdateSanPhamRequest request,
+            BindingResult bindingResult) {
+
+        try {
+            System.out.println("🔄 UPDATE SẢN PHẨM - ID: " + id);
+
+            if (bindingResult.hasErrors()) {
+                Map<String, String> errors = bindingResult.getFieldErrors().stream()
+                        .collect(Collectors.toMap(
+                                error -> error.getField(),
+                                error -> error.getDefaultMessage()
+                        ));
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Dữ liệu không hợp lệ",
+                        "errors", errors
+                ));
+            }
+
+            SanPhamResponse updated = spService.updateSanPham(id, request);
+
+            System.out.println("✅ Cập nhật sản phẩm thành công");
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Cập nhật sản phẩm thành công",
+                    "data", updated
+            ));
+
+        } catch (RuntimeException e) {
+            System.err.println("❌ Lỗi: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi cập nhật sản phẩm: " + e.getMessage()
+            ));
+        }
+    }
+
+    @GetMapping("/{id}/edit")
+    public ResponseEntity<?> getSanPhamForEdit(@PathVariable Integer id) {
+        try {
+            System.out.println("📝 GET SAN PHAM FOR EDIT - ID: " + id);
+
+            SanPhamResponse sanPham = spService.getSanPhamDetailWithVariants(id);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Lấy thông tin sản phẩm thành công",
+                    "data", sanPham
+            ));
+
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi lấy thông tin sản phẩm: " + e.getMessage()
+            ));
+        }
     }
 }
