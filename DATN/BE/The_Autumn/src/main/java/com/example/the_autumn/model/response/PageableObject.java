@@ -16,13 +16,16 @@ public class PageableObject<T> {
 
     private List<T> data;
 
-    private Integer totalPage; // tong so phan tu/trang
+    private Integer totalPage;
 
-    private Integer currentPage;// page hien tai
+    private Integer currentPage;
+
+    private Long totalElements;
 
     public PageableObject(Page<T> page){
         this.data = page.getContent();
         this.totalPage = page.getTotalPages();
         this.currentPage = page.getNumber();
+        this.totalElements = page.getTotalElements();
     }
 }
