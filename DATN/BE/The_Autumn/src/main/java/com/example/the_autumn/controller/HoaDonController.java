@@ -79,14 +79,14 @@ public class HoaDonController {
     @GetMapping
     public ResponseEntity<PageHoaDonRequest<HoaDonRespone>> getAllOrSearch(
             @RequestParam(required = false) String searchText,  // ⭐ THAY: gộp 3 ô thành 1
-            @RequestParam(required = false) Boolean loaiHoaDon,
+            @RequestParam(required = false) List<Boolean> loaiHoaDon,
             @RequestParam(required = false) Integer trangThai,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate ngayTao,
             @RequestParam(required = false) String hinhThucThanhToan,  // ⭐ THÊM: lọc hình thức thanh toán
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size
     ) {
-        if (searchText != null || loaiHoaDon != null || trangThai != null ||
+        if (searchText != null || loaiHoaDon != null && !loaiHoaDon.isEmpty() || trangThai != null ||
                 ngayTao != null || hinhThucThanhToan != null) {
             PageHoaDonRequest<HoaDonRespone> response = hoaDonService.timkiemVaLoc(
                     searchText,  // ⭐ THAY
@@ -277,11 +277,6 @@ public class HoaDonController {
         }
     }
 
-
-//    @PostMapping
-//    public String upload(@RequestParam("file") MultipartFile file) {
-//        return hoaDonService.uploadFile(file);
-//    }
 
 
     @GetMapping("/{id}/lich-su")

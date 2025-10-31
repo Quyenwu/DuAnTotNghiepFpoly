@@ -1,5 +1,6 @@
 package com.example.the_autumn.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
@@ -34,8 +35,10 @@ public class LichSuHoaDon {
     @Column(name = "mo_ta", length = 200)
     private String moTa;
 
+
     @Column(name = "ngay_cap_nhat")
     private Date ngayCapNhat;
+
 
     @Column(name = "trang_thai")
     private Boolean trangThai;
