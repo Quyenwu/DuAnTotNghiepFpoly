@@ -2,10 +2,12 @@ package com.example.the_autumn.service;
 
 import com.example.the_autumn.entity.*;
 import com.example.the_autumn.model.request.SanPhamRequest;
+import com.example.the_autumn.model.request.UpdateSanPhamRequest;
 import com.example.the_autumn.model.response.PageableObject;
 import com.example.the_autumn.model.response.SanPhamResponse;
 import com.example.the_autumn.repository.*;
 import com.example.the_autumn.util.MapperUtils;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -144,5 +146,58 @@ public class SanPhamService {
         SanPham sp = spRepo.findById(id).get();
         sp.setTrangThai(trangThai);
         spRepo.save(sp);
+    }
+
+    @Transactional
+    public SanPhamResponse updateSanPham(Integer id, UpdateSanPhamRequest request) {
+        System.out.println("🔄 Service: Update sản phẩm ID=" + id);
+
+        SanPham sanPham = spRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm với ID: " + id));
+
+        NhaSanXuat nhaSanXuat = nsxRepo.findById(request.getIdNhaSanXuat())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy nhà sản xuất với ID: " + request.getIdNhaSanXuat()));
+
+        XuatXu xuatXu = xxRepo.findById(request.getIdXuatXu())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy xuất xứ với ID: " + request.getIdXuatXu()));
+
+        ChatLieu chatLieu = clRepo.findById(request.getIdChatLieu())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy chất liệu với ID: " + request.getIdChatLieu()));
+
+        KieuDang kieuDang = kdRepo.findById(request.getIdKieuDang())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy kiểu dáng với ID: " + request.getIdKieuDang()));
+
+        CoAo coAo = spRepo.findById(request.getIdCoAo())
+                .map(sp -> sp.getCoAo())
+                .orElseGet(() -> {
+                    throw new RuntimeException("Không tìm thấy cổ áo với ID: " + request.getIdCoAo());
+                });
+
+        TayAo tayAo = spRepo.findById(request.getIdTayAo())
+                .map(sp -> sp.getTayAo())
+                .orElseGet(() -> {
+                    throw new RuntimeException("Không tìm thấy tay áo với ID: " + request.getIdTayAo());
+                });
+
+        sanPham.setTenSanPham(request.getTenSanPham());
+        sanPham.setNhaSanXuat(nhaSanXuat);
+        sanPham.setXuatXu(xuatXu);
+        sanPham.setChatLieu(chatLieu);
+        sanPham.setKieuDang(kieuDang);
+        sanPham.setCoAo(coAo);
+        sanPham.setTayAo(tayAo);
+        sanPham.setTrongLuong(request.getTrongLuong());
+
+        if (request.getTrangThai() != null) {
+            sanPham.setTrangThai(request.getTrangThai());
+        }
+
+        sanPham.setNgaySua(new Date());
+
+        SanPham saved = spRepo.save(sanPham);
+
+        System.out.println("✅ Service: Đã cập nhật sản phẩm ID=" + id);
+
+        return new SanPhamResponse(saved);
     }
 }
