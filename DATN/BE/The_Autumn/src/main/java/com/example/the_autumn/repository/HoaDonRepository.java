@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 
 @Repository
@@ -44,12 +45,10 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer>, JpaSpe
     @Query("SELECT COUNT(h) FROM HoaDon h WHERE h.maHoaDon LIKE CONCAT(:prefix, '%')")
     Integer countByMaHoaDonStartingWith(@Param("prefix") String prefix);
 
+    Optional<HoaDon> findByMaHoaDon(String maHoaDon);
+    List<HoaDon> findByTrangThai(Integer trangThai);
 
+    @Query("SELECT MAX(CAST(SUBSTRING(h.maHoaDon, 3) AS integer)) FROM HoaDon h WHERE h.maHoaDon LIKE 'HD%'")
+    Optional<Integer> findMaxMaHoaDonNumber();
 }
 
-
-
-
-
-
-//
