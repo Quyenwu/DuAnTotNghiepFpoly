@@ -298,7 +298,7 @@ public class HoaDonService {
 
     public PageHoaDonRequest<HoaDonRespone> timkiemVaLoc(
             String searchText,  // ⭐ THAY: gộp 3 tham số thành 1
-            Boolean loaiHoaDon,
+            List<Boolean> loaiHoaDon,
             Integer trangThai,
             LocalDate ngayTao,
             String hinhThucThanhToan,  // ⭐ THÊM
@@ -321,14 +321,15 @@ public class HoaDonService {
                 predicates.add(cb.or(maPredicate, tenKhPredicate, tenNvPredicate));
             }
 
-            if (loaiHoaDon != null) {
-                predicates.add(cb.equal(root.get("loaiHoaDon"), loaiHoaDon));
+            if (loaiHoaDon != null && !loaiHoaDon.isEmpty()) {
+                predicates.add(root.get("loaiHoaDon").in(loaiHoaDon));
             }
+
+
 
             if (trangThai != null) {
                 predicates.add(cb.equal(root.get("trangThai"), trangThai));
             }
-
             if (ngayTao != null) {
                 LocalDateTime startOfDay = ngayTao.atStartOfDay();
                 LocalDateTime endOfDay = ngayTao.atTime(23, 59, 59);
@@ -553,14 +554,20 @@ public class HoaDonService {
                     request.getGhiChu());
             luuLichSu(hoaDon, "Cập nhật ghi chú", moTa, null);
         }
+        if (request.getTrangThai() != null && !request.getTrangThai().equals(hoaDon.getTrangThai())) {
+            Integer oldStatus = hoaDon.getTrangThai();
+            hoaDon.setTrangThai(request.getTrangThai());
+            luuLichSu(hoaDon, "Cập nhật trạng thái hóa đơn",
+                    String.format("Trạng thái: %s → %s", oldStatus, request.getTrangThai()), null);
+        }
+
+
         // ✅ 4. Cập nhật ngày sửa
         hoaDon.setNgaySua(new Date());
         hoaDonRepository.save(hoaDon);
 
         return new UpdateHoaDonResponse(true, "Cập nhật hóa đơn thành công");
     }
-
-
 
 
 
@@ -574,16 +581,6 @@ public class HoaDonService {
     }
 
 
-
-//    public String uploadFile(MultipartFile file) {
-//        try {
-//            Map uploadResult = cloudinary.uploader().upload(file.getBytes(),
-//                    ObjectUtils.asMap("resource_type", "auto"));
-//            return uploadResult.get("secure_url").toString();
-//        } catch (IOException e) {
-//            throw new RuntimeException("Upload thất bại: " + e.getMessage());
-//        }
-//    }
 
 
     public void luuLichSu(HoaDon hoaDon, String hanhDong, String moTa, Integer nguoiThucHien) {
@@ -640,17 +637,6 @@ public class HoaDonService {
 
         return "Cập nhật dịch vụ từ " + oldServiceText + " sang " + newServiceText + " thành công";
     }
-
-
-//    public void guiHoaDonChoKhachHang(HoaDon hoaDon, String pdfPath) {
-//        String emailKhach = hoaDon.getKhachHang().getEmail();
-//        emailService.sendInvoiceEmail(emailKhach, pdfPath);
-//    }
-
-
-
-
-
 
 }
 

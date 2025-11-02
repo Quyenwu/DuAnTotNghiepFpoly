@@ -26,7 +26,8 @@ public class UpdateHoaDonRequest {
     private Integer idPhieuGiamGia;  // null = không dùng phiếu
     private String ghiChu;
     private String hinhThucThanhToan;
-
+    private Integer trangThai;        // ✅ thêm mới
+    private String tenNhanVien;
     // Danh sách sản phẩm
     private List<ChiTietSanPhamRequest> chiTietSanPhams;
 

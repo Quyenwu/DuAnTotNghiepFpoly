@@ -1,5 +1,6 @@
 package com.example.the_autumn.controller;
 
+import com.example.the_autumn.model.response.PageableObject;
 import com.example.the_autumn.model.response.ResponseObject;
 import com.example.the_autumn.model.response.SanPhamResponse;
 import com.example.the_autumn.service.ChiTietSanPhamService;
@@ -35,12 +36,21 @@ public class SanPhamController {
     @GetMapping("playlist/paging")
     public ResponseObject<?> phanTrangProduct(
             @RequestParam(value = "pageNo1", defaultValue = "0") Integer pageNo,
-            @RequestParam(value = "pageSize1", defaultValue = "2") Integer pageSize) {
-        return new ResponseObject<>(spService.phanTrang(pageNo, pageSize));
+            @RequestParam(value = "pageSize1", defaultValue = "5") Integer pageSize) {
+
+        System.out.println("📄 Controller: phanTrangProduct - pageNo=" + pageNo + ", pageSize=" + pageSize);
+
+        PageableObject<SanPhamResponse> result = spService.phanTrang(pageNo, pageSize);
+
+        System.out.println("✅ Controller trả về: " + result.getData().size() + " sản phẩm, tổng trang: " + result.getTotalPage());
+
+        return new ResponseObject<>(result);
     }
 
     @GetMapping("/filter")
     public ResponseObject<?> filterSanPham(
+            @RequestParam(value = "pageNo1", defaultValue = "0") Integer pageNo,
+            @RequestParam(value = "pageSize1", defaultValue = "5") Integer pageSize,
             @RequestParam(required = false) String searchText,
             @RequestParam(required = false) String maSanPham,
             @RequestParam(required = false) String tenSanPham,
@@ -51,7 +61,8 @@ public class SanPhamController {
             @RequestParam(required = false) Boolean trangThai) {
 
         try {
-            System.out.println("🎯 BE nhận filter request:");
+            System.out.println("🎯 BE nhận filter request với phân trang:");
+            System.out.println("- pageNo: " + pageNo + ", pageSize: " + pageSize);
             System.out.println("- searchText: " + searchText);
             System.out.println("- maSanPham: " + maSanPham);
             System.out.println("- tenSanPham: " + tenSanPham);
@@ -61,13 +72,13 @@ public class SanPhamController {
             System.out.println("- tenXuatXu: " + tenXuatXu);
             System.out.println("- trangThai: " + trangThai);
 
-            List<SanPhamResponse> result = spService.filterSanPham(
-                    searchText,
-                    maSanPham, tenSanPham, tenNhaSanXuat, tenChatLieu,
-                    tenKieuDang, tenXuatXu, null, trangThai
+            PageableObject<SanPhamResponse> result = spService.filterSanPhamWithPaging(
+                    pageNo, pageSize,
+                    searchText, maSanPham, tenSanPham, tenNhaSanXuat,
+                    tenChatLieu, tenKieuDang, tenXuatXu, null, trangThai
             );
 
-            System.out.println("✅ BE trả về " + result.size() + " sản phẩm");
+            System.out.println("✅ BE trả về trang " + pageNo + " với " + result.getData().size() + " sản phẩm, tổng trang: " + result.getTotalPage());
             return new ResponseObject<>(result);
         } catch (Exception e) {
             e.printStackTrace();
