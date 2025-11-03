@@ -84,20 +84,7 @@ public class PhieuGiamGiaService {
     @Transactional
     public void add(PhieuGiamGiaRequesst req) {
         PhieuGiamGia p = MapperUtils.map(req, PhieuGiamGia.class);
-
-        // ✅ Gán trạng thái mặc định theo ngày
-        LocalDate now = LocalDate.now();
-        if (p.getNgayBatDau() != null && p.getNgayKetThuc() != null) {
-            if (now.isBefore(p.getNgayBatDau())) {
-                p.setTrangThai(0); // Sắp diễn ra
-            } else if (!now.isAfter(p.getNgayKetThuc())) {
-                p.setTrangThai(1); // Đang diễn ra
-            } else {
-                p.setTrangThai(2); // Kết thúc
-            }
-        } else {
-            p.setTrangThai(0);
-        }
+        p.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : 1);
 
         if (req.getKieu() == 1 && req.getIdKhachHangs() != null) {
             p.setSoLuongDung(req.getIdKhachHangs().size());
@@ -106,8 +93,6 @@ public class PhieuGiamGiaService {
         PhieuGiamGia savedPGG = phieuGiamGiaRepository.saveAndFlush(p);
         em.refresh(savedPGG);
         logger.info("✅ Saved discount ID={} & code={}", savedPGG.getId(), savedPGG.getMaGiamGia());
-
-        // ✅ Gửi email cho khách hàng được gán
         if (req.getKieu() == 1 && req.getIdKhachHangs() != null && !req.getIdKhachHangs().isEmpty()) {
             List<GiamGiaKhachHang> list = new ArrayList<>();
             for (Integer khachHangId : req.getIdKhachHangs()) {
@@ -136,36 +121,18 @@ public class PhieuGiamGiaService {
     public void update(Integer id, PhieuGiamGiaRequesst req) {
         PhieuGiamGia p = phieuGiamGiaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu giảm giá ID: " + id));
-
         BigDecimal oldGiaTri = p.getGiaTriGiamGia();
         Boolean oldLoaiGiam = p.getLoaiGiamGia();
-
         List<GiamGiaKhachHang> existingList = giamGiaKhachHangRepository.findByPhieuGiamGia_Id(id);
         Map<Integer, GiamGiaKhachHang> existingMap = existingList.stream()
                 .collect(Collectors.toMap(gg -> gg.getKhachHang().getId(), gg -> gg));
-
         MapperUtils.mapToExisting(req, p);
         p.setId(id);
-
-        LocalDate now = LocalDate.now();
-        if (p.getNgayBatDau() != null && p.getNgayKetThuc() != null) {
-            if (now.isBefore(p.getNgayBatDau())) {
-                p.setTrangThai(0);
-            } else if (!now.isAfter(p.getNgayKetThuc())) {
-                p.setTrangThai(1);
-            } else {
-                p.setTrangThai(2);
-            }
-        }
-
         PhieuGiamGia saved = phieuGiamGiaRepository.saveAndFlush(p);
         em.refresh(saved);
-
         boolean isGiaTriChanged = oldGiaTri.compareTo(saved.getGiaTriGiamGia()) != 0;
         boolean isLoaiChanged = !oldLoaiGiam.equals(saved.getLoaiGiamGia());
-
         giamGiaKhachHangRepository.deleteByPhieuGiamGiaId(id);
-
         List<GiamGiaKhachHang> newList = new ArrayList<>();
         if (req.getKieu() == 1 && req.getIdKhachHangs() != null) {
             List<Integer> newIds = req.getIdKhachHangs();
@@ -181,16 +148,19 @@ public class PhieuGiamGiaService {
                 if (existingMap.containsKey(khId)) {
                     if (isGiaTriChanged || isLoaiChanged) {
                         emailService.sendDiscountUpdateEmail(kh.getEmail(), saved);
+                        logger.info("📧 Gửi email cập nhật cho {}", kh.getEmail());
                     }
                 } else {
                     emailService.sendDiscountEmail(kh.getEmail(), saved);
+                    logger.info("📧 Gửi email mới cho {}", kh.getEmail());
                 }
             }
-
             existingList.stream()
                     .filter(gg -> !newIds.contains(gg.getKhachHang().getId()))
-                    .forEach(gg -> emailService.sendDiscountCancelEmail(gg.getKhachHang().getEmail(), saved));
-
+                    .forEach(gg -> {
+                        emailService.sendDiscountCancelEmail(gg.getKhachHang().getEmail(), saved);
+                        logger.info("📧 Gửi email hủy cho {}", gg.getKhachHang().getEmail());
+                    });
             if (!newList.isEmpty()) {
                 giamGiaKhachHangRepository.saveAll(newList);
             }
@@ -211,19 +181,17 @@ public class PhieuGiamGiaService {
         PhieuGiamGia p = phieuGiamGiaRepository.findById(id)
                 .orElseThrow(() -> new ApiException("Không tìm thấy Phiếu Giảm Giá", "404"));
         LocalDate now = LocalDate.now();
-
         if (trangThai == 1 && p.getNgayKetThuc().isBefore(now)) {
             throw new ApiException("Phiếu này đã hết hạn, không thể kích hoạt lại!", "400");
         }
-
-        if (now.isBefore(p.getNgayBatDau())) {
+        if (p.getNgayBatDau().isAfter(now)) {
             p.setTrangThai(0);
-        } else if (!now.isAfter(p.getNgayKetThuc())) {
+        } else if ((p.getNgayBatDau().isBefore(now) || p.getNgayBatDau().isEqual(now))
+                && (p.getNgayKetThuc().isAfter(now) || p.getNgayKetThuc().isEqual(now))) {
             p.setTrangThai(1);
-        } else {
+        } else if (p.getNgayKetThuc().isBefore(now)) {
             p.setTrangThai(2);
         }
-
         phieuGiamGiaRepository.save(p);
     }
 
@@ -246,12 +214,61 @@ public class PhieuGiamGiaService {
                 keywordPredicates.add(cb.like(cb.lower(root.get("tenChuongTrinh")), kw));
                 keywordPredicates.add(cb.like(cb.lower(root.get("moTa")), kw));
 
+                if (keyword.endsWith("%")) {
+                    try {
+                        String numberPart = keyword.substring(0, keyword.length() - 1).trim();
+                        BigDecimal value = new BigDecimal(numberPart);
+
+                        Predicate giaTriPredicate = cb.equal(root.get("giaTriGiamGia"), value);
+                        Predicate loaiGiamGiaPredicate = cb.equal(root.get("loaiGiamGia"), false);
+                        keywordPredicates.add(cb.and(giaTriPredicate, loaiGiamGiaPredicate));
+
+                    } catch (NumberFormatException e) {
+                    }
+                }
+                else if (keyword.toLowerCase().contains("vnd")) {
+                    try {
+                        String numberPart = keyword.replaceAll("[^0-9]", "").trim();
+                        if (!numberPart.isEmpty()) {
+                            BigDecimal value = new BigDecimal(numberPart);
+
+                            Predicate giaTriPredicate = cb.equal(root.get("giaTriGiamGia"), value);
+                            Predicate loaiGiamGiaPredicate = cb.equal(root.get("loaiGiamGia"), true);
+                            keywordPredicates.add(cb.and(giaTriPredicate, loaiGiamGiaPredicate));
+                        }
+                    } catch (NumberFormatException e) {
+                    }
+                }
+                else {
+                    try {
+                        BigDecimal value = new BigDecimal(keyword);
+
+                        keywordPredicates.add(cb.equal(root.get("giaTriGiamGia"), value));
+                        keywordPredicates.add(cb.equal(root.get("mucGiaGiamToiDa"), value));
+                        keywordPredicates.add(cb.equal(root.get("giaTriDonHangToiThieu"), value));
+
+                    } catch (NumberFormatException e) {
+                    }
+
+                    try {
+                        Integer soLuong = Integer.parseInt(keyword);
+                        keywordPredicates.add(cb.equal(root.get("soLuongDung"), soLuong));
+                    } catch (NumberFormatException e) {
+                    }
+                }
+
                 predicates.add(cb.or(keywordPredicates.toArray(new Predicate[0])));
             }
 
-            if (kieu != null) predicates.add(cb.equal(root.get("kieu"), kieu));
-            if (loaiGiamGia != null) predicates.add(cb.equal(root.get("loaiGiamGia"), loaiGiamGia));
-            if (trangThai != null) predicates.add(cb.equal(root.get("trangThai"), trangThai));
+            if (kieu != null) {
+                predicates.add(cb.equal(root.get("kieu"), kieu));
+            }
+            if (loaiGiamGia != null) {
+                predicates.add(cb.equal(root.get("loaiGiamGia"), loaiGiamGia));
+            }
+            if (trangThai != null) {
+                predicates.add(cb.equal(root.get("trangThai"), trangThai));
+            }
             if (tuNgay != null && denNgay != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("ngayBatDau"), tuNgay));
                 predicates.add(cb.lessThanOrEqualTo(root.get("ngayKetThuc"), denNgay));
@@ -261,7 +278,9 @@ public class PhieuGiamGiaService {
                 predicates.add(cb.lessThanOrEqualTo(root.get("ngayKetThuc"), denNgay));
             }
 
-            return predicates.isEmpty() ? cb.conjunction() : cb.and(predicates.toArray(new Predicate[0]));
+            return predicates.isEmpty()
+                    ? cb.conjunction()
+                    : cb.and(predicates.toArray(new Predicate[0]));
         };
 
         return phieuGiamGiaRepository.findAll(spec)

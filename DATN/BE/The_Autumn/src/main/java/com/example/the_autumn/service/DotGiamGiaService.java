@@ -25,7 +25,10 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -82,19 +85,11 @@ public class DotGiamGiaService {
         dot.setGiaTriToiThieu(req.getGiaTriToiThieu());
         dot.setNgayBatDau(req.getNgayBatDau());
         dot.setNgayKetThuc(req.getNgayKetThuc());
-
-        // ✅ Xác định trạng thái theo ngày
-        LocalDate now = LocalDate.now();
-        if (now.isBefore(dot.getNgayBatDau())) {
-            dot.setTrangThai(0); // sắp diễn ra
-        } else if (!now.isAfter(dot.getNgayKetThuc())) {
-            dot.setTrangThai(1); // đang diễn ra
-        } else {
-            dot.setTrangThai(2); // kết thúc
-        }
+        dot.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : 1);
 
         DotGiamGia savedDot = dotGiamGiaRepository.saveAndFlush(dot);
         em.refresh(savedDot);
+        logger.info("✅ Saved DotGiamGia ID={} & code={}", savedDot.getId(), savedDot.getMaGiamGia());
 
         if (req.getCtspIds() == null || req.getCtspIds().isEmpty()) {
             throw new ApiException("Danh sách sản phẩm chi tiết không được để trống!", "400");
@@ -114,44 +109,36 @@ public class DotGiamGiaService {
             chiTietList.add(chiTiet);
         }
 
-        dotGiamGiaChiTietRepository.saveAll(chiTietList);
-        logger.info("✅ Thêm đợt giảm giá thành công ID={} với {} sản phẩm", savedDot.getId(), chiTietList.size());
+        if (!chiTietList.isEmpty()) {
+            dotGiamGiaChiTietRepository.saveAll(chiTietList);
+            logger.info("💾 Saved {} product-discount relations for DotGiamGia ID={}", chiTietList.size(), savedDot.getId());
+        }
+
+        logger.info("✅ Add DotGiamGia completed successfully with {} details", chiTietList.size());
     }
 
 
-    @Transactional
-    public void update(Integer id, DotGiamGiaRequest req) {
+    public void update(Integer id, DotGiamGiaRequest dotGiamGiaRequest) {
         DotGiamGia dot = dotGiamGiaRepository.findById(id)
                 .orElseThrow(() -> new ApiException("Không tìm thấy đợt giảm giá với ID: " + id, "404"));
 
-        dot.setMaGiamGia(req.getMaGiamGia());
-        dot.setTenDot(req.getTenDot());
-        dot.setLoaiGiamGia(req.getLoaiGiamGia());
-        dot.setGiaTriGiam(req.getGiaTriGiam());
-        dot.setGiaTriToiThieu(req.getGiaTriToiThieu());
-        dot.setNgayBatDau(req.getNgayBatDau());
-        dot.setNgayKetThuc(req.getNgayKetThuc());
-
-        LocalDate now = LocalDate.now();
-        if (now.isBefore(dot.getNgayBatDau())) {
-            dot.setTrangThai(0);
-        } else if (!now.isAfter(dot.getNgayKetThuc())) {
-            dot.setTrangThai(1);
-        } else {
-            dot.setTrangThai(2);
-        }
+        dot.setMaGiamGia(dotGiamGiaRequest.getMaGiamGia());
+        dot.setTenDot(dotGiamGiaRequest.getTenDot());
+        dot.setLoaiGiamGia(dotGiamGiaRequest.getLoaiGiamGia());
+        dot.setGiaTriGiam(dotGiamGiaRequest.getGiaTriGiam());
+        dot.setGiaTriToiThieu(dotGiamGiaRequest.getGiaTriToiThieu());
+        dot.setNgayBatDau(dotGiamGiaRequest.getNgayBatDau());
+        dot.setNgayKetThuc(dotGiamGiaRequest.getNgayKetThuc());
+        dot.setTrangThai(dotGiamGiaRequest.getTrangThai() != null ? dotGiamGiaRequest.getTrangThai() : dot.getTrangThai());
 
         dot = dotGiamGiaRepository.save(dot);
 
-        List<Integer> newCtspIds = req.getCtspIds();
+        List<Integer> newCtspIds = dotGiamGiaRequest.getCtspIds();
         if (newCtspIds == null || newCtspIds.isEmpty()) {
             throw new ApiException("Danh sách sản phẩm chi tiết không được để trống!", "400");
         }
 
         List<DotGiamGiaChiTiet> oldChiTietList = dotGiamGiaChiTietRepository.findByDotGiamGia(dot);
-        Set<Integer> oldIds = oldChiTietList.stream()
-                .map(c -> c.getChiTietSanPham().getId())
-                .collect(Collectors.toSet());
 
         for (DotGiamGiaChiTiet old : oldChiTietList) {
             if (!newCtspIds.contains(old.getChiTietSanPham().getId())) {
@@ -161,14 +148,25 @@ public class DotGiamGiaService {
 
         int doUuTien = 1;
         for (Integer idCtsp : newCtspIds) {
-            if (!oldIds.contains(idCtsp)) {
+            boolean exists = oldChiTietList.stream()
+                    .anyMatch(c -> c.getChiTietSanPham().getId().equals(idCtsp));
+
+            if (!exists) {
                 ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(idCtsp)
                         .orElseThrow(() -> new ApiException("Không tìm thấy sản phẩm chi tiết ID: " + idCtsp, "404"));
+
                 DotGiamGiaChiTiet chiTiet = new DotGiamGiaChiTiet();
                 chiTiet.setDotGiamGia(dot);
                 chiTiet.setChiTietSanPham(ctsp);
                 chiTiet.setDoUuTien(doUuTien++);
                 dotGiamGiaChiTietRepository.save(chiTiet);
+            } else {
+                DotGiamGiaChiTiet existing = oldChiTietList.stream()
+                        .filter(c -> c.getChiTietSanPham().getId().equals(idCtsp))
+                        .findFirst()
+                        .get();
+                existing.setDoUuTien(doUuTien++);
+                dotGiamGiaChiTietRepository.save(existing);
             }
         }
     }
@@ -178,16 +176,16 @@ public class DotGiamGiaService {
                 .orElseThrow(() -> new ApiException("Không tìm thấy đợt giảm giá", "404"));
 
         LocalDate now = LocalDate.now();
-        if (now.isBefore(dot.getNgayBatDau())) {
-            dot.setTrangThai(0);
-        } else if (!now.isAfter(dot.getNgayKetThuc())) {
-            dot.setTrangThai(1);
-        } else {
-            dot.setTrangThai(2);
+        if (trangThai == 1 && dot.getNgayKetThuc().isBefore(now)) {
+            throw new ApiException("Đợt giảm này đã hết hạn, không thể kích hoạt lại!", "400");
         }
-
-        if (trangThai != null) {
-            dot.setTrangThai(trangThai);
+        if (dot.getNgayBatDau().isAfter(now)) {
+            dot.setTrangThai(0);
+        } else if ((dot.getNgayBatDau().isBefore(now) || dot.getNgayBatDau().isEqual(now))
+                && (dot.getNgayKetThuc().isAfter(now) || dot.getNgayKetThuc().isEqual(now))) {
+            dot.setTrangThai(1);
+        } else if (dot.getNgayKetThuc().isBefore(now)) {
+            dot.setTrangThai(2);
         }
 
         dotGiamGiaRepository.save(dot);
@@ -206,10 +204,40 @@ public class DotGiamGiaService {
 
             if (keyword != null && !keyword.isBlank()) {
                 String kw = "%" + keyword.toLowerCase() + "%";
-                predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("maGiamGia")), kw),
-                        cb.like(cb.lower(root.get("tenDot")), kw)
-                ));
+                List<Predicate> keywordPredicates = new ArrayList<>();
+
+                keywordPredicates.add(cb.like(cb.lower(root.get("maGiamGia")), kw));
+                keywordPredicates.add(cb.like(cb.lower(root.get("tenDot")), kw));
+
+                if (keyword.endsWith("%")) {
+                    try {
+                        String numberPart = keyword.substring(0, keyword.length() - 1).trim();
+                        BigDecimal value = new BigDecimal(numberPart);
+                        Predicate giaTriPredicate = cb.equal(root.get("giaTriGiam"), value);
+                        Predicate loaiPredicate = cb.equal(root.get("loaiGiamGia"), false);
+                        keywordPredicates.add(cb.and(giaTriPredicate, loaiPredicate));
+                    } catch (NumberFormatException ignored) {}
+                }
+                else if (keyword.toLowerCase().contains("vnd")) {
+                    try {
+                        String numberPart = keyword.replaceAll("[^0-9]", "").trim();
+                        if (!numberPart.isEmpty()) {
+                            BigDecimal value = new BigDecimal(numberPart);
+                            Predicate giaTriPredicate = cb.equal(root.get("giaTriGiam"), value);
+                            Predicate loaiPredicate = cb.equal(root.get("loaiGiamGia"), true);
+                            keywordPredicates.add(cb.and(giaTriPredicate, loaiPredicate));
+                        }
+                    } catch (NumberFormatException ignored) {}
+                }
+                else {
+                    try {
+                        BigDecimal value = new BigDecimal(keyword);
+                        keywordPredicates.add(cb.equal(root.get("giaTriGiam"), value));
+                        keywordPredicates.add(cb.equal(root.get("giaTriToiThieu"), value));
+                    } catch (NumberFormatException ignored) {}
+                }
+
+                predicates.add(cb.or(keywordPredicates.toArray(new Predicate[0])));
             }
 
             if (loaiGiamGia != null) {
@@ -221,14 +249,15 @@ public class DotGiamGiaService {
             }
 
             if (tuNgay != null && denNgay != null) {
-                predicates.add(cb.between(root.get("ngayBatDau"), tuNgay, denNgay));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("ngayBatDau"), tuNgay));
+                predicates.add(cb.lessThanOrEqualTo(root.get("ngayKetThuc"), denNgay));
             } else if (tuNgay != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("ngayBatDau"), tuNgay));
             } else if (denNgay != null) {
                 predicates.add(cb.lessThanOrEqualTo(root.get("ngayKetThuc"), denNgay));
             }
 
-            return cb.and(predicates.toArray(new Predicate[0]));
+            return predicates.isEmpty() ? cb.conjunction() : cb.and(predicates.toArray(new Predicate[0]));
         };
 
         return dotGiamGiaRepository.findAll(spec)

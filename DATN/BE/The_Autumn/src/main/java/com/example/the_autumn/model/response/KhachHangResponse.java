@@ -1,12 +1,12 @@
 package com.example.the_autumn.model.response;
 
-import com.example.the_autumn.entity.DiaChi;
 import com.example.the_autumn.entity.KhachHang;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -29,6 +29,7 @@ public class KhachHangResponse {
     private Date ngaySua;
     private Integer soLanMua;
     private Date ngayMuaGanNhat;
+    private BigDecimal tongTienDaMua;
     List<DiaChiResponse> diaChi;
 
     public KhachHangResponse(KhachHang khachHang) {
@@ -48,9 +49,10 @@ public class KhachHangResponse {
                     .collect(Collectors.toList());
         }
     }
-    public KhachHangResponse(KhachHang khachHang, Integer soLanMua, Date ngayMuaGanNhat) {
+    public KhachHangResponse(KhachHang khachHang, Integer soLanMua, Date ngayMuaGanNhat, BigDecimal tongTienDaMua) {
         this(khachHang);
         this.soLanMua = soLanMua;
         this.ngayMuaGanNhat = ngayMuaGanNhat;
+        this.tongTienDaMua = tongTienDaMua;
     }
 }

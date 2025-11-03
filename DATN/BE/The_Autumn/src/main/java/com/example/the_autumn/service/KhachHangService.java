@@ -16,12 +16,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,11 +55,18 @@ public class KhachHangService {
             Long soLanMuaLong = stats != null ? (Long) stats[1] : 0L;
             Integer soLanMua = soLanMuaLong != null ? soLanMuaLong.intValue() : 0;
             Date ngayMuaGanNhat = stats != null ? (Date) stats[2] : null;
+            BigDecimal tongTienDaMua = stats != null ? (BigDecimal) stats[3] : BigDecimal.ZERO;
 
-            result.add(new KhachHangResponse(k, soLanMua, ngayMuaGanNhat));
+            result.add(new KhachHangResponse(k, soLanMua, ngayMuaGanNhat, tongTienDaMua));
         }
+
+        result.sort(Comparator.comparing(KhachHangResponse::getSoLanMua, Comparator.reverseOrder())
+                .thenComparing(KhachHangResponse::getNgayMuaGanNhat, Comparator.nullsLast(Comparator.reverseOrder()))
+                .thenComparing(KhachHangResponse::getTongTienDaMua, Comparator.reverseOrder()));
+
         return result;
     }
+
 
     public List<KhachHangResponse> getData() {
         return khachHangRepository.findAll()
