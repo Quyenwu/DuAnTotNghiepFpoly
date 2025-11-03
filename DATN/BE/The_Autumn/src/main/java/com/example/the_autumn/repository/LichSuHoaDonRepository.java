@@ -5,18 +5,26 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 
 @Repository
 public interface LichSuHoaDonRepository extends JpaRepository<LichSuHoaDon, Integer> {
 
-    @Query("SELECT l.khachHang.id AS khachHangId, COUNT(l) AS soLanMua, MAX(l.ngayCapNhat) AS ngayMuaGanNhat " +
-            "FROM LichSuHoaDon l " +
-            "GROUP BY l.khachHang.id")
+    @Query("SELECT lshd.khachHang.id AS khachHangId, " +
+            "COUNT(lshd) AS soLanMua, " +
+            "MAX(lshd.ngayCapNhat) AS ngayMuaGanNhat, " +
+            "COALESCE(SUM(hd.tongTienSauGiam), 0) AS tongTienDaMua " +
+            "FROM LichSuHoaDon lshd " +
+            "JOIN lshd.hoaDon hd " +
+            "GROUP BY lshd.khachHang.id")
     List<Object[]> getSoLanVaNgayMuaGanNhatCuaKhachHang();
+
+
 
     List<LichSuHoaDon> findByHoaDon_IdOrderByNgayCapNhatDesc(Integer hoaDonId);
 
     // Lấy lịch sử theo trạng thái
     List<LichSuHoaDon> findByHoaDon_IdAndTrangThaiOrderByNgayCapNhatDesc(Integer hoaDonId, Boolean trangThai);
+
 }
