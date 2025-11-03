@@ -54,7 +54,7 @@ public class DotGiamGia {
     private LocalDate ngayKetThuc;
 
     @Column(name = "trang_thai")
-    private Boolean trangThai;
+    private Integer trangThai;
 
     @OneToMany(mappedBy = "dotGiamGia", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<DotGiamGiaChiTiet> dotGiamGiaChiTiets;
