@@ -24,7 +24,7 @@ public class DotGiamGiaRequest {
     private Date ngayTao;
     private LocalDate ngayBatDau;
     private LocalDate ngayKetThuc;
-    private Boolean trangThai;
+    private Integer trangThai;
     private List<Integer> ctspIds;
     private List<Integer> sanphamIds;
 

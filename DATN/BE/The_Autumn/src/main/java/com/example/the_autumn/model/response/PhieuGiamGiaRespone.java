@@ -29,7 +29,7 @@ public class PhieuGiamGiaRespone {
     private Date ngayTao;
     private LocalDate ngayBatDau;
     private LocalDate ngayKetThuc;
-    private Boolean trangThai;
+    private Integer trangThai;
 
     public PhieuGiamGiaRespone(PhieuGiamGia p) {
         this.id = p.getId();

@@ -68,7 +68,7 @@ public class PhieuGiamGiaController {
     }
 
     @PutMapping("/update-trang-thai/{id}")
-    public ResponseObject<?> updateTrangThai(@PathVariable Integer id, @RequestParam Boolean trangThai) {
+    public ResponseObject<?> updateTrangThai(@PathVariable Integer id, @RequestParam Integer trangThai) {
         phieuGiamGiaService.updateTrangThai(id, trangThai);
         return new ResponseObject<>(null, "Cập nhập trạng thái thành công");
     }
@@ -80,7 +80,7 @@ public class PhieuGiamGiaController {
             @RequestParam(value = "denNgay", required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
             @RequestParam(value = "kieu", required = false) Integer kieu,
             @RequestParam(value = "loaiGiamGia", required = false) Boolean loaiGiamGia,
-            @RequestParam(value = "trangThai", required = false) Boolean trangThai
+            @RequestParam(value = "trangThai", required = false) Integer trangThai
     ) {
         List<PhieuGiamGiaRespone> result = phieuGiamGiaService.searchPhieuGiamGia(
                 keyword, tuNgay, denNgay, kieu, loaiGiamGia, trangThai
