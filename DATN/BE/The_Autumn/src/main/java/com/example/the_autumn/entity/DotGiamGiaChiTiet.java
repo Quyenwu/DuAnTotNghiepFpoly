@@ -1,5 +1,7 @@
 package com.example.the_autumn.entity;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -15,20 +17,21 @@ import java.math.BigDecimal;
 @Setter
 @Entity
 @Table(name = "dot_giam_gia_chi_tiet")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class DotGiamGiaChiTiet {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_ctsp", referencedColumnName = "id", nullable = false)
     private ChiTietSanPham chiTietSanPham;
 
     @Column(name = "gia_sau_giam")
     private BigDecimal giaSauGiam;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_dot_giam_gia", referencedColumnName = "id", nullable = false)
     private DotGiamGia dotGiamGia;
 

@@ -3,12 +3,10 @@ package com.example.the_autumn.controller;
 
 import com.example.the_autumn.entity.HoaDon;
 import com.example.the_autumn.entity.LichSuHoaDon;
+import com.example.the_autumn.model.request.HoaDonRequest;
 import com.example.the_autumn.model.request.PageHoaDonRequest;
 import com.example.the_autumn.model.request.UpdateHoaDonRequest;
-import com.example.the_autumn.model.response.HoaDonDetailResponse;
-import com.example.the_autumn.model.response.HoaDonRespone;
-import com.example.the_autumn.model.response.TrangThaiHoaDonRespone;
-import com.example.the_autumn.model.response.UpdateHoaDonResponse;
+import com.example.the_autumn.model.response.*;
 import com.example.the_autumn.repository.HoaDonRepository;
 import com.example.the_autumn.service.AnhService;
 import com.example.the_autumn.service.HoaDonService;
@@ -359,9 +357,11 @@ public class HoaDonController {
 
     }
 
-
-
-
+    @PostMapping("/add")
+    public ResponseObject<?> addHoaDon(@RequestBody HoaDonRequest hoaDonRequest){
+        HoaDon savedHoaDon = hoaDonService.add(hoaDonRequest);
+        return new ResponseObject<>(savedHoaDon,"Thêm thành công");
+    }
 }
 
 

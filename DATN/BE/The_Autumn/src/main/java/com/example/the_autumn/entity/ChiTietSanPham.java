@@ -1,5 +1,7 @@
 package com.example.the_autumn.entity;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,21 +18,22 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "chi_tiet_san_pham")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class ChiTietSanPham {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_san_pham",referencedColumnName = "id", nullable = false)
     private SanPham sanPham;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_mau_sac",referencedColumnName = "id", nullable = false)
     private MauSac mauSac;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_kich_thuoc",referencedColumnName = "id", nullable = false)
     private KichThuoc kichThuoc;
 
@@ -55,13 +58,13 @@ public class ChiTietSanPham {
     @Column(name = "trang_thai")
     private Boolean trangThai = true;
 
-    @OneToMany(mappedBy = "chiTietSanPham", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "chiTietSanPham", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<Anh> anhs;
 
-    @OneToMany(mappedBy = "chiTietSanPham", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "chiTietSanPham", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<DotGiamGiaChiTiet> dotGiamGiaChiTiets;
 
-    @OneToMany(mappedBy = "chiTietSanPham", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "chiTietSanPham", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<HoaDonChiTiet> hoaDonChiTiets;
 
 
