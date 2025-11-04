@@ -84,7 +84,7 @@ public class PhieuGiamGiaService {
     @Transactional
     public void add(PhieuGiamGiaRequesst req) {
         PhieuGiamGia p = MapperUtils.map(req, PhieuGiamGia.class);
-        p.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : true);
+        p.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : 1);
 
         if (req.getKieu() == 1 && req.getIdKhachHangs() != null) {
             p.setSoLuongDung(req.getIdKhachHangs().size());
@@ -177,20 +177,31 @@ public class PhieuGiamGiaService {
     }
 
 
-    public void updateTrangThai(Integer id, Boolean trangThai) {
+    public void updateTrangThai(Integer id, Integer trangThai) {
         PhieuGiamGia p = phieuGiamGiaRepository.findById(id)
                 .orElseThrow(() -> new ApiException("Không tìm thấy Phiếu Giảm Giá", "404"));
         LocalDate now = LocalDate.now();
-        if (Boolean.TRUE.equals(trangThai) && p.getNgayKetThuc().isBefore(now)) {
-            throw new ApiException("Phiếu này đã hết hạn, không thể kích hoạt lại!", "400");
-        }
-        if (p.getNgayBatDau().isAfter(now) && Boolean.TRUE.equals(trangThai)) {
-            p.setTrangThai(true);
-        } else if (p.getNgayKetThuc().isBefore(now)) {
-            p.setTrangThai(false);
+
+        if (trangThai == null) {
+            if (p.getTrangThai() != null && p.getTrangThai() == 2) {
+                return;
+            }
+
+            if (p.getNgayBatDau().isAfter(now)) {
+                p.setTrangThai(0);
+            } else if ((p.getNgayBatDau().isBefore(now) || p.getNgayBatDau().isEqual(now))
+                    && (p.getNgayKetThuc().isAfter(now) || p.getNgayKetThuc().isEqual(now))) {
+                p.setTrangThai(1);
+            } else if (p.getNgayKetThuc().isBefore(now)) {
+                p.setTrangThai(2);
+            }
         } else {
+            if (trangThai == 1 && p.getNgayKetThuc().isBefore(now)) {
+                throw new ApiException("Phiếu này đã hết hạn, không thể kích hoạt lại!", "400");
+            }
             p.setTrangThai(trangThai);
         }
+
         phieuGiamGiaRepository.save(p);
     }
 
@@ -200,7 +211,7 @@ public class PhieuGiamGiaService {
             LocalDate denNgay,
             Integer kieu,
             Boolean loaiGiamGia,
-            Boolean trangThai
+            Integer trangThai
     ) {
         Specification<PhieuGiamGia> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();

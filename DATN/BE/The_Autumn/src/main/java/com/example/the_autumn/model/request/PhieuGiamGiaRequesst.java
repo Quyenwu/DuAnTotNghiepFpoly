@@ -30,6 +30,6 @@ public class PhieuGiamGiaRequesst {
     private Date ngayTao;
     private LocalDate ngayBatDau;
     private LocalDate ngayKetThuc;
-    private Boolean trangThai;
+    private Integer trangThai;
     private List<Integer> idKhachHangs;
 }
