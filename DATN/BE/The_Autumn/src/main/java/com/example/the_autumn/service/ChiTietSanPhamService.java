@@ -438,4 +438,14 @@ public class ChiTietSanPhamService {
         System.out.println("✅ Đã cập nhật mô tả biến thể: " + idChiTietSanPham);
     }
 
+    public Optional<ChiTietSanPham> findById(Integer id) {
+        return ctspRepo.findById(id);
+    }
+
+    public void save(ChiTietSanPham ctsp) {
+        ctspRepo.save(ctsp);
+    }
+
+
+
 }

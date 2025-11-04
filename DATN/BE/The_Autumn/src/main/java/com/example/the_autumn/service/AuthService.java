@@ -21,7 +21,6 @@ public class AuthService {
     KhachHangRepository khRepo;
 
     public String login(String email, String password) {
-        // Tìm nhân viên
         List<NhanVien> allNhanVien = nvRepo.findAll();
         Optional<NhanVien> nvOpt = allNhanVien.stream()
                 .filter(nv -> email.equals(nv.getEmail()) &&
@@ -35,7 +34,6 @@ public class AuthService {
             return "STAFF:" + nv.getId() + ":" + nv.getHoTen() + ":" + nv.getChucVu().getId();
         }
 
-        // Tìm khách hàng
         Optional<KhachHang> khOpt = khRepo.findByEmail(email);
         if (khOpt.isPresent()) {
             KhachHang kh = khOpt.get();
@@ -49,11 +47,9 @@ public class AuthService {
     }
 
     public boolean isEmailExists(String email) {
-        // Kiểm tra trong nhân viên
         boolean existsInNhanVien = nvRepo.findAll().stream()
                 .anyMatch(nv -> email.equals(nv.getEmail()));
 
-        // Kiểm tra trong khách hàng
         boolean existsInKhachHang = khRepo.findByEmail(email).isPresent();
 
         return existsInNhanVien || existsInKhachHang;
@@ -64,7 +60,6 @@ public class AuthService {
             throw new RuntimeException("Email đã tồn tại trong hệ thống");
         }
 
-        // Set default values
         if (khachHang.getTrangThai() == null) {
             khachHang.setTrangThai(true);
         }
