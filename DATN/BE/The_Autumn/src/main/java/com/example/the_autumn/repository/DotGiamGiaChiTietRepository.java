@@ -21,6 +21,13 @@ public interface DotGiamGiaChiTietRepository extends JpaRepository<DotGiamGiaChi
 
     @Query("SELECT d FROM DotGiamGiaChiTiet d WHERE d.chiTietSanPham.id = :idCtsp")
     List<DotGiamGiaChiTiet> findByChiTietSanPhamId(@Param("idCtsp") Integer idCtsp);
+
+    @Query("SELECT d FROM DotGiamGiaChiTiet d WHERE " +
+            "d.chiTietSanPham.id = :chiTietSanPhamId AND " +
+            "d.dotGiamGia.trangThai = 1 AND " +
+            "d.dotGiamGia.ngayBatDau <= CURRENT_DATE AND " +
+            "d.dotGiamGia.ngayKetThuc >= CURRENT_DATE")
+    List<DotGiamGiaChiTiet> findActiveByChiTietSanPhamId(@Param("chiTietSanPhamId") Integer chiTietSanPhamId);
 }
 
 

@@ -1,5 +1,7 @@
 package com.example.the_autumn.entity;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -22,6 +24,7 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "mau_sac")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class MauSac {
 
     @Id
@@ -37,6 +40,6 @@ public class MauSac {
     @Column(name = "trang_thai")
     private Boolean trangThai;
 
-    @OneToMany(mappedBy = "mauSac",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "mauSac",fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<ChiTietSanPham> chiTietSanPham;
 }

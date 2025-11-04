@@ -1,5 +1,7 @@
 package com.example.the_autumn.entity;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -17,32 +19,33 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "san_pham")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class SanPham {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_nha_san_xuat",referencedColumnName = "id", nullable = false)
     private NhaSanXuat nhaSanXuat;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_xuat_xu",referencedColumnName = "id", nullable = false)
     private XuatXu xuatXu;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_chat_lieu",referencedColumnName = "id", nullable = false)
     private ChatLieu chatLieu;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_kieu_dang",referencedColumnName = "id", nullable = false)
     private KieuDang kieuDang;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_co_ao",referencedColumnName = "id", nullable = false)
     private CoAo coAo;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_tay_ao",referencedColumnName = "id", nullable = false)
     private TayAo tayAo;
 
@@ -70,6 +73,6 @@ public class SanPham {
     @Column(name = "trang_thai")
     private Boolean trangThai;
 
-    @OneToMany(mappedBy = "sanPham",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "sanPham",fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     private List<ChiTietSanPham> chiTietSanPham;
 }

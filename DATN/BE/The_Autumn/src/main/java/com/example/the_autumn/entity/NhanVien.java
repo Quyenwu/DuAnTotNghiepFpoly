@@ -1,5 +1,9 @@
 package com.example.the_autumn.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -28,14 +32,16 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "nhan_vien")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class NhanVien {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_chuc_vu", referencedColumnName = "id", nullable = false)
+    @JsonBackReference
     private ChucVu chucVu;
 
     @Column(name = "ma_nhan_vien", insertable = false, updatable = false)
@@ -78,9 +84,9 @@ public class NhanVien {
     @Column(name = "trang_thai")
     private Boolean trangThai;
 
-    @OneToMany(mappedBy = "nhanVien", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "nhanVien", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<HoaDon> hoaDons;
 
-    @OneToMany(mappedBy = "nhanVien", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "nhanVien", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<LichSuHoaDon> lichSuHoaDons;
 }
