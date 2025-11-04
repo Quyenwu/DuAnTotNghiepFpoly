@@ -181,17 +181,27 @@ public class PhieuGiamGiaService {
         PhieuGiamGia p = phieuGiamGiaRepository.findById(id)
                 .orElseThrow(() -> new ApiException("Không tìm thấy Phiếu Giảm Giá", "404"));
         LocalDate now = LocalDate.now();
-        if (trangThai == 1 && p.getNgayKetThuc().isBefore(now)) {
-            throw new ApiException("Phiếu này đã hết hạn, không thể kích hoạt lại!", "400");
+
+        if (trangThai == null) {
+            if (p.getTrangThai() != null && p.getTrangThai() == 2) {
+                return;
+            }
+
+            if (p.getNgayBatDau().isAfter(now)) {
+                p.setTrangThai(0);
+            } else if ((p.getNgayBatDau().isBefore(now) || p.getNgayBatDau().isEqual(now))
+                    && (p.getNgayKetThuc().isAfter(now) || p.getNgayKetThuc().isEqual(now))) {
+                p.setTrangThai(1);
+            } else if (p.getNgayKetThuc().isBefore(now)) {
+                p.setTrangThai(2);
+            }
+        } else {
+            if (trangThai == 1 && p.getNgayKetThuc().isBefore(now)) {
+                throw new ApiException("Phiếu này đã hết hạn, không thể kích hoạt lại!", "400");
+            }
+            p.setTrangThai(trangThai);
         }
-        if (p.getNgayBatDau().isAfter(now)) {
-            p.setTrangThai(0);
-        } else if ((p.getNgayBatDau().isBefore(now) || p.getNgayBatDau().isEqual(now))
-                && (p.getNgayKetThuc().isAfter(now) || p.getNgayKetThuc().isEqual(now))) {
-            p.setTrangThai(1);
-        } else if (p.getNgayKetThuc().isBefore(now)) {
-            p.setTrangThai(2);
-        }
+
         phieuGiamGiaRepository.save(p);
     }
 

@@ -77,6 +77,10 @@ public class DotGiamGiaService {
 
     @Transactional
     public void add(DotGiamGiaRequest req) {
+        if (req.getCtspIds() == null || req.getCtspIds().isEmpty()) {
+            throw new ApiException("Danh sách sản phẩm chi tiết không được để trống!", "400");
+        }
+
         DotGiamGia dot = new DotGiamGia();
         dot.setMaGiamGia(req.getMaGiamGia());
         dot.setTenDot(req.getTenDot());
@@ -89,40 +93,26 @@ public class DotGiamGiaService {
 
         DotGiamGia savedDot = dotGiamGiaRepository.saveAndFlush(dot);
         em.refresh(savedDot);
-        logger.info("✅ Saved DotGiamGia ID={} & code={}", savedDot.getId(), savedDot.getMaGiamGia());
-
-        if (req.getCtspIds() == null || req.getCtspIds().isEmpty()) {
-            throw new ApiException("Danh sách sản phẩm chi tiết không được để trống!", "400");
-        }
 
         List<DotGiamGiaChiTiet> chiTietList = new ArrayList<>();
-        int doUuTien = 1;
 
         for (Integer idCtsp : req.getCtspIds()) {
             ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(idCtsp)
                     .orElseThrow(() -> new ApiException("Không tìm thấy chi tiết sản phẩm ID: " + idCtsp, "404"));
 
+            int maxDoUuTien = dotGiamGiaChiTietRepository.findMaxDoUuTienByCtspId(idCtsp);
+
             DotGiamGiaChiTiet chiTiet = new DotGiamGiaChiTiet();
             chiTiet.setDotGiamGia(savedDot);
             chiTiet.setChiTietSanPham(ctsp);
-            chiTiet.setDoUuTien(doUuTien++);
-            BigDecimal giaBan = ctsp.getGiaBan();
-            BigDecimal giaSauGiam;
-            if (!savedDot.getLoaiGiamGia()) {
-                giaSauGiam = giaBan.subtract(giaBan.multiply(savedDot.getGiaTriGiam().divide(BigDecimal.valueOf(100))));
-            } else {
-                giaSauGiam = giaBan.subtract(savedDot.getGiaTriGiam());
-            }
-            chiTiet.setGiaSauGiam(giaSauGiam);
+            chiTiet.setDoUuTien(maxDoUuTien + 1); // tăng theo từng id_ctsp
+            chiTiet.setGiaSauGiam(null);
+
             chiTietList.add(chiTiet);
         }
-
-        if (!chiTietList.isEmpty()) {
-            dotGiamGiaChiTietRepository.saveAll(chiTietList);
-            logger.info("💾 Saved {} product-discount relations for DotGiamGia ID={}", chiTietList.size(), savedDot.getId());
-        }
-
-        logger.info("✅ Add DotGiamGia completed successfully with {} details", chiTietList.size());
+        dotGiamGiaChiTietRepository.saveAll(chiTietList);
+        logger.info("✅ Đã lưu {} chi tiết giảm giá cho đợt ID={}", chiTietList.size(), savedDot.getId());
+        capNhatDoUuTienTheoGiaTriGiam();
     }
 
 
@@ -167,6 +157,7 @@ public class DotGiamGiaService {
                 chiTiet.setDotGiamGia(dot);
                 chiTiet.setChiTietSanPham(ctsp);
                 chiTiet.setDoUuTien(doUuTien++);
+                chiTiet.setGiaSauGiam(null);
                 dotGiamGiaChiTietRepository.save(chiTiet);
             } else {
                 DotGiamGiaChiTiet existing = oldChiTietList.stream()
@@ -184,16 +175,24 @@ public class DotGiamGiaService {
                 .orElseThrow(() -> new ApiException("Không tìm thấy đợt giảm giá", "404"));
 
         LocalDate now = LocalDate.now();
-        if (trangThai == 1 && dot.getNgayKetThuc().isBefore(now)) {
-            throw new ApiException("Đợt giảm này đã hết hạn, không thể kích hoạt lại!", "400");
-        }
-        if (dot.getNgayBatDau().isAfter(now)) {
-            dot.setTrangThai(0);
-        } else if ((dot.getNgayBatDau().isBefore(now) || dot.getNgayBatDau().isEqual(now))
-                && (dot.getNgayKetThuc().isAfter(now) || dot.getNgayKetThuc().isEqual(now))) {
-            dot.setTrangThai(1);
-        } else if (dot.getNgayKetThuc().isBefore(now)) {
-            dot.setTrangThai(2);
+        if (trangThai == null) {
+            if (dot.getTrangThai() != null && dot.getTrangThai() == 2) {
+                return;
+            }
+
+            if (dot.getNgayBatDau().isAfter(now)) {
+                dot.setTrangThai(0);
+            } else if ((dot.getNgayBatDau().isBefore(now) || dot.getNgayBatDau().isEqual(now))
+                    && (dot.getNgayKetThuc().isAfter(now) || dot.getNgayKetThuc().isEqual(now))) {
+                dot.setTrangThai(1);
+            } else if (dot.getNgayKetThuc().isBefore(now)) {
+                dot.setTrangThai(2);
+            }
+        } else {
+            if (trangThai == 1 && dot.getNgayKetThuc().isBefore(now)) {
+                throw new ApiException("Phiếu này đã hết hạn, không thể kích hoạt lại!", "400");
+            }
+            dot.setTrangThai(trangThai);
         }
 
         dotGiamGiaRepository.save(dot);
@@ -296,5 +295,47 @@ public class DotGiamGiaService {
         }
 
         return result;
+    }
+
+    @Transactional
+    public void capNhatDoUuTienTheoGiaTriGiam() {
+        List<Integer> allCtspIds = dotGiamGiaChiTietRepository.findAll().stream()
+                .map(ct -> ct.getChiTietSanPham().getId())
+                .distinct()
+                .collect(Collectors.toList());
+
+        for (Integer idCtsp : allCtspIds) {
+            List<DotGiamGiaChiTiet> dsChiTiet = dotGiamGiaChiTietRepository.findByChiTietSanPhamId(idCtsp);
+
+            if (dsChiTiet.isEmpty()) continue;
+
+            dsChiTiet.sort((a, b) -> {
+                BigDecimal giaTriA = tinhGiaTriGiamThucTe(a);
+                BigDecimal giaTriB = tinhGiaTriGiamThucTe(b);
+                return giaTriB.compareTo(giaTriA);
+            });
+
+            int doUuTien = 1;
+            for (DotGiamGiaChiTiet c : dsChiTiet) {
+                c.setDoUuTien(doUuTien++);
+            }
+
+            dotGiamGiaChiTietRepository.saveAll(dsChiTiet);
+        }
+        logger.info("✅ Đã cập nhật lại độ ưu tiên cho tất cả chi tiết đợt giảm giá.");
+    }
+
+    private BigDecimal tinhGiaTriGiamThucTe(DotGiamGiaChiTiet dggct) {
+        DotGiamGia dgg = dggct.getDotGiamGia();
+        if (dgg == null || dgg.getGiaTriGiam() == null) return BigDecimal.ZERO;
+
+        ChiTietSanPham ctsp = dggct.getChiTietSanPham();
+        BigDecimal giaBan = (ctsp != null && ctsp.getGiaBan() != null) ? ctsp.getGiaBan() : BigDecimal.ZERO;
+
+        if (!dgg.getLoaiGiamGia()) {
+            return giaBan.multiply(dgg.getGiaTriGiam().divide(BigDecimal.valueOf(100)));
+        } else {
+            return dgg.getGiaTriGiam();
+        }
     }
 }

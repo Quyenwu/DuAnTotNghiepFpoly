@@ -10,7 +10,9 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @NoArgsConstructor
 @Getter
@@ -72,45 +74,43 @@ public class ChiTietSanPhamResponse {
         this.giaSauGiam = tinhGiaSauGiam(ctsp);
     }
 
-    private BigDecimal tinhGiaSauGiam(ChiTietSanPham ctsp) {
-        BigDecimal giaGoc = ctsp.getGiaBan();
-        DotGiamGiaChiTiet dot = layDotGiamGiaHienTai(ctsp);
-
-        if (dot == null) {
-            return giaGoc;
-        }
-
-        DotGiamGia dgg = dot.getDotGiamGia();
-        if (dgg == null || dgg.getGiaTriGiam() == null) {
-            return giaGoc;
-        }
-
-        if (!dgg.getLoaiGiamGia()) {
-            return giaGoc.subtract(
-                    giaGoc.multiply(dgg.getGiaTriGiam().divide(BigDecimal.valueOf(100)))
-            );
-        } else {
-            return giaGoc.subtract(dgg.getGiaTriGiam());
-        }
-    }
-
-    private DotGiamGiaChiTiet layDotGiamGiaHienTai(ChiTietSanPham ctsp) {
-        if (ctsp.getDotGiamGiaChiTiets() == null || ctsp.getDotGiamGiaChiTiets().isEmpty()) {
-            return null;
-        }
-
+    public BigDecimal tinhGiaSauGiam(ChiTietSanPham ctsp) {
         LocalDate now = LocalDate.now();
-        return ctsp.getDotGiamGiaChiTiets().stream()
-                .filter(ct -> {
-                    DotGiamGia dgg = ct.getDotGiamGia();
+
+        List<DotGiamGiaChiTiet> activeDiscounts = ctsp.getDotGiamGiaChiTiets().stream()
+                .filter(dggct -> {
+                    DotGiamGia dgg = dggct.getDotGiamGia();
                     return dgg != null
-                            && dgg.getNgayBatDau() != null
-                            && dgg.getNgayKetThuc() != null
+                            && dgg.getTrangThai() == 1
                             && (now.isEqual(dgg.getNgayBatDau()) || now.isAfter(dgg.getNgayBatDau()))
-                            && (now.isEqual(dgg.getNgayKetThuc()) || now.isBefore(dgg.getNgayKetThuc()))
-                            && dgg.getTrangThai() == 1;
+                            && (now.isEqual(dgg.getNgayKetThuc()) || now.isBefore(dgg.getNgayKetThuc()));
                 })
-                .findFirst()
-                .orElse(null);
+                .collect(Collectors.toList());
+
+        if (activeDiscounts.isEmpty()) {
+            return ctsp.getGiaBan();
+        }
+
+        BigDecimal giaBanGoc = ctsp.getGiaBan();
+        BigDecimal giaThapNhat = giaBanGoc;
+
+        for (DotGiamGiaChiTiet dggct : activeDiscounts) {
+            DotGiamGia dgg = dggct.getDotGiamGia();
+            BigDecimal giaSauGiam;
+
+            if (!dgg.getLoaiGiamGia()) {
+                giaSauGiam = giaBanGoc.subtract(
+                        giaBanGoc.multiply(dgg.getGiaTriGiam().divide(BigDecimal.valueOf(100)))
+                );
+            } else {
+                giaSauGiam = giaBanGoc.subtract(dgg.getGiaTriGiam());
+            }
+
+            if (giaSauGiam.compareTo(giaThapNhat) < 0) {
+                giaThapNhat = giaSauGiam;
+            }
+        }
+
+        return giaThapNhat;
     }
 }
