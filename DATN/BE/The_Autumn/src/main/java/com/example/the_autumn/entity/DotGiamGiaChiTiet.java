@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+
 @NoArgsConstructor
 @AllArgsConstructor
 @Getter
@@ -22,6 +24,9 @@ public class DotGiamGiaChiTiet {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_ctsp", referencedColumnName = "id", nullable = false)
     private ChiTietSanPham chiTietSanPham;
+
+    @Column(name = "gia_sau_giam")
+    private BigDecimal giaSauGiam;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_dot_giam_gia", referencedColumnName = "id", nullable = false)
