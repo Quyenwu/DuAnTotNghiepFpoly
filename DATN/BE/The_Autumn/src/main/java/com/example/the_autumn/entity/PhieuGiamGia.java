@@ -68,7 +68,7 @@ public class PhieuGiamGia {
     private LocalDate ngayKetThuc;
 
     @Column(name = "trang_thai")
-    private Boolean trangThai;
+    private Integer trangThai;
 
     @OneToMany(mappedBy = "phieuGiamGia", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<GiamGiaKhachHang> giamGiaKhachHangs;

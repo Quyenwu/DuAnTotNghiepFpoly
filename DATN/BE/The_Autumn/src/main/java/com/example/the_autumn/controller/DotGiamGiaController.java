@@ -67,7 +67,7 @@ public class DotGiamGiaController {
     }
 
     @PutMapping("/update-trang-thai/{id}")
-    public ResponseObject<?> updateTrangThai(@PathVariable Integer id, @RequestParam Boolean trangThai) {
+    public ResponseObject<?> updateTrangThai(@PathVariable Integer id, @RequestParam Integer trangThai) {
         dotGiamGiaService.updateTrangThai(id, trangThai);
         return new ResponseObject<>(null, "Cập nhập trạng thái thành công");
     }
@@ -79,7 +79,7 @@ public class DotGiamGiaController {
             @RequestParam(value = "denNgay", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate denNgay,
             @RequestParam(value = "loaiGiamGia", required = false) Boolean loaiGiamGia,
-            @RequestParam(value = "trangThai", required = false) Boolean trangThai
+            @RequestParam(value = "trangThai", required = false) Integer trangThai
     ) {
         List<DotGiamGiaResponse> result = dotGiamGiaService.searchDotGiamGia(
                 keyword, tuNgay, denNgay, loaiGiamGia, trangThai
