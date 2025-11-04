@@ -106,6 +106,14 @@ public class DotGiamGiaService {
             chiTiet.setDotGiamGia(savedDot);
             chiTiet.setChiTietSanPham(ctsp);
             chiTiet.setDoUuTien(doUuTien++);
+            BigDecimal giaBan = ctsp.getGiaBan();
+            BigDecimal giaSauGiam;
+            if (!savedDot.getLoaiGiamGia()) {
+                giaSauGiam = giaBan.subtract(giaBan.multiply(savedDot.getGiaTriGiam().divide(BigDecimal.valueOf(100))));
+            } else {
+                giaSauGiam = giaBan.subtract(savedDot.getGiaTriGiam());
+            }
+            chiTiet.setGiaSauGiam(giaSauGiam);
             chiTietList.add(chiTiet);
         }
 
