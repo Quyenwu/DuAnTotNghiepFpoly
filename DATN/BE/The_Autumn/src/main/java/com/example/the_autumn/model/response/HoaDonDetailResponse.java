@@ -16,18 +16,20 @@ public class HoaDonDetailResponse {
     private String emailKhachHang;
     private String diaChiKhachHang;
 
-
+    private Integer idNhanVien;
     private String tenNhanVien;
     private String sdtNhanVien;
 
 
     private Boolean loaiHoaDon;
+    private Integer idPhuongThucThanhToan;
     private String hinhThucThanhToan;
     private BigDecimal phiVanChuyen;
     private BigDecimal tongTien;
     private BigDecimal tongTienSauGiam;
     private Integer trangThai;
     private String ghiChu;
+
 
 
     private List<ChiTietSanPhamResponse> chiTietSanPhams;
@@ -61,6 +63,9 @@ public class HoaDonDetailResponse {
     public String getDiaChiKhachHang() { return diaChiKhachHang; }
     public void setDiaChiKhachHang(String diaChiKhachHang) { this.diaChiKhachHang = diaChiKhachHang; }
 
+    public Integer getIdNhanVien() { return idNhanVien; }
+    public void setIdNhanVien(Integer idNhanVien) { this.idNhanVien = idNhanVien; }
+
     public String getTenNhanVien() { return tenNhanVien; }
     public void setTenNhanVien(String tenNhanVien) { this.tenNhanVien = tenNhanVien; }
 
@@ -69,6 +74,9 @@ public class HoaDonDetailResponse {
 
     public Boolean getLoaiHoaDon() { return loaiHoaDon; }
     public void setLoaiHoaDon(Boolean loaiHoaDon) { this.loaiHoaDon = loaiHoaDon; }
+
+    public Integer getIdPhuongThucThanhToan() { return idPhuongThucThanhToan; }
+    public void setIdPhuongThucThanhToan(Integer idPhuongThucThanhToan) { this.idPhuongThucThanhToan = idPhuongThucThanhToan; }
 
     public String getHinhThucThanhToan() { return hinhThucThanhToan; }
     public void setHinhThucThanhToan(String hinhThucThanhToan) { this.hinhThucThanhToan = hinhThucThanhToan; }
@@ -131,6 +139,7 @@ public class HoaDonDetailResponse {
 
         public List<String> getAnhUrls() { return anhUrls; }
         public void setAnhUrls(List<String> anhUrls) { this.anhUrls = anhUrls; }
+
 
 
     }
