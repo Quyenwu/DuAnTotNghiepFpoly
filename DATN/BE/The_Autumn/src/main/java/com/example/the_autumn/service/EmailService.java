@@ -23,6 +23,123 @@ public class EmailService {
     private JavaMailSender mailSender;
 
     @Async
+    public void sendResetPasswordEmail(String toEmail, String resetToken) {
+        String resetLink = "http://localhost:5173/reset-password?token=" + resetToken;
+        String subject = "🔐 Đặt lại mật khẩu - The Autumn";
+        String body = buildResetPasswordEmail(resetLink);
+
+        sendEmail(toEmail, subject, body);
+    }
+
+    private String buildResetPasswordEmail(String resetLink) {
+        return """
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { 
+                        font-family: 'Arial', sans-serif; 
+                        line-height: 1.6; 
+                        color: #333; 
+                        margin: 0; 
+                        padding: 0; 
+                    }
+                    .container { 
+                        max-width: 600px; 
+                        margin: 0 auto; 
+                        background: #ffffff; 
+                    }
+                    .header { 
+                        background: linear-gradient(135deg, #E67E22, #D35400); 
+                        color: white; 
+                        padding: 30px 20px; 
+                        text-align: center; 
+                    }
+                    .header h1 { 
+                        margin: 0; 
+                        font-size: 28px; 
+                    }
+                    .content { 
+                        padding: 30px; 
+                        background: #f9f9f9; 
+                    }
+                    .button { 
+                        background: linear-gradient(135deg, #E67E22, #D35400); 
+                        color: white; 
+                        padding: 15px 30px; 
+                        text-decoration: none; 
+                        border-radius: 5px; 
+                        display: inline-block; 
+                        font-weight: bold;
+                        font-size: 16px;
+                        margin: 20px 0;
+                    }
+                    .code-box { 
+                        background: #fff; 
+                        padding: 15px; 
+                        border-radius: 5px; 
+                        border-left: 4px solid #E67E22;
+                        margin: 20px 0;
+                        word-break: break-all;
+                        font-family: monospace;
+                    }
+                    .footer { 
+                        text-align: center; 
+                        padding: 20px; 
+                        font-size: 12px; 
+                        color: #666; 
+                        background: #fff;
+                    }
+                    .note {
+                        background: #fff3cd;
+                        padding: 15px;
+                        border-radius: 5px;
+                        border-left: 4px solid #ffc107;
+                        margin: 20px 0;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>THE AUTUMN</h1>
+                        <p>Hệ thống quản lý cửa hàng thời trang</p>
+                    </div>
+                    <div class="content">
+                        <h2>🔐 Đặt Lại Mật Khẩu</h2>
+                        <p>Xin chào,</p>
+                        <p>Bạn đã yêu cầu đặt lại mật khẩu cho tài khoản <strong>The Autumn</strong>.</p>
+                        
+                        <p style="text-align: center;">
+                            <a href="%s" class="button">ĐẶT LẠI MẬT KHẨU</a>
+                        </p>
+                        
+                        <p>Hoặc sử dụng link sau:</p>
+                        <div class="code-box">
+                            %s
+                        </div>
+                        
+                        <div class="note">
+                            <p><strong>📌 Lưu ý quan trọng:</strong></p>
+                            <p>• Link đặt lại mật khẩu sẽ hết hạn sau <strong>24 giờ</strong></p>
+                            <p>• Nếu bạn không yêu cầu đặt lại mật khẩu, vui lòng bỏ qua email này</p>
+                            <p>• Liên hệ hỗ trợ nếu bạn gặp bất kỳ vấn đề nào</p>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <p><strong>The Autumn Team</strong></p>
+                        <p>📧 Email: TheAutumnShop@gmail.com</p>
+                        <p>📞 Hotline: 0900 123 456</p>
+                        <p>© 2025 The Autumn. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """.formatted(resetLink, resetLink);
+    }
+
+    @Async
     public void sendDiscountEmail(String to, PhieuGiamGia phieu) {
         sendEmail(to, "🎉 Bạn nhận được phiếu giảm giá từ The Autumn!", buildEmailBody(phieu));
     }
