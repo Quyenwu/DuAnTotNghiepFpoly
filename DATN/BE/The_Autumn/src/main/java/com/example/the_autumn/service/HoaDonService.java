@@ -10,6 +10,7 @@ import com.example.the_autumn.entity.HoaDon;
 import com.example.the_autumn.entity.HoaDonChiTiet;
 import com.example.the_autumn.entity.LichSuHoaDon;
 import com.example.the_autumn.entity.NhanVien;
+import com.example.the_autumn.entity.PhuongThucThanhToan;
 import com.example.the_autumn.model.request.PageHoaDonRequest;
 import com.example.the_autumn.model.request.UpdateHoaDonRequest;
 import com.example.the_autumn.model.response.HoaDonDetailResponse;
@@ -21,6 +22,7 @@ import com.example.the_autumn.repository.HoaDonRepository;
 import com.example.the_autumn.repository.KhachHangRepository;
 import com.example.the_autumn.repository.LichSuHoaDonRepository;
 import com.example.the_autumn.repository.NhanVienRepository;
+import com.example.the_autumn.repository.PhuongThucThanhToanRepository;
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
@@ -75,6 +77,9 @@ public class HoaDonService {
 
     @Autowired
     private LichSuHoaDonRepository lichSuHoaDonRepository;
+
+    @Autowired
+    private PhuongThucThanhToanRepository phuongThucThanhToanRepository;
 
 //    @Autowired
 //    private Cloudinary cloudinary;
@@ -435,6 +440,20 @@ public class HoaDonService {
         } else {
             dto.setHinhThucThanhToan("Chưa thanh toán");
         }
+        if (hoaDon.getNhanVien() != null) {
+            dto.setIdNhanVien(hoaDon.getNhanVien().getId());
+            dto.setTenNhanVien(hoaDon.getNhanVien().getHoTen());
+            dto.setSdtNhanVien(hoaDon.getNhanVien().getSdt());
+        }
+
+        // ⭐ THÊM: Set ID phương thức thanh toán
+        if (hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()) {
+            HinhThucThanhToan hinhThuc = hoaDon.getHinhThucThanhToans().get(0);
+            if (hinhThuc.getPhuongThucThanhToan() != null) {
+                dto.setIdPhuongThucThanhToan(hinhThuc.getPhuongThucThanhToan().getId());
+                dto.setHinhThucThanhToan(hinhThuc.getPhuongThucThanhToan().getTenPhuongThucThanhToan());
+            }
+        }
 
 
         dto.setLoaiHoaDon(hoaDon.getLoaiHoaDon());
@@ -502,7 +521,7 @@ public class HoaDonService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn ID " + id));
         StringBuilder thayDoiLog = new StringBuilder();
 
-        // ✅ 1. Cập nhật thông tin khách hàng
+        // ✅ 1. Cập nhật thông tin khách hàng (giữ nguyên code cũ)
         if (hoaDon.getKhachHang() != null) {
             boolean coThayDoi = false;
             if (request.getHoTenKhachHang() != null &&
@@ -534,7 +553,8 @@ public class HoaDonService {
                 luuLichSu(hoaDon, "Cập nhật thông tin khách hàng", thayDoiLog.toString().trim(), null);
             }
         }
-        // ✅ 2. Cập nhật địa chỉ giao hàng
+
+        // ✅ 2. Cập nhật địa chỉ (giữ nguyên)
         if (request.getDiaChiKhachHang() != null &&
                 !request.getDiaChiKhachHang().equals(hoaDon.getDiaChiKhachHang())) {
             String oldAddress = hoaDon.getDiaChiKhachHang();
@@ -544,7 +564,8 @@ public class HoaDonService {
                     request.getDiaChiKhachHang());
             luuLichSu(hoaDon, "Cập nhật địa chỉ giao hàng", moTa, null);
         }
-        // ✅ 3. Cập nhật ghi chú
+
+        // ✅ 3. Cập nhật ghi chú (giữ nguyên)
         if (request.getGhiChu() != null &&
                 !request.getGhiChu().equals(hoaDon.getGhiChu())) {
             String oldNote = hoaDon.getGhiChu();
@@ -554,6 +575,8 @@ public class HoaDonService {
                     request.getGhiChu());
             luuLichSu(hoaDon, "Cập nhật ghi chú", moTa, null);
         }
+
+        // ✅ 4. Cập nhật trạng thái (giữ nguyên)
         if (request.getTrangThai() != null && !request.getTrangThai().equals(hoaDon.getTrangThai())) {
             Integer oldStatus = hoaDon.getTrangThai();
             hoaDon.setTrangThai(request.getTrangThai());
@@ -561,8 +584,53 @@ public class HoaDonService {
                     String.format("Trạng thái: %s → %s", oldStatus, request.getTrangThai()), null);
         }
 
+        // ⭐ 5. CẬP NHẬT NHÂN VIÊN
+        if (request.getIdNhanVien() != null) {
+            NhanVien nhanVienMoi = nhanVienRepository.findById(request.getIdNhanVien())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên ID " + request.getIdNhanVien()));
 
-        // ✅ 4. Cập nhật ngày sửa
+            String oldNhanVien = hoaDon.getNhanVien() != null ? hoaDon.getNhanVien().getHoTen() : "N/A";
+            hoaDon.setNhanVien(nhanVienMoi);
+
+            String moTa = String.format("Nhân viên: '%s' → '%s'", oldNhanVien, nhanVienMoi.getHoTen());
+            luuLichSu(hoaDon, "Cập nhật nhân viên", moTa, null);
+        }
+
+        // ⭐ 6. CẬP NHẬT PHƯƠNG THỨC THANH TOÁN
+        if (request.getIdPhuongThucThanhToan() != null) {
+            PhuongThucThanhToan phuongThucMoi = phuongThucThanhToanRepository.findById(request.getIdPhuongThucThanhToan())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy phương thức thanh toán ID " + request.getIdPhuongThucThanhToan()));
+
+            // Lấy hình thức thanh toán hiện tại
+            String oldPhuongThuc = "Chưa có";
+            if (hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()) {
+                HinhThucThanhToan hinhThucCu = hoaDon.getHinhThucThanhToans().get(0);
+                oldPhuongThuc = hinhThucCu.getPhuongThucThanhToan().getTenPhuongThucThanhToan();
+            }
+
+            // Xóa hình thức cũ (nếu có)
+            if (hoaDon.getHinhThucThanhToans() != null) {
+                hoaDon.getHinhThucThanhToans().clear();
+            }
+
+            // Tạo hình thức mới
+            HinhThucThanhToan hinhThucMoi = new HinhThucThanhToan();
+            hinhThucMoi.setHoaDon(hoaDon);
+            hinhThucMoi.setPhuongThucThanhToan(phuongThucMoi);
+            hinhThucMoi.setTrangThai(true);
+
+            // Thêm vào list
+            if (hoaDon.getHinhThucThanhToans() == null) {
+                hoaDon.setHinhThucThanhToans(new ArrayList<>());
+            }
+            hoaDon.getHinhThucThanhToans().add(hinhThucMoi);
+
+            String moTa = String.format("Phương thức thanh toán: '%s' → '%s'",
+                    oldPhuongThuc, phuongThucMoi.getTenPhuongThucThanhToan());
+            luuLichSu(hoaDon, "Cập nhật phương thức thanh toán", moTa, null);
+        }
+
+        // ✅ 7. Lưu hóa đơn
         hoaDon.setNgaySua(new Date());
         hoaDonRepository.save(hoaDon);
 
