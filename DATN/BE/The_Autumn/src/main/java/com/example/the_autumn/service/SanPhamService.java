@@ -43,16 +43,61 @@ public class SanPhamService {
     @Autowired
     private KieuDangRepository kdRepo;
 
-    public List<SanPhamResponse> findAll(){return spRepo.findAll().stream()
-            .sorted((a, b) -> b.getNgayTao().compareTo(a.getNgayTao()))
-            .map(SanPhamResponse::new)
-            .collect(Collectors.toList());}
+    public List<SanPhamResponse> findAll(){
+        return spRepo.findAll().stream()
+                .sorted((a, b) -> b.getNgayTao().compareTo(a.getNgayTao()))
+                .map(SanPhamResponse::new)
+                .collect(Collectors.toList());
+    }
 
     public PageableObject<SanPhamResponse> phanTrang(Integer pageNo, Integer pageSize) {
         Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by(Sort.Direction.DESC, "ngayTao"));
         Page<SanPham> pageSp = spRepo.findAll(pageable);
-        Page<SanPhamResponse>spRes = pageSp.map(SanPhamResponse::new);
+        Page<SanPhamResponse> spRes = pageSp.map(SanPhamResponse::new);
         return new PageableObject<>(spRes);
+    }
+
+    public PageableObject<SanPhamResponse> filterSanPhamWithPaging(
+            Integer pageNo,
+            Integer pageSize,
+            String searchText,
+            String maSanPham,
+            String tenSanPham,
+            String tenNhaSanXuat,
+            String tenChatLieu,
+            String tenKieuDang,
+            String tenXuatXu,
+            Date ngayTao,
+            Boolean trangThai
+    ) {
+        System.out.println("🔍 Service: filterSanPhamWithPaging - pageNo=" + pageNo + ", pageSize=" + pageSize);
+
+        List<SanPhamResponse> filteredList = filterSanPham(
+                searchText, maSanPham, tenSanPham, tenNhaSanXuat,
+                tenChatLieu, tenKieuDang, tenXuatXu, ngayTao, trangThai
+        );
+
+        System.out.println("✅ Tổng số sản phẩm sau filter: " + filteredList.size());
+
+        int totalItems = filteredList.size();
+        int fromIndex = pageNo * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, totalItems);
+
+        List<SanPhamResponse> pageData = fromIndex < totalItems
+                ? filteredList.subList(fromIndex, toIndex)
+                : List.of();
+
+        System.out.println("📄 Trả về trang " + (pageNo + 1) + ": " + pageData.size() + " sản phẩm");
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize);
+
+        Page<SanPhamResponse> page = new org.springframework.data.domain.PageImpl<>(
+                pageData,
+                pageable,
+                totalItems
+        );
+
+        return new PageableObject<>(page);
     }
 
     public List<SanPhamResponse> filterSanPham(
@@ -67,7 +112,6 @@ public class SanPhamService {
             Boolean trangThai
     ){
         List<SanPham> list = spRepo.findAll();
-        List<ChiTietSanPham> list1 = ctspRepo.findAll();
 
         return list.stream()
                 .filter(sp -> searchText == null || searchText.isEmpty() ||
@@ -101,6 +145,7 @@ public class SanPhamService {
                         (sp.getNgayTao() != null &&
                                 sp.getNgayTao().compareTo(ngayTao) >= 0))
                 .filter(sp -> trangThai == null || sp.getTrangThai().equals(trangThai))
+                .sorted((a, b) -> b.getNgayTao().compareTo(a.getNgayTao()))
                 .map(SanPhamResponse::new)
                 .collect(Collectors.toList());
     }
@@ -120,7 +165,9 @@ public class SanPhamService {
         spRepo.save(sp);
     }
 
-    public void delete(Integer id){spRepo.deleteById(id);}
+    public void delete(Integer id){
+        spRepo.deleteById(id);
+    }
 
     public SanPhamResponse getSanPhamDetailWithVariants(Integer idSanPham) {
         System.out.println("🔍 SanPhamService.getSanPhamDetailWithVariants() - ID: " + idSanPham);
@@ -145,6 +192,7 @@ public class SanPhamService {
     public void updateTrangThai(Integer id, Boolean trangThai) {
         SanPham sp = spRepo.findById(id).get();
         sp.setTrangThai(trangThai);
+        sp.setNgaySua(new Date());
         spRepo.save(sp);
     }
 

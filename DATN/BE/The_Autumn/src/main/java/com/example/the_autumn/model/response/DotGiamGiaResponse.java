@@ -24,7 +24,7 @@ public class DotGiamGiaResponse {
     private Date ngayTao;
     private LocalDate ngayBatDau;
     private LocalDate ngayKetThuc;
-    private Boolean trangThai;
+    private Integer trangThai;
 
     public DotGiamGiaResponse(DotGiamGia dotGiamGia) {
         this.id = dotGiamGia.getId();

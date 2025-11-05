@@ -1,5 +1,8 @@
 package com.example.the_autumn.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,6 +12,7 @@ import lombok.*;
 @Setter
 @Entity
 @Table(name = "giam_gia_khach_hang")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class GiamGiaKhachHang {
 
     @Id
@@ -18,11 +22,11 @@ public class GiamGiaKhachHang {
     @Column(name = "trang_thai")
     private Boolean trangThai;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_phieu_giam", referencedColumnName = "id", nullable = false)
     private PhieuGiamGia phieuGiamGia;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_khach_hang", referencedColumnName = "id", nullable = false)
     private KhachHang khachHang;
 }

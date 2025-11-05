@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
@@ -382,5 +383,39 @@ public class ChiTietSanPhamController {
         List<ChiTietSanPhamResponse> list = chiTietSanPhamService.findBySanPhamId(id);
         return new ResponseObject<>(list, "Lấy chi tiết sản phẩm thành công");
     }
+
+    @PutMapping("/giam-so-luong/{id}")
+    @Transactional
+    public ResponseObject<?> giamSoLuong(@PathVariable Integer id, @RequestParam Integer soLuong) {
+        Optional<ChiTietSanPham> optional = chiTietSanPhamService.findById(id);
+        if (optional.isEmpty()) {
+            return ResponseObject.error("Không tìm thấy sản phẩm ID: " + id);
+        }
+
+        ChiTietSanPham ctsp = optional.get();
+        if (ctsp.getSoLuongTon() < soLuong) {
+            return ResponseObject.error("Không đủ hàng tồn trong kho");
+        }
+
+        ctsp.setSoLuongTon(ctsp.getSoLuongTon() - soLuong);
+        chiTietSanPhamService.save(ctsp);
+        return ResponseObject.success(ctsp, "Đã trừ " + soLuong + " sản phẩm khỏi kho");
+    }
+
+    @PutMapping("/tang-so-luong/{id}")
+    @Transactional
+    public ResponseObject<?> tangSoLuong(@PathVariable Integer id, @RequestParam Integer soLuong) {
+        Optional<ChiTietSanPham> optional = chiTietSanPhamService.findById(id);
+        if (optional.isEmpty()) {
+            return ResponseObject.error("Không tìm thấy sản phẩm ID: " + id);
+        }
+
+        ChiTietSanPham ctsp = optional.get();
+        ctsp.setSoLuongTon(ctsp.getSoLuongTon() + soLuong);
+        chiTietSanPhamService.save(ctsp);
+        return ResponseObject.success(ctsp, "Đã cộng " + soLuong + " sản phẩm vào kho");
+    }
+
+
 
 }

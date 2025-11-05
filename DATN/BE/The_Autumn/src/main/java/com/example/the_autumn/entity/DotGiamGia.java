@@ -1,6 +1,8 @@
 package com.example.the_autumn.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import jakarta.persistence.Table;
 import lombok.*;
@@ -21,6 +23,7 @@ import java.util.List;
 @Setter
 @Entity
 @Table(name = "dot_giam_gia")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class DotGiamGia {
 
     @Id
@@ -54,8 +57,8 @@ public class DotGiamGia {
     private LocalDate ngayKetThuc;
 
     @Column(name = "trang_thai")
-    private Boolean trangThai;
+    private Integer trangThai;
 
-    @OneToMany(mappedBy = "dotGiamGia", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "dotGiamGia", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<DotGiamGiaChiTiet> dotGiamGiaChiTiets;
 }

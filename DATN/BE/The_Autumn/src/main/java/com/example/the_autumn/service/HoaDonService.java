@@ -11,6 +11,9 @@ import com.example.the_autumn.entity.HoaDonChiTiet;
 import com.example.the_autumn.entity.LichSuHoaDon;
 import com.example.the_autumn.entity.NhanVien;
 import com.example.the_autumn.entity.PhuongThucThanhToan;
+import com.example.the_autumn.entity.*;
+import com.example.the_autumn.model.request.HoaDonChiTietRequest;
+import com.example.the_autumn.model.request.HoaDonRequest;
 import com.example.the_autumn.model.request.PageHoaDonRequest;
 import com.example.the_autumn.model.request.UpdateHoaDonRequest;
 import com.example.the_autumn.model.response.HoaDonDetailResponse;
@@ -23,6 +26,7 @@ import com.example.the_autumn.repository.KhachHangRepository;
 import com.example.the_autumn.repository.LichSuHoaDonRepository;
 import com.example.the_autumn.repository.NhanVienRepository;
 import com.example.the_autumn.repository.PhuongThucThanhToanRepository;
+import com.example.the_autumn.repository.*;
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
@@ -47,6 +51,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -81,6 +86,15 @@ public class HoaDonService {
     @Autowired
     private PhuongThucThanhToanRepository phuongThucThanhToanRepository;
 
+    @Autowired
+    private PhieuGiamGiaRepository phieuGiamGiaRepository;
+
+    @Autowired
+    private ChiTietSanPhamRepository chiTietSanPhamRepository;
+
+    @Autowired
+    private DotGiamGiaChiTietRepository dotGiamGiaChiTietRepository;
+
 //    @Autowired
 //    private Cloudinary cloudinary;
 
@@ -105,7 +119,6 @@ public class HoaDonService {
         );
     }
 
-    // ✅ Method chuyển đổi Entity → DTO (QUAN TRỌNG!)
     private HoaDonRespone convertToDTO(HoaDon hd) {
         HoaDonRespone dto = new HoaDonRespone();
         dto.setId(hd.getId());
@@ -694,18 +707,204 @@ public class HoaDonService {
         String oldServiceText = oldService != null && oldService ? "Tại quầy" : "Online";
         String newServiceText = loaiHoaDon ? "Tại quầy" : "Online";
 
-        // Cập nhật dịch vụ
         hoaDon.setLoaiHoaDon(loaiHoaDon);
         hoaDon.setNgaySua(new Date());
         hoaDonRepository.save(hoaDon);
 
-        // Lưu lịch sử
         String moTa = String.format("Dịch vụ: '%s' → '%s'", oldServiceText, newServiceText);
         luuLichSu(hoaDon, "Cập nhật dịch vụ", moTa, null);
 
         return "Cập nhật dịch vụ từ " + oldServiceText + " sang " + newServiceText + " thành công";
     }
 
+    @Transactional
+    public HoaDon add(HoaDonRequest req) {
+        HoaDon hoaDon = new HoaDon();
+
+        if (req.getIdKhachHang() != null) {
+            KhachHang khachHang = khachHangRepository.findById(req.getIdKhachHang())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng ID: " + req.getIdKhachHang()));
+            hoaDon.setKhachHang(khachHang);
+        }
+
+        if (req.getIdNhanVien() != null) {
+            NhanVien nhanVien = nhanVienRepository.findById(req.getIdNhanVien())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên ID: " + req.getIdNhanVien()));
+            hoaDon.setNhanVien(nhanVien);
+        } else {
+            NhanVien defaultNhanVien = nhanVienRepository.findById(1).orElse(null);
+            hoaDon.setNhanVien(defaultNhanVien);
+        }
+
+        if (req.getIdPhieuGiamGia() != null) {
+            PhieuGiamGia phieuGiamGia = phieuGiamGiaRepository.findById(req.getIdPhieuGiamGia()).orElse(null);
+            hoaDon.setPhieuGiamGia(phieuGiamGia);
+        }
+
+        hoaDon.setLoaiHoaDon(req.getLoaiHoaDon() != null ? req.getLoaiHoaDon() : false);
+        hoaDon.setPhiVanChuyen(req.getPhiVanChuyen() != null ? req.getPhiVanChuyen() : BigDecimal.ZERO);
+        hoaDon.setTongTien(req.getTongTien() != null ? req.getTongTien() : BigDecimal.ZERO);
+        hoaDon.setTongTienSauGiam(req.getTongTienSauGiam() != null ? req.getTongTienSauGiam() : BigDecimal.ZERO);
+        hoaDon.setGhiChu(req.getGhiChu());
+        hoaDon.setDiaChiKhachHang(req.getDiaChiKhachHang());
+        hoaDon.setNgayThanhToan(req.getNgayThanhToan() != null ? req.getNgayThanhToan() : new Date());
+        hoaDon.setNguoiTao(req.getNguoiTao() != null ? req.getNguoiTao() : 1);
+        hoaDon.setNgayTao(new Date());
+        hoaDon.setTrangThai(req.getTrangThai() != null ? req.getTrangThai() : 1);
+
+        List<HoaDonChiTiet> hoaDonChiTiets = new ArrayList<>();
+        BigDecimal tongTienHoaDon = BigDecimal.ZERO;
+
+        if (req.getChiTietList() != null && !req.getChiTietList().isEmpty()) {
+            for (HoaDonChiTietRequest chiTietReq : req.getChiTietList()) {
+                try {
+                    if (chiTietReq.getIdChiTietSanPham() == null) {
+                        throw new RuntimeException("ID chi tiết sản phẩm không được null");
+                    }
+
+                    Integer soLuong = chiTietReq.getSoLuong();
+                    if (soLuong == null || soLuong <= 0) {
+                        throw new RuntimeException("Số lượng phải lớn hơn 0 cho sản phẩm ID: " + chiTietReq.getIdChiTietSanPham());
+                    }
+
+                    ChiTietSanPham chiTietSP = chiTietSanPhamRepository.findById(chiTietReq.getIdChiTietSanPham())
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết sản phẩm ID: " + chiTietReq.getIdChiTietSanPham()));
+
+                    BigDecimal giaGoc = chiTietSP.getGiaBan();
+                    if (giaGoc == null || giaGoc.compareTo(BigDecimal.ZERO) <= 0) {
+                        throw new RuntimeException("Chi tiết sản phẩm " + chiTietSP.getSanPham().getTenSanPham() + " không có giá bán hợp lệ");
+                    }
+
+                    BigDecimal giaSauGiam = getGiaSauGiamFromDotGiamGia(chiTietSP.getId(), giaGoc);
+                    BigDecimal giaBan = giaSauGiam;
+
+                    System.out.println("💰 Sản phẩm: " + chiTietSP.getSanPham().getTenSanPham() +
+                            ", Giá gốc: " + giaGoc + ", Giá sau giảm: " + giaSauGiam);
+
+                    if (chiTietSP.getSoLuongTon() < soLuong) {
+                        throw new RuntimeException("Số lượng tồn không đủ cho sản phẩm: " + chiTietSP.getSanPham().getTenSanPham() +
+                                ". Tồn: " + chiTietSP.getSoLuongTon() + ", Yêu cầu: " + soLuong);
+                    }
+
+                    HoaDonChiTiet hoaDonChiTiet = new HoaDonChiTiet();
+                    hoaDonChiTiet.setHoaDon(hoaDon);
+                    hoaDonChiTiet.setChiTietSanPham(chiTietSP);
+                    hoaDonChiTiet.setSoLuong(soLuong);
+                    hoaDonChiTiet.setGiaBan(giaBan);
+
+                    BigDecimal thanhTien = giaBan.multiply(BigDecimal.valueOf(soLuong));
+                    hoaDonChiTiet.setThanhTien(thanhTien);
+
+                    hoaDonChiTiet.setGhiChu(chiTietReq.getGhiChu());
+                    hoaDonChiTiet.setTrangThai(true);
+
+                    hoaDonChiTiets.add(hoaDonChiTiet);
+
+                    tongTienHoaDon = tongTienHoaDon.add(thanhTien);
+
+                    chiTietSP.setSoLuongTon(chiTietSP.getSoLuongTon() - soLuong);
+                    chiTietSanPhamRepository.save(chiTietSP);
+
+                    System.out.println("✅ Đã xử lý chi tiết sản phẩm: " + chiTietSP.getSanPham().getTenSanPham() +
+                            ", Số lượng: " + soLuong + ", Giá bán: " + giaBan + ", Thành tiền: " + thanhTien);
+
+                } catch (Exception e) {
+                    System.err.println("❌ Lỗi khi xử lý chi tiết sản phẩm ID " + chiTietReq.getIdChiTietSanPham() + ": " + e.getMessage());
+                    throw e;
+                }
+            }
+        } else {
+            throw new RuntimeException("Không có chi tiết sản phẩm trong hóa đơn");
+        }
+
+        hoaDon.setHoaDonChiTiets(hoaDonChiTiets);
+
+        HoaDon savedHoaDon = hoaDonRepository.save(hoaDon);
+        System.out.println("✅ Đã lưu hóa đơn ID: " + savedHoaDon.getId() + " với " + hoaDonChiTiets.size() + " chi tiết");
+        System.out.println("💰 Tổng tiền hóa đơn: " + tongTienHoaDon);
+
+        return savedHoaDon;
+    }
+
+    private BigDecimal getGiaSauGiamFromDotGiamGia(Integer idChiTietSanPham, BigDecimal giaGoc) {
+        try {
+            List<DotGiamGiaChiTiet> dotGiamGiaList = dotGiamGiaChiTietRepository
+                    .findByChiTietSanPhamId(idChiTietSanPham);
+
+            if (dotGiamGiaList.isEmpty()) {
+                System.out.println("ℹ️ Không có đợt giảm giá cho sản phẩm ID: " + idChiTietSanPham + ", sử dụng giá gốc");
+                return giaGoc;
+            }
+
+            LocalDate now = LocalDate.now();
+            DotGiamGiaChiTiet dotGiamGiaActive = null;
+
+            for (DotGiamGiaChiTiet dot : dotGiamGiaList) {
+                DotGiamGia dotGiamGia = dot.getDotGiamGia();
+                if (dotGiamGia != null &&
+                        dotGiamGia.getTrangThai() == 1 &&
+                        dotGiamGia.getNgayBatDau() != null &&
+                        dotGiamGia.getNgayKetThuc() != null) {
+
+                    boolean isAfterStart = now.isAfter(dotGiamGia.getNgayBatDau()) || now.isEqual(dotGiamGia.getNgayBatDau());
+                    boolean isBeforeEnd = now.isBefore(dotGiamGia.getNgayKetThuc()) || now.isEqual(dotGiamGia.getNgayKetThuc());
+
+                    if (isAfterStart && isBeforeEnd) {
+                        dotGiamGiaActive = dot;
+                        System.out.println("🎯 Tìm thấy đợt giảm giá active: " + dotGiamGia.getTenDot() +
+                                " từ " + dotGiamGia.getNgayBatDau() + " đến " + dotGiamGia.getNgayKetThuc());
+                        break;
+                    }
+                }
+            }
+
+            if (dotGiamGiaActive == null) {
+                System.out.println("ℹ️ Không có đợt giảm giá active cho sản phẩm ID: " + idChiTietSanPham);
+                return giaGoc;
+            }
+
+            DotGiamGia dotGiamGia = dotGiamGiaActive.getDotGiamGia();
+            BigDecimal giaTriGiam = dotGiamGia.getGiaTriGiam();
+
+            if (giaTriGiam == null) {
+                System.out.println("⚠️ Đợt giảm giá không có giá trị giảm, sử dụng giá gốc");
+                return giaGoc;
+            }
+
+            BigDecimal giaSauGiam;
+
+            if (!dotGiamGia.getLoaiGiamGia()) {
+                BigDecimal phanTramGiam = giaTriGiam.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                BigDecimal soTienGiam = giaGoc.multiply(phanTramGiam);
+                giaSauGiam = giaGoc.subtract(soTienGiam);
+
+                System.out.println("💰 Giảm " + giaTriGiam + "%: " + soTienGiam + " từ " + giaGoc + " xuống " + giaSauGiam);
+            } else {
+                giaSauGiam = giaGoc.subtract(giaTriGiam);
+
+                if (giaSauGiam.compareTo(BigDecimal.ZERO) < 0) {
+                    giaSauGiam = BigDecimal.ZERO;
+                    System.out.println("⚠️ Giá sau giảm âm, đặt về 0");
+                }
+
+                System.out.println("💰 Giảm " + giaTriGiam + " VND: từ " + giaGoc + " xuống " + giaSauGiam);
+            }
+
+            if (dotGiamGiaActive.getGiaSauGiam() == null ||
+                    !dotGiamGiaActive.getGiaSauGiam().equals(giaSauGiam)) {
+                dotGiamGiaActive.setGiaSauGiam(giaSauGiam);
+                dotGiamGiaChiTietRepository.save(dotGiamGiaActive);
+                System.out.println("💾 Đã cập nhật giá sau giảm vào DotGiamGiaChiTiet: " + giaSauGiam);
+            }
+
+            return giaSauGiam;
+
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi khi lấy giá sau giảm cho sản phẩm ID " + idChiTietSanPham + ": " + e.getMessage());
+            e.printStackTrace();
+            return giaGoc;
+        }
+    }
 }
 
 

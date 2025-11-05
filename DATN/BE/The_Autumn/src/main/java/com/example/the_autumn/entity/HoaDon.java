@@ -1,15 +1,14 @@
 package com.example.the_autumn.entity;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 import jakarta.persistence.*;
 import lombok.*;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.time.LocalDateTime;
-import com.fasterxml.jackson.annotation.JsonFormat;
 
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,24 +16,25 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @Setter
 @Entity
 @Table(name = "hoa_don")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class HoaDon {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_khach_hang",referencedColumnName = "id", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_khach_hang",referencedColumnName = "id", nullable = true)
     @JsonIgnoreProperties({"hoaDons", "hibernateLazyInitializer", "handler"})  // ✅ Thêm
     private KhachHang khachHang;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_nhan_vien",referencedColumnName = "id", nullable = false)
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_nhan_vien",referencedColumnName = "id", nullable = true)
     @JsonIgnoreProperties({"hoaDons", "hibernateLazyInitializer", "handler"})  // ✅ Thêm
     private NhanVien nhanVien;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "id_phieu_giam_gia",referencedColumnName = "id", nullable = true)
     @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})  // ✅ Thêm
     private PhieuGiamGia phieuGiamGia;
@@ -60,8 +60,6 @@ public class HoaDon {
     @Column(name = "dia_chi_khach_hang",  length = 200)
     private String diaChiKhachHang;
 
-
-
     @Column(name = "ngay_thanh_toan")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") 
     private Date ngayThanhToan;  
@@ -83,21 +81,16 @@ public class HoaDon {
     @Column(name = "trang_thai")
     private Integer trangThai;
 
-    @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY,cascade = CascadeType.ALL, orphanRemoval = true)
-    @JsonManagedReference
+    @OneToMany(mappedBy = "hoaDon", fetch = FetchType.EAGER,cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LichSuThanhToan> lichSuThanhToans;
 
-    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JsonManagedReference
-    private List<HoaDonChiTiet> hoaDonChiTiets;
+    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    private List<HoaDonChiTiet> hoaDonChiTiets = new ArrayList<>();
 
-    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JsonManagedReference  
+    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<LichSuHoaDon> lichSuHoaDons;
 
-    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-    @JsonManagedReference
+    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     private List<HinhThucThanhToan> hinhThucThanhToans;
-
 
 }
