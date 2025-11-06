@@ -40,6 +40,6 @@ public class KichThuoc {
     @Column(name = "trang_thai")
     private Boolean trangThai;
 
-    @OneToMany(mappedBy = "kichThuoc",fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "kichThuoc",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ChiTietSanPham> chiTietSanPham;
 }

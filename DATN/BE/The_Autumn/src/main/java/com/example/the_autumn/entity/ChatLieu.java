@@ -33,7 +33,7 @@ public class ChatLieu {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @OneToMany(mappedBy = "chatLieu", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "chatLieu", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<SanPham> sanPhams;
 
     @Column(name = "ma_chat_lieu", insertable = false, updatable = false)

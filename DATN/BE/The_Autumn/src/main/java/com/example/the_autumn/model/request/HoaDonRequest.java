@@ -28,5 +28,9 @@ public class HoaDonRequest {
     private Date ngayThanhToan;
     private Integer nguoiTao;
     private Integer trangThai;
+    private BigDecimal soTienThanhToan;
+    private String ghiChuThanhToan;
     private List<HoaDonChiTietRequest> chiTietList;
+    private Integer idPhuongThucThanhToan;
+
 }

@@ -25,15 +25,15 @@ public class ChiTietSanPham {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_san_pham",referencedColumnName = "id", nullable = false)
     private SanPham sanPham;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_mau_sac",referencedColumnName = "id", nullable = false)
     private MauSac mauSac;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_kich_thuoc",referencedColumnName = "id", nullable = false)
     private KichThuoc kichThuoc;
 
@@ -58,13 +58,13 @@ public class ChiTietSanPham {
     @Column(name = "trang_thai")
     private Boolean trangThai = true;
 
-    @OneToMany(mappedBy = "chiTietSanPham", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "chiTietSanPham", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Anh> anhs;
 
-    @OneToMany(mappedBy = "chiTietSanPham", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "chiTietSanPham", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<DotGiamGiaChiTiet> dotGiamGiaChiTiets;
 
-    @OneToMany(mappedBy = "chiTietSanPham", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "chiTietSanPham", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<HoaDonChiTiet> hoaDonChiTiets;
 
 

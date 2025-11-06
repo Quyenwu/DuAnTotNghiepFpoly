@@ -18,16 +18,16 @@ public class HinhThucThanhToan {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_phuong_thuc",referencedColumnName = "id", nullable = false)
     private PhuongThucThanhToan phuongThucThanhToan;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_hoa_don",referencedColumnName = "id", nullable = false)
     private HoaDon hoaDon;
 
     @Column(name = "loai_thanh_toan", length = 500)
-    private String loaiThanhToan;
+    private Boolean loaiThanhToan;
 
     @Column(name = "trang_thai")
     private Boolean trangThai;

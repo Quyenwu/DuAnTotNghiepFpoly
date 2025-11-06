@@ -25,27 +25,27 @@ public class SanPham {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_nha_san_xuat",referencedColumnName = "id", nullable = false)
     private NhaSanXuat nhaSanXuat;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_xuat_xu",referencedColumnName = "id", nullable = false)
     private XuatXu xuatXu;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_chat_lieu",referencedColumnName = "id", nullable = false)
     private ChatLieu chatLieu;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_kieu_dang",referencedColumnName = "id", nullable = false)
     private KieuDang kieuDang;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_co_ao",referencedColumnName = "id", nullable = false)
     private CoAo coAo;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tay_ao",referencedColumnName = "id", nullable = false)
     private TayAo tayAo;
 
@@ -73,6 +73,6 @@ public class SanPham {
     @Column(name = "trang_thai")
     private Boolean trangThai;
 
-    @OneToMany(mappedBy = "sanPham",fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "sanPham",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ChiTietSanPham> chiTietSanPham;
 }

@@ -25,14 +25,13 @@ import java.util.List;
 @Entity
 @Table(name = "nha_san_xuat")
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
-
 public class NhaSanXuat {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @OneToMany(mappedBy = "nhaSanXuat",fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "nhaSanXuat",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<SanPham> sanPhams;
 
     @Column(name = "ma_nha_san_xuat", insertable = false, updatable = false)
