@@ -59,6 +59,6 @@ public class DotGiamGia {
     @Column(name = "trang_thai")
     private Integer trangThai;
 
-    @OneToMany(mappedBy = "dotGiamGia", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "dotGiamGia", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<DotGiamGiaChiTiet> dotGiamGiaChiTiets;
 }

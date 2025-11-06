@@ -32,9 +32,9 @@ public class PhuongThucThanhToan {
     @Column(name = "trang_thai")
     private Boolean trangThai;
 
-    @OneToMany(mappedBy = "phuongThucThanhToan", fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "phuongThucThanhToan", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<HinhThucThanhToan> hinhThucThanhToans;
 
-    @OneToMany(mappedBy = "phuongThucThanhToan", fetch = FetchType.EAGER,cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "phuongThucThanhToan", fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private List<LichSuThanhToan> lichSuThanhToans;
 }

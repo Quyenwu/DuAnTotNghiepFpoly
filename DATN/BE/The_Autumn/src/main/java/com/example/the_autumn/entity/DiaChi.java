@@ -33,15 +33,15 @@ public class DiaChi {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_khach_hang",referencedColumnName = "id", nullable = false)
     private KhachHang khachHang;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tinh",referencedColumnName = "id", nullable = false)
     private TinhThanh tinhThanh;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_quan",referencedColumnName = "id", nullable = false)
     private QuanHuyen quanHuyen;
 

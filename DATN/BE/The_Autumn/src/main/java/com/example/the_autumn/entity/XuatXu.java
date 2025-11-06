@@ -31,7 +31,7 @@ public class XuatXu {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @OneToMany(mappedBy = "xuatXu", fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "xuatXu", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<SanPham> sanPhams;
 
     @Column(name = "ma_xuat_xu", insertable = false, updatable = false)

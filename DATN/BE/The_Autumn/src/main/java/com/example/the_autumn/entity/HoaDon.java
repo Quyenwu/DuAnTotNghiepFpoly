@@ -81,16 +81,16 @@ public class HoaDon {
     @Column(name = "trang_thai")
     private Integer trangThai;
 
-    @OneToMany(mappedBy = "hoaDon", fetch = FetchType.EAGER,cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY,cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LichSuThanhToan> lichSuThanhToans;
 
-    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<HoaDonChiTiet> hoaDonChiTiets = new ArrayList<>();
 
-    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<LichSuHoaDon> lichSuHoaDons;
 
-    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<HinhThucThanhToan> hinhThucThanhToans;
 
 }

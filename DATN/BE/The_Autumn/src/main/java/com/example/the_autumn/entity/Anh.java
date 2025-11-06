@@ -29,7 +29,7 @@ public class Anh {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_ctsp", referencedColumnName = "id", nullable = false)
     private ChiTietSanPham chiTietSanPham;
 

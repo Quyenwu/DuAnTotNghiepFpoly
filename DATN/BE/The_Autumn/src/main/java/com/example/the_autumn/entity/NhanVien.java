@@ -39,7 +39,7 @@ public class NhanVien {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_chuc_vu", referencedColumnName = "id", nullable = false)
     @JsonBackReference
     private ChucVu chucVu;
@@ -84,9 +84,9 @@ public class NhanVien {
     @Column(name = "trang_thai")
     private Boolean trangThai;
 
-    @OneToMany(mappedBy = "nhanVien", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "nhanVien", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<HoaDon> hoaDons;
 
-    @OneToMany(mappedBy = "nhanVien", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "nhanVien", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<LichSuHoaDon> lichSuHoaDons;
 }

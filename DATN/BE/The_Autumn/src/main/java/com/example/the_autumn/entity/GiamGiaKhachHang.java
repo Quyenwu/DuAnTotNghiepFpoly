@@ -22,11 +22,11 @@ public class GiamGiaKhachHang {
     @Column(name = "trang_thai")
     private Boolean trangThai;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_phieu_giam", referencedColumnName = "id", nullable = false)
     private PhieuGiamGia phieuGiamGia;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_khach_hang", referencedColumnName = "id", nullable = false)
     private KhachHang khachHang;
 }

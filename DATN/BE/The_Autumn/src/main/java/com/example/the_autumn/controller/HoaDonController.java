@@ -14,6 +14,7 @@ import com.example.the_autumn.repository.NhanVienRepository;
 import com.example.the_autumn.repository.PhuongThucThanhToanRepository;
 import com.example.the_autumn.service.AnhService;
 import com.example.the_autumn.service.HoaDonService;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -74,9 +75,6 @@ public class HoaDonController {
 
     @Autowired
     private  AnhService anhService;
-
-
-
 
     @GetMapping("/{id}")
     public ResponseEntity<HoaDon> getById(@PathVariable Integer id) {
@@ -410,11 +408,11 @@ public class HoaDonController {
 
 
 
-    @PostMapping("/add")
-    public ResponseObject<?> addHoaDon(@RequestBody HoaDonRequest hoaDonRequest){
-        HoaDon savedHoaDon = hoaDonService.add(hoaDonRequest);
-        return new ResponseObject<>(savedHoaDon,"Thêm thành công");
-    }
+        @PostMapping("/add")
+        public ResponseObject<?> addHoaDon(@RequestBody HoaDonRequest hoaDonRequest){
+            HoaDon savedHoaDon = hoaDonService.add(hoaDonRequest);
+            return new ResponseObject<>(savedHoaDon,"Thêm thành công");
+        }
 }
 
 

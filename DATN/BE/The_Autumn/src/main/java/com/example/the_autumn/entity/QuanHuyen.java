@@ -36,10 +36,10 @@ public class QuanHuyen {
     @Column(name = "ten_quan", nullable = false, length = 100)
     private String tenQuan;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_tinh",referencedColumnName = "id", nullable = false)
     private TinhThanh tinhThanh;
 
-    @OneToMany(mappedBy = "quanHuyen", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "quanHuyen", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<DiaChi> diaChis;
 }
