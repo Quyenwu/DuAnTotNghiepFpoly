@@ -17,4 +17,5 @@ public class HoaDonChiTietRequest {
     private Integer soLuong;
     private BigDecimal giaBan;
     private String ghiChu;
+    private Boolean trangThai;
 }
