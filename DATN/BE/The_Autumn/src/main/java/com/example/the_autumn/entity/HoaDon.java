@@ -81,6 +81,9 @@ public class HoaDon {
     @Column(name = "trang_thai")
     private Integer trangThai;
 
+    @Column(name = "trang_thai_thanh_toan")
+    private Integer trangThaiGiaoHang;
+
     @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY,cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LichSuThanhToan> lichSuThanhToans;
 

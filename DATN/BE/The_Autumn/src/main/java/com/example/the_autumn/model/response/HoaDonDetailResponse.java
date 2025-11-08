@@ -28,16 +28,18 @@ public class HoaDonDetailResponse {
     private BigDecimal tongTien;
     private BigDecimal tongTienSauGiam;
     private Integer trangThai;
+    private Integer trangThaiGiaoHang;
     private String ghiChu;
-
-
 
     private List<ChiTietSanPhamResponse> chiTietSanPhams;
 
+    public Integer getTrangThaiGiaoHang() {
+        return trangThaiGiaoHang;
+    }
 
-
-
-
+    public void setTrangThaiGiaoHang(Integer trangThaiGiaoHang) {
+        this.trangThaiGiaoHang = trangThaiGiaoHang;
+    }
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }

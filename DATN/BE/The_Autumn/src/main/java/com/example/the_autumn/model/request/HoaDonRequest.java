@@ -16,6 +16,9 @@ import java.util.List;
 @Setter
 public class HoaDonRequest {
 
+    private Integer idTinh;
+    private Integer idQuan;
+    private String diaChiCuThe;
     private Integer idKhachHang;
     private Integer idNhanVien;
     private Integer idPhieuGiamGia;
@@ -28,6 +31,7 @@ public class HoaDonRequest {
     private Date ngayThanhToan;
     private Integer nguoiTao;
     private Integer trangThai;
+    private Integer trangThaiGiaoHang;
     private BigDecimal soTienThanhToan;
     private String ghiChuThanhToan;
     private List<HoaDonChiTietRequest> chiTietList;
