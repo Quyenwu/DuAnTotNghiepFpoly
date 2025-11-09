@@ -8,7 +8,6 @@ import java.util.List;
 
 @Repository
 public interface AnhRepository extends JpaRepository<Anh, Integer> {
-    // ✅ GIỮ LẠI - ĐÚNG SYNTAX
     List<Anh> findByChiTietSanPham_Id(Integer idChiTietSanPham);
 
     List<Anh> findByChiTietSanPham_IdAndTrangThai(Integer idChiTietSanPham, Boolean trangThai);
