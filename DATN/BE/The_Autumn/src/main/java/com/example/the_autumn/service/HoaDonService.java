@@ -146,7 +146,6 @@ public class HoaDonService {
         dto.setNgayTao(hd.getNgayTao());
         dto.setNgaySua(hd.getNgaySua());
         dto.setTrangThai(hd.getTrangThai());
-        dto.setTrangThaiGiaoHang(hd.getTrangThaiGiaoHang());
 
         if (hd.getKhachHang() != null) {
             KhachHangDTO khDTO = new KhachHangDTO();
@@ -164,7 +163,6 @@ public class HoaDonService {
             nvDTO.setSdt(hd.getNhanVien().getSdt());
             nvDTO.setEmail(hd.getNhanVien().getEmail());
             dto.setNhanVien(nvDTO);
-            dto.setLoaiHoaDonText(hd.getLoaiHoaDon() != null && hd.getLoaiHoaDon() ? "Tại quầy" : "Online");
 
             if (hd.getHinhThucThanhToans() != null && !hd.getHinhThucThanhToans().isEmpty()) {
                 HinhThucThanhToan hinhThuc = hd.getHinhThucThanhToans().get(0);
@@ -480,7 +478,6 @@ public class HoaDonService {
         dto.setTongTien(hoaDon.getTongTien());
         dto.setTongTienSauGiam(hoaDon.getTongTienSauGiam());
         dto.setTrangThai(hoaDon.getTrangThai());
-        dto.setTrangThaiGiaoHang(hoaDon.getTrangThaiGiaoHang());
         dto.setGhiChu(hoaDon.getGhiChu());
 
 
@@ -591,14 +588,6 @@ public class HoaDonService {
                     oldNote != null ? oldNote : "(Trống)",
                     request.getGhiChu());
             luuLichSu(hoaDon, "Cập nhật ghi chú", moTa, null);
-        }
-
-        if (request.getTrangThaiGiaoHang() != null && !request.getTrangThaiGiaoHang().equals(hoaDon.getTrangThaiGiaoHang())) {
-            Integer oldShippingStatus = hoaDon.getTrangThaiGiaoHang();
-            hoaDon.setTrangThaiGiaoHang(request.getTrangThaiGiaoHang());
-            luuLichSu(hoaDon, "Cập nhật trạng thái hóa đơn",
-                    String.format("Trạng thái giao hàng: %s → %s", oldShippingStatus, request.getTrangThaiGiaoHang()), null);
-
         }
 
         if (request.getTrangThai() != null && !request.getTrangThai().equals(hoaDon.getTrangThai())) {
@@ -820,29 +809,19 @@ public class HoaDonService {
         hoaDon.setGhiChu(req.getGhiChu());
         hoaDon.setNgayThanhToan(new Date());
 
-        int trangThaiHoaDon;
+        Integer trangThai;
         if (req.getTrangThai() != null) {
-            trangThaiHoaDon = req.getTrangThai();
-            System.out.println("✅ Sử dụng trạng thái từ FE: " + trangThaiHoaDon);
-        } else {
-            trangThaiHoaDon = 1;
-            System.out.println("✅ Sử dụng trạng thái mặc định: " + trangThaiHoaDon + " (loaiHoaDon: " + hoaDon.getLoaiHoaDon() + ")");
-        }
-        hoaDon.setTrangThai(trangThaiHoaDon);
-
-        Integer trangThaiGiaoHang;
-        if (req.getTrangThaiGiaoHang() != null) {
-            trangThaiGiaoHang = req.getTrangThaiGiaoHang();
-            System.out.println("✅ Sử dụng trạng thái giao hàng từ FE: " + trangThaiGiaoHang);
+            trangThai = req.getTrangThai();
+            System.out.println("✅ Sử dụng trạng thái từ FE: " + trangThai);
         } else {
             if (Boolean.TRUE.equals(hoaDon.getLoaiHoaDon())) {
-                trangThaiGiaoHang = 1;
+                trangThai = 1;
             } else {
-                trangThaiGiaoHang = 3;
+                trangThai = 1;
             }
-            System.out.println("✅ Sử dụng trạng thái giao hàng mặc định: " + trangThaiGiaoHang + " (loaiHoaDon: " + hoaDon.getLoaiHoaDon() + ")");
+            System.out.println("✅ Sử dụng trạng thái mặc định: " + trangThai + " (loaiHoaDon: " + hoaDon.getLoaiHoaDon() + ")");
         }
-        hoaDon.setTrangThaiGiaoHang(trangThaiGiaoHang);
+        hoaDon.setTrangThai(trangThai);
 
         if (req.getChiTietList() == null || req.getChiTietList().isEmpty()) {
             throw new RuntimeException("Không có chi tiết sản phẩm trong hóa đơn");
@@ -868,6 +847,7 @@ public class HoaDonService {
             hdct.setGiaBan(giaSauGiam);
             hdct.setThanhTien(giaSauGiam.multiply(BigDecimal.valueOf(ctReq.getSoLuong())));
             hdct.setGhiChu(ctReq.getGhiChu());
+            hdct.setTrangThai(true);
 
             listCT.add(hdct);
 
@@ -885,7 +865,7 @@ public class HoaDonService {
         log.setTrangThai(true);
         log.setNgayCapNhat(new Date());
 
-        if (trangThaiHoaDon == 1) {
+        if (trangThai == 1) {
             if (Boolean.TRUE.equals(hoaDon.getLoaiHoaDon())) {
                 log.setHanhDong("Thanh toán tại quầy");
                 log.setMoTa("Hóa đơn #" + saved.getId() + " đã thanh toán thành công tại quầy.");
@@ -895,7 +875,7 @@ public class HoaDonService {
             }
         } else {
             log.setHanhDong("Tạo hóa đơn");
-            log.setMoTa("Hóa đơn #" + saved.getId() + " đã được tạo với trạng thái: " + trangThaiHoaDon);
+            log.setMoTa("Hóa đơn #" + saved.getId() + " đã được tạo với trạng thái: " + trangThai);
         }
 
         lichSuHoaDonRepository.save(log);
@@ -931,8 +911,7 @@ public class HoaDonService {
 
         System.out.println("🎉 HOÀN TẤT TẠO HÓA ĐƠN - ID: " + saved.getId() +
                 ", Trạng thái: " + saved.getTrangThai() +
-                ", Loại: " + saved.getLoaiHoaDon() +
-                ", Trạng thái giao hàng: " + saved.getTrangThaiGiaoHang());
+                ", Loại: " + saved.getLoaiHoaDon());
         return saved;
     }
 
