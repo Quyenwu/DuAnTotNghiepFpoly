@@ -59,9 +59,11 @@ public class AuthController {
             khachHang.setHoTen(request.getHoTen());
             khachHang.setEmail(request.getEmail());
             khachHang.setMatKhau(request.getPassword());
-            khachHang.setSdt(request.getSdt());
-            khachHang.setGioiTinh(request.getGioiTinh());
-            khachHang.setNgaySinh(request.getNgaySinh());
+
+            khachHang.setSdt(request.getSdt() != null ? request.getSdt() : "");
+            khachHang.setGioiTinh(request.getGioiTinh() != null ? request.getGioiTinh() : true);
+            khachHang.setNgaySinh(request.getNgaySinh() != null ? request.getNgaySinh() : new Date());
+
             khachHang.setTrangThai(true);
             khachHang.setNgayTao(new Date());
 

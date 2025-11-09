@@ -2,6 +2,7 @@ package com.example.the_autumn.service;
 
 import com.example.the_autumn.entity.KhachHang;
 import com.example.the_autumn.entity.NhanVien;
+import com.example.the_autumn.model.request.RegisterRequest;
 import com.example.the_autumn.repository.KhachHangRepository;
 import com.example.the_autumn.repository.NhanVienRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,7 +32,7 @@ public class AuthService {
 
         if (nvOpt.isPresent()) {
             NhanVien nv = nvOpt.get();
-            return "STAFF:" + nv.getId() + ":" + nv.getHoTen() + ":" + nv.getChucVu().getId();
+            return "STAFF:" + nv.getId() + ":" + nv.getHoTen();
         }
 
         Optional<KhachHang> khOpt = khRepo.findByEmail(email);
@@ -44,6 +45,33 @@ public class AuthService {
         }
 
         return null;
+    }
+
+    public String register(RegisterRequest request) {
+        try {
+            if (isEmailExists(request.getEmail())) {
+                throw new RuntimeException("Email đã tồn tại trong hệ thống");
+            }
+
+            KhachHang khachHang = new KhachHang();
+            khachHang.setHoTen(request.getHoTen());
+            khachHang.setEmail(request.getEmail());
+            khachHang.setMatKhau(request.getPassword());
+            khachHang.setSdt(request.getSdt());
+            khachHang.setGioiTinh(request.getGioiTinh());
+            khachHang.setNgaySinh(request.getNgaySinh());
+            khachHang.setTrangThai(true);
+            khachHang.setNgayTao(new Date());
+
+            KhachHang savedKhachHang = khRepo.save(khachHang);
+
+            return "CUSTOMER:" + savedKhachHang.getId() + ":" + savedKhachHang.getHoTen();
+
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("Lỗi đăng ký: " + e.getMessage());
+        }
     }
 
     public boolean isEmailExists(String email) {
