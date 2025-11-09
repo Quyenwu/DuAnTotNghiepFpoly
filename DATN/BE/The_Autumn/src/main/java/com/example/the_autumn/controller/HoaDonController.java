@@ -264,19 +264,6 @@ public class HoaDonController {
         }
     }
 
-    @GetMapping("/{id}/can-edit-shipping")
-    public ResponseEntity<?> canEditShippingStatus(@PathVariable Integer id) {
-        try {
-            boolean canEdit = hoaDonService.canEditShippingStatus(id);
-            Map<String, Object> response = new HashMap<>();
-            response.put("canEdit", canEdit);
-            response.put("message", canEdit ? "Có thể sửa trạng thái giao hàng" : "Không thể sửa trạng thái giao hàng");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
-        }
-    }
 
 
     @PutMapping("/{id}")
