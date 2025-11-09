@@ -1,122 +1,68 @@
 package com.example.the_autumn.service;
 
-import com.example.the_autumn.entity.KhachHang;
+import com.example.the_autumn.entity.ChucVu;
 import com.example.the_autumn.entity.NhanVien;
-import com.example.the_autumn.model.request.RegisterRequest;
-import com.example.the_autumn.repository.KhachHangRepository;
+import com.example.the_autumn.model.request.NhanVienRequest;
+import com.example.the_autumn.model.response.NhanVienResponse;
 import com.example.the_autumn.repository.NhanVienRepository;
+import com.example.the_autumn.security.UserPrinciple;
+import com.example.the_autumn.security.jwt.JwtProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Date;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class AuthService {
 
     @Autowired
-    NhanVienRepository nvRepo;
+    private AuthenticationProvider authenticationProvider;
 
     @Autowired
-    KhachHangRepository khRepo;
+    private JwtProvider jwtProvider;
 
-    public String login(String email, String password) {
-        List<NhanVien> allNhanVien = nvRepo.findAll();
-        Optional<NhanVien> nvOpt = allNhanVien.stream()
-                .filter(nv -> email.equals(nv.getEmail()) &&
-                        nv.getTrangThai() != null &&
-                        nv.getTrangThai() &&
-                        nv.getMatKhau().equals(password))
-                .findFirst();
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-        if (nvOpt.isPresent()) {
-            NhanVien nv = nvOpt.get();
-            return "STAFF:" + nv.getId() + ":" + nv.getHoTen();
-        }
+    @Autowired
+    private NhanVienRepository nhanVienRepository;
 
-        Optional<KhachHang> khOpt = khRepo.findByEmail(email);
-        if (khOpt.isPresent()) {
-            KhachHang kh = khOpt.get();
-            if (kh.getTrangThai() != null && kh.getTrangThai() &&
-                    kh.getMatKhau().equals(password)) {
-                return "CUSTOMER:" + kh.getId() + ":" + kh.getHoTen();
-            }
-        }
+    public void register(NhanVienRequest req) {
+        NhanVien nv = new NhanVien();
+        nv.setHoTen(req.getHoTen());
+        nv.setEmail(req.getEmail());
+        nv.setMatKhau(passwordEncoder.encode(req.getMatKhau()));
+        nv.setDiaChi(req.getDiaChi());
+        nv.setSdt(req.getSdt());
+        nv.setTrangThai(true);
+        nv.setNgayTao(new Date());
+        ChucVu chucVu = new ChucVu();
+        chucVu.setId(2);
+        nv.setChucVu(chucVu);
 
-        return null;
+        nhanVienRepository.save(nv);
     }
 
-    public String register(RegisterRequest request) {
-        try {
-            if (isEmailExists(request.getEmail())) {
-                throw new RuntimeException("Email đã tồn tại trong hệ thống");
-            }
+    public NhanVienResponse login(NhanVienRequest req) {
+        Authentication authentication = authenticationProvider.authenticate(
+                new UsernamePasswordAuthenticationToken(req.getEmail(), req.getMatKhau())
+        );
 
-            KhachHang khachHang = new KhachHang();
-            khachHang.setHoTen(request.getHoTen());
-            khachHang.setEmail(request.getEmail());
-            khachHang.setMatKhau(request.getPassword());
-            khachHang.setSdt(request.getSdt());
-            khachHang.setGioiTinh(request.getGioiTinh());
-            khachHang.setNgaySinh(request.getNgaySinh());
-            khachHang.setTrangThai(true);
-            khachHang.setNgayTao(new Date());
+        UserPrinciple userPrinciple = (UserPrinciple) authentication.getPrincipal();
+        String token = jwtProvider.generateToken(userPrinciple);
 
-            KhachHang savedKhachHang = khRepo.save(khachHang);
+        NhanVienResponse response = new NhanVienResponse();
+        response.setEmail(userPrinciple.getUsername());
+        response.setChucVuName(userPrinciple.getUser().getChucVu().getTenChucVu());
+        response.setHoTen(userPrinciple.getUser().getHoTen());
 
-            return "CUSTOMER:" + savedKhachHang.getId() + ":" + savedKhachHang.getHoTen();
+        response.setAccessToken(token);
+        response.setTypeToken("Bearer");
 
-        } catch (RuntimeException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new RuntimeException("Lỗi đăng ký: " + e.getMessage());
-        }
-    }
-
-    public boolean isEmailExists(String email) {
-        boolean existsInNhanVien = nvRepo.findAll().stream()
-                .anyMatch(nv -> email.equals(nv.getEmail()));
-
-        boolean existsInKhachHang = khRepo.findByEmail(email).isPresent();
-
-        return existsInNhanVien || existsInKhachHang;
-    }
-
-    public KhachHang registerKhachHang(KhachHang khachHang) {
-        if (isEmailExists(khachHang.getEmail())) {
-            throw new RuntimeException("Email đã tồn tại trong hệ thống");
-        }
-
-        if (khachHang.getTrangThai() == null) {
-            khachHang.setTrangThai(true);
-        }
-        if (khachHang.getNgayTao() == null) {
-            khachHang.setNgayTao(new Date());
-        }
-
-        return khRepo.save(khachHang);
-    }
-
-    public Object getUserFromToken(String token) {
-        if (token == null || !token.contains(":")) {
-            return null;
-        }
-
-        try {
-            String[] parts = token.split(":");
-            String userType = parts[0];
-            Integer userId = Integer.parseInt(parts[1]);
-
-            if ("STAFF".equals(userType)) {
-                return nvRepo.findById(userId).orElse(null);
-            } else if ("CUSTOMER".equals(userType)) {
-                return khRepo.findById(userId).orElse(null);
-            }
-        } catch (Exception e) {
-            return null;
-        }
-
-        return null;
+        return response;
     }
 }

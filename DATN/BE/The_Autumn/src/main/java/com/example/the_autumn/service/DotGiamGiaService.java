@@ -105,7 +105,7 @@ public class DotGiamGiaService {
             DotGiamGiaChiTiet chiTiet = new DotGiamGiaChiTiet();
             chiTiet.setDotGiamGia(savedDot);
             chiTiet.setChiTietSanPham(ctsp);
-            chiTiet.setDoUuTien(maxDoUuTien + 1); // tăng theo từng id_ctsp
+            chiTiet.setDoUuTien(maxDoUuTien + 1);
             chiTiet.setGiaSauGiam(null);
 
             chiTietList.add(chiTiet);

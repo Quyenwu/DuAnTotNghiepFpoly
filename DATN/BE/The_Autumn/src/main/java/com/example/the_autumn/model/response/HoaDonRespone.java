@@ -27,13 +27,10 @@ public class HoaDonRespone {
     private Date ngaySua;
     private Integer trangThai;
 
-    private String loaiHoaDonText;
     private String hinhThucThanhToan;
-
 
     private KhachHangDTO khachHang;
     private NhanVienDTO nhanVien;
-
 
     public HoaDonRespone(HoaDon hoaDon) {
         if (hoaDon == null) {
@@ -54,29 +51,12 @@ public class HoaDonRespone {
         this.trangThai = hoaDon.getTrangThai();
         this.loaiHoaDon = hoaDon.getLoaiHoaDon();
 
-        // ⭐ Convert KhachHang entity → KhachHangDTO (đầy đủ fields từ DB: id, hoTen, maKhachHang, soDienThoai, email, trangThai)
         if (hoaDon.getKhachHang() != null) {
-            this.khachHang = new KhachHangDTO(hoaDon.getKhachHang());  // Giả sử KhachHangDTO có constructor từ entity (thêm nếu chưa)
-            // Hoặc thủ công nếu chưa có constructor:
-            // this.khachHang = new KhachHangDTO();
-            // this.khachHang.setId(hoaDon.getKhachHang().getId());
-            // this.khachHang.setHoTen(hoaDon.getKhachHang().getHoTen());
-            // this.khachHang.setMaKhachHang(hoaDon.getKhachHang().getMaKhachHang());
-            // this.khachHang.setSoDienThoai(hoaDon.getKhachHang().getSoDienThoai());
-            // this.khachHang.setEmail(hoaDon.getKhachHang().getEmail());
-            // this.khachHang.setTrangThai(hoaDon.getKhachHang().getTrangThai());
+            this.khachHang = new KhachHangDTO(hoaDon.getKhachHang());
         }
 
-        // ⭐ Convert NhanVien entity → NhanVienDTO (đầy đủ: id, hoTen, maNhanVien, email, trangThai)
         if (hoaDon.getNhanVien() != null) {
-            this.nhanVien = new NhanVienDTO(hoaDon.getNhanVien());  // Giả sử có constructor từ entity
-            // Hoặc thủ công:
-            // this.nhanVien = new NhanVienDTO();
-            // this.nhanVien.setId(hoaDon.getNhanVien().getId());
-            // this.nhanVien.setHoTen(hoaDon.getNhanVien().getHoTen());
-            // this.nhanVien.setMaNhanVien(hoaDon.getNhanVien().getMaNhanVien());
-            // this.nhanVien.setEmail(hoaDon.getNhanVien().getEmail());
-            // this.nhanVien.setTrangThai(hoaDon.getNhanVien().getTrangThai());
+            this.nhanVien = new NhanVienDTO(hoaDon.getNhanVien());
         }
 
         if (hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()) {
@@ -85,8 +65,6 @@ public class HoaDonRespone {
                     .getTenPhuongThucThanhToan();
         }
 
-
     }
-
 
 }

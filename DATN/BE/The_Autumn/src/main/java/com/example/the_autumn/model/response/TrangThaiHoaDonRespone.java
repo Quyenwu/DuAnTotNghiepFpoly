@@ -5,8 +5,7 @@ public class TrangThaiHoaDonRespone {
     public static final Integer CHO_GIAO_HANG = 1;
     public static final Integer DANG_VAN_CHUYEN = 2;
     public static final Integer DA_THANH_TOAN = 3;
-    public static final Integer HOAN_THANH = 4;
-    public static final Integer DA_HUY = 5;
+    public static final Integer DA_HUY = 4 ;
 
     public static String getText(Integer trangThai) {
         if (trangThai == null) return "Không xác định";
@@ -15,8 +14,7 @@ public class TrangThaiHoaDonRespone {
             case 1: return "Chờ giao hàng ";
             case 2: return "Đang vận chuyển";
             case 3: return "Đã thanh toán";
-            case 4: return "Hoàn thành";
-            case 5: return "Đã hủy";
+            case 4: return "Đã hủy";
             default: return "Không xác định";
         }
     }

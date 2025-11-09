@@ -1,5 +1,7 @@
 package com.example.the_autumn.entity;
 
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -9,6 +11,7 @@ import lombok.*;
 @Setter
 @Entity
 @Table(name = "hinh_thuc_thanh_toan")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class HinhThucThanhToan {
 
     @Id
@@ -24,7 +27,7 @@ public class HinhThucThanhToan {
     private HoaDon hoaDon;
 
     @Column(name = "loai_thanh_toan", length = 500)
-    private String loaiThanhToan;
+    private Boolean loaiThanhToan;
 
     @Column(name = "trang_thai")
     private Boolean trangThai;

@@ -1,6 +1,9 @@
 package com.example.the_autumn.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
 import lombok.*;
 import java.util.Date;
@@ -11,6 +14,7 @@ import java.util.Date;
 @Setter
 @Entity
 @Table(name = "lich_su_hoa_don")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
 public class LichSuHoaDon {
 
     @Id

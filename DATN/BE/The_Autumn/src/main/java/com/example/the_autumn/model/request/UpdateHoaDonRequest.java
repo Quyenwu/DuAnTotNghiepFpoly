@@ -25,9 +25,11 @@ public class UpdateHoaDonRequest {
     private BigDecimal phiVanChuyen;
     private Integer idPhieuGiamGia;  // null = không dùng phiếu
     private String ghiChu;
-    private String hinhThucThanhToan;
-    private Integer trangThai;        // ✅ thêm mới
-    private String tenNhanVien;
+    private Integer trangThai;
+    private Integer trangThaiGiaoHang;
+
+    private Integer idNhanVien;
+    private Integer idPhuongThucThanhToan;
     // Danh sách sản phẩm
     private List<ChiTietSanPhamRequest> chiTietSanPhams;
 

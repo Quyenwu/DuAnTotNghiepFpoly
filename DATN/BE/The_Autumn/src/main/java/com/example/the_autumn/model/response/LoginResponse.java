@@ -3,19 +3,21 @@ package com.example.the_autumn.model.response;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Getter
 @Setter
 public class LoginResponse {
-    private String token;
-    private String userType;
-    private String hoTen;
+    private Integer chucVuId;
+    private String chucVuName;
+    private String email;
+    private String matKhau;
     private String message;
     private Boolean success;
-
+    private String accessToken;
+    private String typeToken;
     public LoginResponse(String token, String userType, String hoTen, String message, Boolean success) {
-        this.token = token;
-        this.userType = userType;
-        this.hoTen = hoTen;
+
         this.message = message;
         this.success = success;
     }

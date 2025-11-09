@@ -3,15 +3,18 @@ package com.example.the_autumn.controller;
 
 import com.example.the_autumn.entity.HoaDon;
 import com.example.the_autumn.entity.LichSuHoaDon;
+import com.example.the_autumn.entity.NhanVien;
+import com.example.the_autumn.entity.PhuongThucThanhToan;
+import com.example.the_autumn.model.request.HoaDonRequest;
 import com.example.the_autumn.model.request.PageHoaDonRequest;
 import com.example.the_autumn.model.request.UpdateHoaDonRequest;
-import com.example.the_autumn.model.response.HoaDonDetailResponse;
-import com.example.the_autumn.model.response.HoaDonRespone;
-import com.example.the_autumn.model.response.TrangThaiHoaDonRespone;
-import com.example.the_autumn.model.response.UpdateHoaDonResponse;
+import com.example.the_autumn.model.response.*;
 import com.example.the_autumn.repository.HoaDonRepository;
+import com.example.the_autumn.repository.NhanVienRepository;
+import com.example.the_autumn.repository.PhuongThucThanhToanRepository;
 import com.example.the_autumn.service.AnhService;
 import com.example.the_autumn.service.HoaDonService;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.servlet.http.HttpServletResponse;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
@@ -65,10 +68,13 @@ public class HoaDonController {
     private HoaDonRepository hoaDonRepository;
 
     @Autowired
+    private NhanVienRepository nhanVienRepository;
+
+    @Autowired
+    private PhuongThucThanhToanRepository phuongThucRepository;
+
+    @Autowired
     private  AnhService anhService;
-
-
-
 
     @GetMapping("/{id}")
     public ResponseEntity<HoaDon> getById(@PathVariable Integer id) {
@@ -258,6 +264,20 @@ public class HoaDonController {
         }
     }
 
+    @GetMapping("/{id}/can-edit-shipping")
+    public ResponseEntity<?> canEditShippingStatus(@PathVariable Integer id) {
+        try {
+            boolean canEdit = hoaDonService.canEditShippingStatus(id);
+            Map<String, Object> response = new HashMap<>();
+            response.put("canEdit", canEdit);
+            response.put("message", canEdit ? "Có thể sửa trạng thái giao hàng" : "Không thể sửa trạng thái giao hàng");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateHoaDon(
@@ -359,9 +379,54 @@ public class HoaDonController {
 
     }
 
+    @GetMapping("/nhan-vien")
+    public ResponseEntity<?> getAllNhanVien() {
+        try {
+            List<NhanVien> list = nhanVienRepository.findAll();
+            List<Map<String, Object>> result = list.stream()
+                    .map(nv -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", nv.getId());
+                        map.put("hoTen", nv.getHoTen());
+                        map.put("maNhanVien", nv.getMaNhanVien());
+                        map.put("email", nv.getEmail());
+                        map.put("sdt", nv.getSdt());
+                        return map;
+                    })
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Lỗi: " + e.getMessage());
+        }
+    }
+
+    // ⭐ THÊM: API lấy danh sách phương thức thanh toán
+    @GetMapping("/phuong-thuc-thanh-toan")
+    public ResponseEntity<?> getAllPhuongThucThanhToan() {
+        try {
+            List<PhuongThucThanhToan> list = phuongThucRepository.findAll();
+            List<Map<String, Object>> result = list.stream()
+                    .map(pt -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", pt.getId());
+                        map.put("tenPhuongThucThanhToan", pt.getTenPhuongThucThanhToan());
+                        map.put("maPhuongThucThanhToan", pt.getMaPhuongThucThanhToan());
+                        return map;
+                    })
+                    .collect(Collectors.toList());
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Lỗi: " + e.getMessage());
+        }
+    }
 
 
 
+        @PostMapping("/add")
+        public ResponseObject<?> addHoaDon(@RequestBody HoaDonRequest hoaDonRequest){
+            HoaDon savedHoaDon = hoaDonService.add(hoaDonRequest);
+            return new ResponseObject<>(savedHoaDon,"Thêm thành công");
+        }
 }
 
 
