@@ -527,8 +527,8 @@ public class HoaDonService {
         HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn với ID: " + idHoaDon));
 
-
-        return hoaDon.getTrangThai() != null && hoaDon.getTrangThai() == 0;
+        Integer status = hoaDon.getTrangThai();
+        return status != null && status != 3 && status != 4;
     }
 
 
@@ -815,7 +815,7 @@ public class HoaDonService {
             System.out.println("✅ Sử dụng trạng thái từ FE: " + trangThai);
         } else {
             if (Boolean.TRUE.equals(hoaDon.getLoaiHoaDon())) {
-                trangThai = 1;
+                trangThai = 3;
             } else {
                 trangThai = 1;
             }
@@ -996,12 +996,6 @@ public class HoaDonService {
         }
     }
 
-    public boolean canEditShippingStatus(Integer idHoaDon) {
-        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn với ID: " + idHoaDon));
-        return hoaDon.getTrangThai() != null &&
-                (hoaDon.getTrangThai() == 0 || hoaDon.getTrangThai() == 1);
-    }
 }
 
 
