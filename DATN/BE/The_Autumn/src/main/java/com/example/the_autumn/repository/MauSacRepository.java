@@ -1,6 +1,7 @@
 package com.example.the_autumn.repository;
 
 import com.example.the_autumn.entity.MauSac;
+import com.example.the_autumn.entity.SanPham;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -12,4 +13,5 @@ public interface MauSacRepository extends JpaRepository<MauSac, Integer> {
     List<MauSac> findByNameContaining(String name);
 
     List<MauSac> findByTenMauSacContainingIgnoreCase(String name);
+    List<MauSac> findByTrangThai(Boolean trangThai);
 }

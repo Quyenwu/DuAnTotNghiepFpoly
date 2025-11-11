@@ -415,7 +415,4 @@ public class ChiTietSanPhamController {
         chiTietSanPhamService.save(ctsp);
         return ResponseObject.success(ctsp, "Đã cộng " + soLuong + " sản phẩm vào kho");
     }
-
-
-
 }

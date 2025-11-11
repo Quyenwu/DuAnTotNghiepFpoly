@@ -1,6 +1,7 @@
 package com.example.the_autumn.repository;
 
 import com.example.the_autumn.entity.KhachHang;
+import com.example.the_autumn.entity.SanPham;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -38,4 +39,5 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
     Optional<KhachHang> findByEmail(String email);
 
     Optional<KhachHang> findBySdt(String sdt);
+    List<KhachHang> findByTrangThai(Boolean trangThai);
 }

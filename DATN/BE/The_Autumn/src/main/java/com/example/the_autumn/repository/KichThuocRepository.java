@@ -1,6 +1,7 @@
 package com.example.the_autumn.repository;
 
 import com.example.the_autumn.entity.KichThuoc;
+import com.example.the_autumn.entity.SanPham;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -12,4 +13,5 @@ public interface KichThuocRepository extends JpaRepository<KichThuoc, Integer> {
     List<KichThuoc> findByNameContaining(String name);
 
     List<KichThuoc> findByTenKichThuocContainingIgnoreCase(String name);
+    List<KichThuoc> findByTrangThai(Boolean trangThai);
 }

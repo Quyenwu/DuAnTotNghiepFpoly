@@ -1,6 +1,7 @@
 package com.example.the_autumn.repository;
 
 import com.example.the_autumn.entity.CoAo;
+import com.example.the_autumn.entity.SanPham;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -13,4 +14,5 @@ public interface CoAoRepository extends JpaRepository<CoAo,Integer> {
     List<CoAo> findByNameContaining(String name);
 
     List<CoAo> findByTenCoAoContainingIgnoreCase(String name);
+    List<CoAo> findByTrangThai(Boolean trangThai);
 }

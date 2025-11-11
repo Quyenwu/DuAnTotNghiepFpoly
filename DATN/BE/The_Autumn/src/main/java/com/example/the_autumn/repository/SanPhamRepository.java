@@ -16,7 +16,7 @@ import java.util.Optional;
 public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
 
     List<SanPham> findByTenSanPhamAndTrangThai(String tenSanPham, Boolean trangThai);
-
+    List<SanPham> findByTrangThai(Boolean trangThai);
     @Query("select sp from SanPham sp where (:q is null or lower(sp.tenSanPham) like lower(concat('%', :q, '%')) or lower(sp.maSanPham) like lower(concat('%', :q, '%')))")
     Page<SanPham> search(String q, Pageable pageable);
   

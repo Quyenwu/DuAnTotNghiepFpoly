@@ -52,7 +52,7 @@ public interface ChiTietSanPhamRepository extends JpaRepository<ChiTietSanPham, 
     Long countBySanPham_Id(Integer idSanPham);
 
     List<ChiTietSanPham> findBySanPham_IdAndSoLuongTonGreaterThan(Integer idSanPham, Integer soLuong);
-
+    List<ChiTietSanPham> findBySoLuongTonGreaterThanAndTrangThai(int soLuong, Boolean  trangThai);
     @Modifying
     @Transactional
     void deleteBySanPham_Id(Integer idSanPham);

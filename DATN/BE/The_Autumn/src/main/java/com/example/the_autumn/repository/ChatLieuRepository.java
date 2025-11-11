@@ -1,6 +1,7 @@
 package com.example.the_autumn.repository;
 
 import com.example.the_autumn.entity.ChatLieu;
+import com.example.the_autumn.entity.SanPham;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -12,4 +13,5 @@ public interface ChatLieuRepository extends JpaRepository<ChatLieu,Integer> {
     List<ChatLieu> findByNameContaining(String name);
 
     List<ChatLieu> findByTenChatLieuContainingIgnoreCase(String name);
+    List<ChatLieu> findByTrangThai(Boolean trangThai);
 }
