@@ -33,6 +33,7 @@ public class HoaDonRequest {
     private Integer trangThai;
     private BigDecimal soTienThanhToan;
     private String ghiChuThanhToan;
+    private Date ngayTao;
     private List<HoaDonChiTietRequest> chiTietList;
     private Integer idPhuongThucThanhToan;
 

@@ -46,6 +46,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -387,7 +389,6 @@ public class HoaDonController {
         }
     }
 
-    // ⭐ THÊM: API lấy danh sách phương thức thanh toán
     @GetMapping("/phuong-thuc-thanh-toan")
     public ResponseEntity<?> getAllPhuongThucThanhToan() {
         try {
@@ -414,6 +415,60 @@ public class HoaDonController {
             HoaDon savedHoaDon = hoaDonService.add(hoaDonRequest);
             return new ResponseObject<>(savedHoaDon,"Thêm thành công");
         }
+
+    @PostMapping("/create-and-pay-vnpay")
+    public ResponseEntity<?> createHoaDonAndPayWithVNPAY(@RequestBody HoaDonRequest hoaDonRequest) {
+        try {
+            System.out.println("=== VNPay Request ===");
+            System.out.println("Amount: " + hoaDonRequest.getTongTienSauGiam());
+            System.out.println("Customer: " + hoaDonRequest.getIdKhachHang());
+
+            VNPayResponse response = hoaDonService.createHoaDonAndPayWithVNPAY(hoaDonRequest);
+
+            return ResponseEntity.ok(new BaseResponse(true, "Tạo hóa đơn và thanh toán VNPAY thành công", response));
+        } catch (Exception e) {
+            System.err.println("Error in createAndPayWithVNPAY: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.badRequest().body(new BaseResponse(false, "Lỗi: " + e.getMessage(), null));
+        }
+    }
+
+    @GetMapping("/vnpay-return")
+    public ResponseEntity<?> vnpayReturn(
+            @RequestParam Map<String, String> params,
+            HttpServletResponse response) {
+        try {
+            String result = hoaDonService.handleVNPayReturn(params);
+
+            String redirectUrl = "http://localhost:3000/payment-result?status=" +
+                    ("00".equals(params.get("vnp_ResponseCode")) ? "success" : "fail") +
+                    "&message=" + URLEncoder.encode(result, StandardCharsets.UTF_8) +
+                    "&orderId=" + params.get("vnp_TxnRef");
+
+            response.sendRedirect(redirectUrl);
+            return ResponseEntity.ok().build();
+
+        } catch (Exception e) {
+            try {
+                String errorRedirectUrl = "http://localhost:3000/payment-result?status=error&message=" +
+                        URLEncoder.encode("Lỗi xử lý thanh toán: " + e.getMessage(), StandardCharsets.UTF_8);
+                response.sendRedirect(errorRedirectUrl);
+            } catch (IOException ex) {
+                return ResponseEntity.badRequest().body("Lỗi xử lý thanh toán");
+            }
+            return ResponseEntity.ok().build();
+        }
+    }
+
+    @PostMapping("/vnpay-ipn")
+    public ResponseEntity<?> vnpayIPN(@RequestParam Map<String, String> params) {
+        try {
+            String result = hoaDonService.handleVNPayIPN(params);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("error");
+        }
+    }
 }
 
 

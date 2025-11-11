@@ -14,4 +14,5 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Integer> , J
     Optional<NhanVien> findByEmail(String email);
 
     NhanVien getNhanVienByEmail(String email);
+
 }
