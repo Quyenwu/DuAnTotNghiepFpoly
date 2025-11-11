@@ -26,11 +26,11 @@ public class NhanVienResponse {
     private String hinhAnh;
     private String cccd;
     private String matKhau;
-
     private Date ngayTao;
     private Date ngaySua;
     private Boolean trangThai;
-
+    private String accessToken;
+    private String typeToken;
     public NhanVienResponse(NhanVien nhanVien) {
         this.id = nhanVien.getId();
         this.chucVuId = nhanVien.getChucVu().getId();

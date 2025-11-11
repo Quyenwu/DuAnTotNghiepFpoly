@@ -26,9 +26,7 @@ public class HoaDonRespone {
     private Date ngayTao;
     private Date ngaySua;
     private Integer trangThai;
-    private Integer trangThaiGiaoHang;
 
-    private String loaiHoaDonText;
     private String hinhThucThanhToan;
 
     private KhachHangDTO khachHang;
@@ -51,7 +49,6 @@ public class HoaDonRespone {
         this.ngayTao = hoaDon.getNgayTao();
         this.ngaySua = hoaDon.getNgaySua();
         this.trangThai = hoaDon.getTrangThai();
-        this.trangThaiGiaoHang = hoaDon.getTrangThaiGiaoHang();
         this.loaiHoaDon = hoaDon.getLoaiHoaDon();
 
         if (hoaDon.getKhachHang() != null) {
@@ -59,7 +56,7 @@ public class HoaDonRespone {
         }
 
         if (hoaDon.getNhanVien() != null) {
-            this.nhanVien = new NhanVienDTO(hoaDon.getNhanVien());  // Giả sử có constructor từ entity
+            this.nhanVien = new NhanVienDTO(hoaDon.getNhanVien());
         }
 
         if (hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()) {

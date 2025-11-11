@@ -31,9 +31,9 @@ public class HoaDonRequest {
     private Date ngayThanhToan;
     private Integer nguoiTao;
     private Integer trangThai;
-    private Integer trangThaiGiaoHang;
     private BigDecimal soTienThanhToan;
     private String ghiChuThanhToan;
+    private Date ngayTao;
     private List<HoaDonChiTietRequest> chiTietList;
     private Integer idPhuongThucThanhToan;
 
