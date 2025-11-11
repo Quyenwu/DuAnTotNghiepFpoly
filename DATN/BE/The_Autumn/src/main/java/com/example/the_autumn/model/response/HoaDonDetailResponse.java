@@ -17,9 +17,16 @@ public class HoaDonDetailResponse {
     private String diaChiKhachHang;
 
     private Integer idNhanVien;
+    private String maNhanVien;
     private String tenNhanVien;
     private String sdtNhanVien;
 
+    private String maGiamGia;
+    private String tenChuongTrinh;
+
+    private String maGiaoDich;
+    private BigDecimal soTien;
+    private String ghiChu;
 
     private Boolean loaiHoaDon;
     private Integer idPhuongThucThanhToan;
@@ -28,18 +35,57 @@ public class HoaDonDetailResponse {
     private BigDecimal tongTien;
     private BigDecimal tongTienSauGiam;
     private Integer trangThai;
-    private Integer trangThaiGiaoHang;
-    private String ghiChu;
+    private String ghiChuThanhToan;
+
+    public String getTenChuongTrinh() {
+        return tenChuongTrinh;
+    }
+
+    public void setTenChuongTrinh(String tenChuongTrinh) {
+        this.tenChuongTrinh = tenChuongTrinh;
+    }
+
+    public String getMaGiamGia() {
+        return maGiamGia;
+    }
+
+    public void setMaGiamGia(String maGiamGia) {
+        this.maGiamGia = maGiamGia;
+    }
+
+    public String getMaGiaoDich() {
+        return maGiaoDich;
+    }
+
+    public void setMaGiaoDich(String maGiaoDich) {
+        this.maGiaoDich = maGiaoDich;
+    }
+
+    public BigDecimal getSoTien() {
+        return soTien;
+    }
+
+    public void setSoTien(BigDecimal soTien) {
+        this.soTien = soTien;
+    }
+
+    public String getGhiChuThanhToan() {
+        return ghiChuThanhToan;
+    }
+
+    public void setGhiChuThanhToan(String ghiChuThanhToan) {
+        this.ghiChuThanhToan = ghiChuThanhToan;
+    }
+
+    public String getMaNhanVien() {
+        return maNhanVien;
+    }
+
+    public void setMaNhanVien(String maNhanVien) {
+        this.maNhanVien = maNhanVien;
+    }
 
     private List<ChiTietSanPhamResponse> chiTietSanPhams;
-
-    public Integer getTrangThaiGiaoHang() {
-        return trangThaiGiaoHang;
-    }
-
-    public void setTrangThaiGiaoHang(Integer trangThaiGiaoHang) {
-        this.trangThaiGiaoHang = trangThaiGiaoHang;
-    }
 
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
