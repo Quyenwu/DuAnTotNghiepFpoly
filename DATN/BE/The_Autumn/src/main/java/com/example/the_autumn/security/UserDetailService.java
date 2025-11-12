@@ -17,20 +17,36 @@ import java.util.stream.Collectors;
 
 @Service
 public class UserDetailService implements UserDetailsService {
+
     @Autowired
     private NhanVienRepository userRepository;
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        NhanVien user=userRepository.getNhanVienByEmail(email);
-        UserPrinciple userPrinciple=new UserPrinciple();
+        System.out.println("Loading user by email: " + email);
+
+        NhanVien user = userRepository.getNhanVienByEmail(email);
+        if (user == null) {
+            System.err.println("User not found with email: " + email);
+            throw new UsernameNotFoundException("User not found with email: " + email);
+        }
+
+        System.out.println("User found: " + user.getEmail());
+        System.out.println("User status: " + user.getTrangThai());
+
+        UserPrinciple userPrinciple = new UserPrinciple();
         userPrinciple.setUser(user);
+
         if (user.getChucVu() != null) {
             userPrinciple.setAuthorities(
                     Set.of(new SimpleGrantedAuthority(user.getChucVu().getTenChucVu()))
             );
+            System.out.println("User role: " + user.getChucVu().getTenChucVu());
         } else {
-            userPrinciple.setAuthorities(Set.of());
+            userPrinciple.setAuthorities(Set.of(new SimpleGrantedAuthority("USER")));
+            System.out.println("No role assigned, using default: USER");
         }
+
         return userPrinciple;
     }
 }
