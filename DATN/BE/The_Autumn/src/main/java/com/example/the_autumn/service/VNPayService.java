@@ -30,38 +30,34 @@ public class VNPayService {
 
     public String createOrder(int amount, String orderInfo, String orderId) {
         try {
-            // Sử dụng tham số giống hệt code mẫu của VNPay
             String vnp_Command = "pay";
-            String vnp_TxnRef = getRandomNumber(8); // VNPay yêu cầu random 8 số
-            String vnp_IpAddr = "127.0.0.1"; // Hoặc lấy IP thực tế
-            String orderType = "other"; // Loại đơn hàng
+            String vnp_TxnRef = getRandomNumber(8);
+            String vnp_IpAddr = "127.0.0.1";
+            String orderType = "other";
 
             // Tạo map chứa params - KHÔNG dùng TreeMap
             Map<String, String> vnp_Params = new HashMap<>();
             vnp_Params.put("vnp_Version", this.vnp_Version);
             vnp_Params.put("vnp_Command", vnp_Command);
             vnp_Params.put("vnp_TmnCode", this.vnp_TmnCode);
-            vnp_Params.put("vnp_Amount", String.valueOf(amount * 100)); // Nhân 100
+            vnp_Params.put("vnp_Amount", String.valueOf(amount * 100));
             vnp_Params.put("vnp_CurrCode", "VND");
             vnp_Params.put("vnp_TxnRef", vnp_TxnRef);
             vnp_Params.put("vnp_OrderInfo", orderInfo);
             vnp_Params.put("vnp_OrderType", orderType);
             vnp_Params.put("vnp_Locale", "vn");
-            vnp_Params.put("vnp_ReturnUrl", this.vnp_ReturnUrl);
+            vnp_Params.put("vnp_ReturnUrl", "http://localhost:5173/admin/detail-bill/" + orderId);
             vnp_Params.put("vnp_IpAddr", vnp_IpAddr);
 
-            // Thời gian tạo đơn - theo múi giờ VN
             Calendar cld = Calendar.getInstance(TimeZone.getTimeZone("Etc/GMT+7"));
             SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
             String vnp_CreateDate = formatter.format(cld.getTime());
             vnp_Params.put("vnp_CreateDate", vnp_CreateDate);
 
-            // Thời gian hết hạn (15 phút)
             cld.add(Calendar.MINUTE, 15);
             String vnp_ExpireDate = formatter.format(cld.getTime());
             vnp_Params.put("vnp_ExpireDate", vnp_ExpireDate);
 
-            // Sắp xếp các tham số theo key - GIỐNG HỆT VNPay
             List fieldNames = new ArrayList(vnp_Params.keySet());
             Collections.sort(fieldNames);
 
@@ -73,12 +69,10 @@ public class VNPayService {
                 String fieldName = (String) itr.next();
                 String fieldValue = vnp_Params.get(fieldName);
                 if ((fieldValue != null) && (fieldValue.length() > 0)) {
-                    // Build hash data - ENCODE giống VNPay
                     hashData.append(fieldName);
                     hashData.append('=');
                     hashData.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
 
-                    // Build query
                     query.append(URLEncoder.encode(fieldName, StandardCharsets.US_ASCII.toString()));
                     query.append('=');
                     query.append(URLEncoder.encode(fieldValue, StandardCharsets.US_ASCII.toString()));
@@ -90,7 +84,6 @@ public class VNPayService {
                 }
             }
 
-            // Tạo chữ ký - Sử dụng hàm hash giống VNPay
             String vnp_SecureHash = hmacSHA512(this.vnp_HashSecret, hashData.toString());
             query.append("&vnp_SecureHash=").append(vnp_SecureHash);
 

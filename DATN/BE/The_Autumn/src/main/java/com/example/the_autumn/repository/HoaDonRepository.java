@@ -50,5 +50,11 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer>, JpaSpe
 
     @Query("SELECT MAX(CAST(SUBSTRING(h.maHoaDon, 3) AS integer)) FROM HoaDon h WHERE h.maHoaDon LIKE 'HD%'")
     Optional<Integer> findMaxMaHoaDonNumber();
+
+    List<HoaDon> findByKhachHangIdAndPhieuGiamGiaIdAndTrangThaiNot(
+            Integer khachHangId,
+            Integer phieuGiamGiaId,
+            Integer trangThai
+    );
 }
 

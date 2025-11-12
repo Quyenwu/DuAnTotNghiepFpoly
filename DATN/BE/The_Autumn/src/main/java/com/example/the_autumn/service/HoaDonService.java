@@ -53,12 +53,7 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -551,6 +546,15 @@ public class HoaDonService {
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn ID " + id));
         StringBuilder thayDoiLog = new StringBuilder();
 
+        if (request.getLoaiHoaDon() != null && !request.getLoaiHoaDon().equals(hoaDon.getLoaiHoaDon())) {
+            Boolean oldLoaiHoaDon = hoaDon.getLoaiHoaDon();
+            hoaDon.setLoaiHoaDon(request.getLoaiHoaDon());
+
+            String moTa = String.format("Loại hóa đơn: '%s' → '%s'",
+                    oldLoaiHoaDon ? "Tại quầy" : "Online",
+                    request.getLoaiHoaDon() ? "Tại quầy" : "Online");
+            luuLichSu(hoaDon, "Cập nhật loại hóa đơn", moTa, null);
+        }
         if (hoaDon.getKhachHang() != null) {
             boolean coThayDoi = false;
             if (request.getHoTenKhachHang() != null &&
@@ -859,9 +863,9 @@ public class HoaDonService {
             ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(ctReq.getIdChiTietSanPham())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết sản phẩm"));
 
-            if (ctsp.getSoLuongTon() < ctReq.getSoLuong()) {
-                throw new RuntimeException("Không đủ tồn kho");
-            }
+//            if (ctsp.getSoLuongTon() < ctReq.getSoLuong()) {
+//                throw new RuntimeException("Không đủ tồn kho");
+//            }
 
             BigDecimal giaGoc = ctsp.getGiaBan();
             BigDecimal giaSauGiam = getGiaSauGiamFromDotGiamGia(ctsp.getId(), giaGoc);
@@ -877,8 +881,8 @@ public class HoaDonService {
 
             listCT.add(hdct);
 
-            ctsp.setSoLuongTon(ctsp.getSoLuongTon() - ctReq.getSoLuong());
-            chiTietSanPhamRepository.save(ctsp);
+//            ctsp.setSoLuongTon(ctsp.getSoLuongTon() - ctReq.getSoLuong());
+//            chiTietSanPhamRepository.save(ctsp);
         }
 
         hoaDon.setHoaDonChiTiets(listCT);
@@ -1027,8 +1031,18 @@ public class HoaDonService {
     @Transactional
     public VNPayResponse createHoaDonAndPayWithVNPAY(HoaDonRequest request) {
         try {
-
-            request.setTrangThai(1);
+            Integer trangThai;
+            if (request.getLoaiHoaDon() == null) {
+                trangThai = request.getTrangThai();
+                System.out.println("✅ Sử dụng trạng thái từ FE: " + trangThai);
+            }else {
+                if (Boolean.TRUE.equals(request.getLoaiHoaDon())) {
+                    trangThai = 3;
+                } else {
+                    trangThai = 1;
+                }
+            }
+            request.setTrangThai(trangThai);
             request.setNgayTao(new Date());
             request.setNgayThanhToan(null);
 
@@ -1118,6 +1132,20 @@ public class HoaDonService {
         } catch (Exception e) {
             return "ERROR";
         }
+    }
+
+    public boolean kiemTraKhachHangDaSuDungPhieu(Integer phieuGiamGiaId, Integer khachHangId) {
+        List<HoaDon> hoaDonDaSuDung = hoaDonRepository.findByKhachHangIdAndPhieuGiamGiaIdAndTrangThaiNot(
+                khachHangId, phieuGiamGiaId, 4
+        );
+
+        return !hoaDonDaSuDung.isEmpty();
+    }
+
+    public List<HoaDon> getHoaDonByKhachHangVaPhieu(Integer phieuGiamGiaId, Integer khachHangId) {
+        return hoaDonRepository.findByKhachHangIdAndPhieuGiamGiaIdAndTrangThaiNot(
+                khachHangId, phieuGiamGiaId, 4
+        );
     }
 
 }
