@@ -14,5 +14,6 @@ import java.util.List;
 
 @Repository
 public interface PhieuGiamGiaRepository extends JpaRepository<PhieuGiamGia, Integer>, JpaSpecificationExecutor<PhieuGiamGia> {
-
+    @Query("SELECT p FROM PhieuGiamGia p WHERE p.trangThai = 1 AND p.ngayBatDau <= :today AND p.ngayKetThuc >= :today")
+    List<PhieuGiamGia> findActive(@Param("today") LocalDate today);
 }

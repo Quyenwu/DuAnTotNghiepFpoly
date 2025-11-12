@@ -17,4 +17,5 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Integer> , J
 
     @Query("SELECT n FROM NhanVien n LEFT JOIN FETCH n.chucVu WHERE n.email = :email")
     NhanVien getNhanVienByEmail(@Param("email") String email);
+
 }

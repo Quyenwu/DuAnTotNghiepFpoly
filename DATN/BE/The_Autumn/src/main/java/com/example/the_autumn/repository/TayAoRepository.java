@@ -1,5 +1,6 @@
 package com.example.the_autumn.repository;
 
+import com.example.the_autumn.entity.SanPham;
 import com.example.the_autumn.entity.TayAo;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -12,4 +13,5 @@ public interface TayAoRepository extends JpaRepository<TayAo, Integer> {
     List<TayAo> findByNameContaining(String name);
 
     List<TayAo> findByTenTayAoContainingIgnoreCase(String name);
+    List<TayAo> findByTrangThai(Boolean trangThai);
 }
