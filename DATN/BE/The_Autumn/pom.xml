@@ -159,24 +159,16 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
-<<<<<<< HEAD
-=======
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
->>>>>>> ed583feb5c76441cc2d2e924d8fc38886d5677f2
         <dependency>
             <groupId>com.fasterxml.jackson.datatype</groupId>
             <artifactId>jackson-datatype-hibernate6</artifactId>
             <version>2.15.2</version>
         </dependency>
         <dependency>
-<<<<<<< HEAD
-            <groupId>com.fasterxml.jackson.datatype</groupId>
-            <artifactId>jackson-datatype-jsr310</artifactId>
-        </dependency>
-=======
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>0.11.5</version>
@@ -194,7 +186,6 @@
             <scope>runtime</scope>
         </dependency>
 
->>>>>>> ed583feb5c76441cc2d2e924d8fc38886d5677f2
     </dependencies>
     <repositories>
         <repository>
@@ -206,8 +197,6 @@
             <url>https://repo.maven.apache.org/maven2</url>
         </repository>
     </repositories>
-
-
     <build>
         <plugins>
             <plugin>
@@ -216,5 +205,4 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
