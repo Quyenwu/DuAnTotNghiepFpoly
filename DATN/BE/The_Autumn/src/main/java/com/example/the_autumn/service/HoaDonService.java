@@ -1195,20 +1195,6 @@ public class HoaDonService {
         }
     }
 
-    public boolean kiemTraKhachHangDaSuDungPhieu(Integer phieuGiamGiaId, Integer khachHangId) {
-        List<HoaDon> hoaDonDaSuDung = hoaDonRepository.findByKhachHangIdAndPhieuGiamGiaIdAndTrangThaiNot(
-                khachHangId, phieuGiamGiaId, 4
-        );
-
-        return !hoaDonDaSuDung.isEmpty();
-    }
-
-    public List<HoaDon> getHoaDonByKhachHangVaPhieu(Integer phieuGiamGiaId, Integer khachHangId) {
-        return hoaDonRepository.findByKhachHangIdAndPhieuGiamGiaIdAndTrangThaiNot(
-                khachHangId, phieuGiamGiaId, 4
-        );
-    }
-
 }
 
 
