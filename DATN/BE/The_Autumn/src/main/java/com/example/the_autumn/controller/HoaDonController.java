@@ -470,53 +470,6 @@ public class HoaDonController {
         }
     }
 
-    @GetMapping("/kiem-tra-su-dung-phieu")
-    public ResponseEntity<?> kiemTraSuDungPhieu(
-            @RequestParam Integer phieuGiamGiaId,
-            @RequestParam Integer khachHangId) {
-
-        try {
-            boolean daSuDung = hoaDonService.kiemTraKhachHangDaSuDungPhieu(phieuGiamGiaId, khachHangId);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("daSuDung", daSuDung);
-            response.put("message", daSuDung ?
-                    "Khách hàng đã sử dụng phiếu này" :
-                    "Khách hàng chưa sử dụng phiếu này");
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                    Map.of("success", false, "message", "Lỗi khi kiểm tra: " + e.getMessage())
-            );
-        }
-    }
-
-    @GetMapping("/lich-su-su-dung-phieu")
-    public ResponseEntity<?> getLichSuSuDungPhieu(
-            @RequestParam Integer phieuGiamGiaId,
-            @RequestParam Integer khachHangId) {
-
-        try {
-            boolean daSuDung = hoaDonService.kiemTraKhachHangDaSuDungPhieu(phieuGiamGiaId, khachHangId);
-            List<HoaDon> hoaDonDaSuDung = hoaDonService.getHoaDonByKhachHangVaPhieu(phieuGiamGiaId, khachHangId);
-
-            Map<String, Object> response = new HashMap<>();
-            response.put("success", true);
-            response.put("daSuDung", daSuDung);
-            response.put("soLanSuDung", hoaDonDaSuDung.size());
-            response.put("hoaDonDaSuDung", hoaDonDaSuDung);
-
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(
-                    Map.of("success", false, "message", "Lỗi khi lấy lịch sử: " + e.getMessage())
-            );
-        }
-    }
 }
 
 
