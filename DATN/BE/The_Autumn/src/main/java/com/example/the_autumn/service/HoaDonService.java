@@ -727,8 +727,8 @@ public class HoaDonService {
 
     @Transactional
     public HoaDon add(HoaDonRequest req) {
-
         HoaDon hoaDon = new HoaDon();
+
         if (req.getNgayTao() != null) {
             hoaDon.setNgayTao(req.getNgayTao());
         } else {
@@ -809,6 +809,62 @@ public class HoaDonService {
                 System.out.println("⚠️ Không có diaChiKhachHang hoặc là 'Chưa có địa chỉ'");
             }
             System.out.println("=== DEBUG THÊM ĐỊA CHỈ KẾT THÚC ===");
+        } else {
+            if (req.getHoTen() != null && !req.getHoTen().isEmpty() &&
+                    req.getSdt() != null && !req.getSdt().isEmpty()) {
+
+                try {
+                    Optional<KhachHang> existingCustomer = khachHangRepository.findBySdt(req.getSdt());
+
+                    if (existingCustomer.isPresent()) {
+                        khachHang = existingCustomer.get();
+                        System.out.println("✅ Sử dụng khách hàng đã tồn tại: " + khachHang.getHoTen() + " (ID: " + khachHang.getId() + ")");
+                    } else {
+                        KhachHang newKhachHang = new KhachHang();
+                        newKhachHang.setHoTen(req.getHoTen());
+                        newKhachHang.setSdt(req.getSdt());
+                        newKhachHang.setGioiTinh(true);
+                        newKhachHang.setNgaySinh(new Date());
+                        newKhachHang.setTrangThai(true);
+                        newKhachHang.setNgayTao(new Date());
+
+                        khachHang = khachHangRepository.save(newKhachHang);
+                        System.out.println("🎉 ĐÃ TẠO KHÁCH HÀNG MỚI: " + khachHang.getHoTen() + " (ID: " + khachHang.getId() + ")");
+
+                        if (req.getIdTinh() != null && req.getIdQuan() != null && req.getDiaChiCuThe() != null) {
+                            try {
+                                TinhThanh tinhThanh = tinhThanhRepository.findById(req.getIdTinh())
+                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy tỉnh/thành ID: " + req.getIdTinh()));
+
+                                QuanHuyen quanHuyen = quanHuyenRepository.findById(req.getIdQuan())
+                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy quận/huyện ID: " + req.getIdQuan()));
+
+                                DiaChi newAddress = new DiaChi();
+                                newAddress.setKhachHang(khachHang);
+                                newAddress.setTinhThanh(tinhThanh);
+                                newAddress.setQuanHuyen(quanHuyen);
+                                newAddress.setDiaChiCuThe(req.getDiaChiCuThe());
+                                newAddress.setTrangThai(true);
+                                newAddress.setTenDiaChi("Địa chỉ mặc định");
+
+                                DiaChi savedAddress = diaChiRepository.save(newAddress);
+                                System.out.println("📍 ĐÃ THÊM ĐỊA CHỈ CHO KHÁCH HÀNG MỚI: " + savedAddress.getDiaChiCuThe());
+
+                            } catch (Exception e) {
+                                System.out.println("⚠️ Không thể thêm địa chỉ cho khách hàng mới: " + e.getMessage());
+                            }
+                        }
+                    }
+
+                    hoaDon.setKhachHang(khachHang);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    hoaDon.setKhachHang(null);
+                }
+            } else {
+                hoaDon.setKhachHang(null);
+            }
         }
 
         NhanVien nhanVien = nhanVienRepository.findById(
@@ -832,6 +888,8 @@ public class HoaDonService {
         }
 
         hoaDon.setLoaiHoaDon(req.getLoaiHoaDon() != null ? req.getLoaiHoaDon() : false);
+
+
         hoaDon.setPhiVanChuyen(req.getPhiVanChuyen() != null ? req.getPhiVanChuyen() : BigDecimal.ZERO);
         hoaDon.setTongTien(req.getTongTien() != null ? req.getTongTien() : BigDecimal.ZERO);
         hoaDon.setTongTienSauGiam(req.getTongTienSauGiam() != null ? req.getTongTienSauGiam() : BigDecimal.ZERO);
@@ -839,17 +897,9 @@ public class HoaDonService {
         hoaDon.setGhiChu(req.getGhiChu());
         hoaDon.setNgayThanhToan(new Date());
 
-        Integer trangThai;
-        if (req.getTrangThai() != null) {
-            trangThai = req.getTrangThai();
-            System.out.println("✅ Sử dụng trạng thái từ FE: " + trangThai);
-        } else {
-            if (Boolean.TRUE.equals(hoaDon.getLoaiHoaDon())) {
-                trangThai = 3;
-            } else {
-                trangThai = 1;
-            }
-            System.out.println("✅ Sử dụng trạng thái mặc định: " + trangThai + " (loaiHoaDon: " + hoaDon.getLoaiHoaDon() + ")");
+        Integer trangThai = req.getTrangThai();
+        if (trangThai == null) {
+            throw new RuntimeException("Trạng thái hóa đơn không được để trống");
         }
         hoaDon.setTrangThai(trangThai);
 
@@ -863,9 +913,9 @@ public class HoaDonService {
             ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(ctReq.getIdChiTietSanPham())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết sản phẩm"));
 
-//            if (ctsp.getSoLuongTon() < ctReq.getSoLuong()) {
-//                throw new RuntimeException("Không đủ tồn kho");
-//            }
+            // if (ctsp.getSoLuongTon() < ctReq.getSoLuong()) {
+            //     throw new RuntimeException("Không đủ tồn kho");
+            // }
 
             BigDecimal giaGoc = ctsp.getGiaBan();
             BigDecimal giaSauGiam = getGiaSauGiamFromDotGiamGia(ctsp.getId(), giaGoc);
@@ -881,8 +931,8 @@ public class HoaDonService {
 
             listCT.add(hdct);
 
-//            ctsp.setSoLuongTon(ctsp.getSoLuongTon() - ctReq.getSoLuong());
-//            chiTietSanPhamRepository.save(ctsp);
+            // ctsp.setSoLuongTon(ctsp.getSoLuongTon() - ctReq.getSoLuong());
+            // chiTietSanPhamRepository.save(ctsp);
         }
 
         hoaDon.setHoaDonChiTiets(listCT);
@@ -895,17 +945,26 @@ public class HoaDonService {
         log.setTrangThai(true);
         log.setNgayCapNhat(new Date());
 
-        if (trangThai == 1) {
-            if (Boolean.TRUE.equals(hoaDon.getLoaiHoaDon())) {
-                log.setHanhDong("Thanh toán tại quầy");
-                log.setMoTa("Hóa đơn #" + saved.getId() + " đã thanh toán thành công tại quầy.");
+        String customerInfo;
+        if (khachHang != null) {
+            customerInfo = "Khách hàng: " + khachHang.getHoTen();
+        } else {
+            if (req.getGhiChu() != null && req.getGhiChu().contains("Khách lẻ")) {
+                customerInfo = "Khách lẻ (nhập thông tin giao hàng)";
             } else {
-                log.setHanhDong("Tạo đơn giao hàng");
-                log.setMoTa("Đơn hàng #" + saved.getId() + " đã được tạo và đang chờ giao hàng.");
+                customerInfo = "Khách lẻ";
             }
+        }
+
+        if (trangThai == 3) {
+            log.setHanhDong("Thanh toán tại quầy");
+            log.setMoTa("Hóa đơn #" + saved.getId() + " đã thanh toán thành công tại quầy. " + customerInfo);
+        } else if (trangThai == 1) {
+            log.setHanhDong("Bán giao hàng");
+            log.setMoTa("Hóa đơn #" + saved.getId() + " đã được tạo và đang chờ giao hàng. " + customerInfo);
         } else {
             log.setHanhDong("Tạo hóa đơn");
-            log.setMoTa("Hóa đơn #" + saved.getId() + " đã được tạo với trạng thái: " + trangThai);
+            log.setMoTa("Hóa đơn #" + saved.getId() + " đã được tạo với trạng thái: " + trangThai + ". " + customerInfo);
         }
 
         lichSuHoaDonRepository.save(log);
@@ -943,9 +1002,11 @@ public class HoaDonService {
 
         System.out.println("🎉 HOÀN TẤT TẠO HÓA ĐƠN - ID: " + saved.getId() +
                 ", Trạng thái: " + saved.getTrangThai() +
-                ", Loại: " + saved.getLoaiHoaDon());
+                ", Loại: " + saved.getLoaiHoaDon() +
+                ", Khách hàng: " + (khachHang != null ? khachHang.getHoTen() : "Khách lẻ"));
         return saved;
     }
+
 
 
     private BigDecimal getGiaSauGiamFromDotGiamGia(Integer idChiTietSanPham, BigDecimal giaGoc) {

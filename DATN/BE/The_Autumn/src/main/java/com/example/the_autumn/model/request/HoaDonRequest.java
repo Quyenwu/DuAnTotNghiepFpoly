@@ -27,6 +27,8 @@ public class HoaDonRequest {
     private BigDecimal tongTien;
     private BigDecimal tongTienSauGiam;
     private String ghiChu;
+    private String hoTen;
+    private String sdt;
     private String diaChiKhachHang;
     private Date ngayThanhToan;
     private Integer nguoiTao;
