@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class GiamGiaKhachHangService {
@@ -16,5 +17,21 @@ public class GiamGiaKhachHangService {
 
     public List<GiamGiaKhachHangResponse>  getAllGiamGiaKhachHang(){
         return giamGiaKhachHangRepository.findAll().stream().map(GiamGiaKhachHangResponse::new).toList();
+    }
+
+    public boolean removeCustomerFromDiscount(Long discountId, Long customerId) {
+        try {
+            Optional<GiamGiaKhachHang> giamGiaKhachHang = giamGiaKhachHangRepository
+                    .findByPhieuGiamGiaIdAndKhachHangId(discountId, customerId);
+
+            if (giamGiaKhachHang.isPresent()) {
+                giamGiaKhachHangRepository.delete(giamGiaKhachHang.get());
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

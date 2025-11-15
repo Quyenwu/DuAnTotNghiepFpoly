@@ -26,7 +26,7 @@ public class LichSuHoaDon {
     private HoaDon hoaDon;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_khach_hang",referencedColumnName = "id", nullable = false)
+    @JoinColumn(name = "id_khach_hang",referencedColumnName = "id", nullable = true)
     private KhachHang khachHang;
 
     @ManyToOne(fetch = FetchType.LAZY)

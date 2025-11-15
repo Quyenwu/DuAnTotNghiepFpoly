@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface GiamGiaKhachHangRepository extends JpaRepository<GiamGiaKhachHang, Integer> {
@@ -18,4 +19,5 @@ public interface GiamGiaKhachHangRepository extends JpaRepository<GiamGiaKhachHa
     @Query("DELETE FROM GiamGiaKhachHang g WHERE g.phieuGiamGia.id = :phieuGiamGiaId")
     void deleteByPhieuGiamGiaId(@Param("phieuGiamGiaId") Integer phieuGiamGiaId);
 
+    Optional<GiamGiaKhachHang> findByPhieuGiamGiaIdAndKhachHangId(Long phieuGiamGiaId, Long khachHangId);
 }
