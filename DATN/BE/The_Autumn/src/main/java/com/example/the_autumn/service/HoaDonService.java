@@ -561,14 +561,96 @@ public class HoaDonService {
             }
         }
 
-        if (request.getDiaChiKhachHang() != null &&
-                !request.getDiaChiKhachHang().equals(hoaDon.getDiaChiKhachHang())) {
+        if (request.getDiaChiCuThe() != null ||
+                request.getThanhPho() != null ||
+                request.getQuan() != null ||
+                request.getIdDiaChi() != null) {
+
+            String diaChiCuThe = request.getDiaChiCuThe() != null ? request.getDiaChiCuThe().trim() : "";
+            Integer idTinh = request.getThanhPho();
+            Integer idQuan = request.getQuan();
+            Integer idDiaChi = request.getIdDiaChi(); // ← ID địa chỉ được chọn từ modal
+
+            // === TẠO CHUỖI ĐỊA CHỈ ĐẦY ĐỦ CHO HÓA ĐƠN ===
+            StringBuilder fullAddress = new StringBuilder();
+            if (!diaChiCuThe.isEmpty()) {
+                fullAddress.append(diaChiCuThe);
+            }
+            if (idQuan != null) {
+                QuanHuyen quan = quanHuyenRepository.findById(idQuan)
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy quận/huyện ID: " + idQuan));
+                if (fullAddress.length() > 0) fullAddress.append(", ");
+                fullAddress.append(quan.getTenQuan());
+            }
+            if (idTinh != null) {
+                TinhThanh tinh = tinhThanhRepository.findById(idTinh)
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy tỉnh/thành ID: " + idTinh));
+                if (fullAddress.length() > 0) fullAddress.append(", ");
+                fullAddress.append(tinh.getTenTinh());
+            }
+            String newFullAddress = fullAddress.toString();
             String oldAddress = hoaDon.getDiaChiKhachHang();
-            hoaDon.setDiaChiKhachHang(request.getDiaChiKhachHang());
-            String moTa = String.format("Địa chỉ: '%s' → '%s'",
-                    oldAddress != null ? oldAddress : "(Trống)",
-                    request.getDiaChiKhachHang());
-            luuLichSu(hoaDon, "Cập nhật địa chỉ giao hàng", moTa, null);
+
+            hoaDon.setDiaChiKhachHang(newFullAddress);
+            luuLichSu(hoaDon, "Cập nhật địa chỉ giao hàng",
+                    String.format("Địa chỉ: '%s' → '%s'",
+                            oldAddress != null ? oldAddress : "(Trống)", newFullAddress), null);
+
+            if (hoaDon.getKhachHang() != null) {
+                KhachHang kh = hoaDon.getKhachHang();
+                DiaChi diaChiMacDinh; // Đây sẽ là địa chỉ được chọn làm mặc định
+
+                if (idDiaChi != null) {
+                    // Trường hợp chọn địa chỉ có sẵn → sửa đúng cái đó
+                    diaChiMacDinh = diaChiRepository.findById(idDiaChi)
+                            .orElseThrow(() -> new RuntimeException("Địa chỉ ID không tồn tại: " + idDiaChi));
+
+                    // Kiểm tra quyền sở hữu
+                    if (!diaChiMacDinh.getKhachHang().getId().equals(kh.getId())) {
+                        throw new RuntimeException("Không được sửa địa chỉ của khách hàng khác!");
+                    }
+                } else {
+                    // Trường hợp nhập tay → tạo mới và sẽ là mặc định
+                    diaChiMacDinh = new DiaChi();
+                    diaChiMacDinh.setKhachHang(kh);
+                    diaChiMacDinh.setTenDiaChi("Địa chỉ từ hóa đơn #" + hoaDon.getMaHoaDon());
+                }
+
+                // === CẬP NHẬT THÔNG TIN CHO ĐỊA CHỈ ĐƯỢC CHỌN ===
+                diaChiMacDinh.setDiaChiCuThe(diaChiCuThe);
+
+                if (idTinh != null) {
+                    TinhThanh tinh = tinhThanhRepository.findById(idTinh)
+                            .orElseThrow(() -> new RuntimeException("Tỉnh không tồn tại: " + idTinh));
+                    diaChiMacDinh.setTinhThanh(tinh);
+                } else {
+                    diaChiMacDinh.setTinhThanh(null);
+                }
+
+                if (idQuan != null) {
+                    QuanHuyen quan = quanHuyenRepository.findById(idQuan)
+                            .orElseThrow(() -> new RuntimeException("Quận/Huyện không tồn tại: " + idQuan));
+                    diaChiMacDinh.setQuanHuyen(quan);
+                } else {
+                    diaChiMacDinh.setQuanHuyen(null);
+                }
+
+                // === QUAN TRỌNG NHẤT: CHỈ CÓ 1 ĐỊA CHỈ MẶC ĐỊNH ===
+                // 1. Tắt hết trạng thái mặc định của khách hàng này
+                diaChiRepository.updateTrangThaiByKhachHangId(kh.getId(), false);
+
+                // 2. Bật trạng thái mặc định cho địa chỉ vừa chọn/tạo
+                diaChiMacDinh.setTrangThai(true);
+
+                // 3. Lưu
+                diaChiRepository.save(diaChiMacDinh);
+
+                // === GHI LOG ===
+                luuLichSu(hoaDon, "Đồng bộ địa chỉ khách hàng",
+                        idDiaChi != null
+                                ? "Cập nhật & đặt làm mặc định địa chỉ ID: " + idDiaChi
+                                : "Tạo mới & đặt làm mặc định địa chỉ từ hóa đơn", null);
+            }
         }
 
         if (request.getGhiChu() != null &&

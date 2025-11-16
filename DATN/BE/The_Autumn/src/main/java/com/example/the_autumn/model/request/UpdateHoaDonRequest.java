@@ -14,23 +14,22 @@ import java.util.List;
 @AllArgsConstructor
 public class UpdateHoaDonRequest {
 
-    // Thông tin khách hàng
     private Integer idKhachHang;
     private String hoTenKhachHang;
     private String sdtKhachHang;
     private String emailKhachHang;
-    private String diaChiKhachHang;
-
-    // Thông tin hóa đơn
+    private String diaChiCuThe;
+    private Integer thanhPho;    // id tỉnh
+    private Integer quan;        // id quận
+    private Integer idDiaChi;
     private BigDecimal phiVanChuyen;
-    private Integer idPhieuGiamGia;  // null = không dùng phiếu
+    private Integer idPhieuGiamGia;
     private String ghiChu;
     private Integer trangThai;
 
     private Boolean loaiHoaDon;
     private Integer idNhanVien;
     private Integer idPhuongThucThanhToan;
-    // Danh sách sản phẩm
     private List<ChiTietSanPhamRequest> chiTietSanPhams;
 
     @Getter
