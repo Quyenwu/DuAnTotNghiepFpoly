@@ -5,14 +5,19 @@ import com.example.the_autumn.model.request.ResetPasswordRequest;
 import com.example.the_autumn.model.response.ForgotPasswordResponse;
 import com.example.the_autumn.service.ForgotPasswordService;
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 
 @RestController
 @RequestMapping("/api/auth")
 @CrossOrigin(origins = {"http://localhost:5173","http://localhost:5174/" , "http://localhost:3000"})
 public class ForgotPasswordController {
+
+    private static final Logger logger = LoggerFactory.getLogger(ForgotPasswordController.class);
 
     @Autowired
     private ForgotPasswordService forgotPasswordService;
@@ -21,18 +26,24 @@ public class ForgotPasswordController {
     public ResponseEntity<ForgotPasswordResponse> forgotPassword(
             @Valid @RequestBody ForgotPasswordRequest request) {
         try {
+            logger.info("🔍 FORGOT_PASSWORD - Received request for email: {}", request.getEmail());
+
             String resetToken = forgotPasswordService.generateResetToken(request.getEmail());
+            logger.info("🔍 FORGOT_PASSWORD - Generated token: {}", resetToken);
 
             if (resetToken != null) {
+                logger.info("✅ FORGOT_PASSWORD - Email sent successfully to: {}", request.getEmail());
                 return ResponseEntity.ok(ForgotPasswordResponse.success(
                         "Nếu email tồn tại trong hệ thống, hướng dẫn reset mật khẩu sẽ được gửi đến email của bạn"
                 ));
             } else {
+                logger.info("⚠️ FORGOT_PASSWORD - Email not found or inactive: {}", request.getEmail());
                 return ResponseEntity.ok(ForgotPasswordResponse.success(
                         "Nếu email tồn tại trong hệ thống, hướng dẫn reset mật khẩu sẽ được gửi đến email của bạn"
                 ));
             }
         } catch (Exception e) {
+            logger.error("❌ FORGOT_PASSWORD - Error for email {}: {}", request.getEmail(), e.getMessage(), e);
             return ResponseEntity.badRequest().body(ForgotPasswordResponse.error(
                     "Lỗi xử lý yêu cầu. Vui lòng thử lại sau."
             ));

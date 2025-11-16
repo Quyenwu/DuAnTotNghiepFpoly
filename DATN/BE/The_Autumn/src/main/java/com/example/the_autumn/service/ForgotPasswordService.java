@@ -7,6 +7,7 @@ import com.example.the_autumn.repository.NhanVienRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -28,6 +29,9 @@ public class ForgotPasswordService {
 
     @Autowired
     private EmailService emailService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private final ConcurrentMap<String, ResetTokenInfo> resetTokens = new ConcurrentHashMap<>();
 
@@ -119,7 +123,7 @@ public class ForgotPasswordService {
 
             if (nvOpt.isPresent()) {
                 NhanVien nv = nvOpt.get();
-                nv.setMatKhau(newPassword);
+                nv.setMatKhau(passwordEncoder.encode(newPassword));
                 nhanVienRepository.save(nv);
                 logger.info("✅ Updated password for staff: {}", email);
                 return true;
@@ -128,7 +132,7 @@ public class ForgotPasswordService {
             Optional<KhachHang> khOpt = khachHangRepository.findByEmail(email);
             if (khOpt.isPresent()) {
                 KhachHang kh = khOpt.get();
-                kh.setMatKhau(newPassword);
+                kh.setMatKhau(passwordEncoder.encode(newPassword));
                 khachHangRepository.save(kh);
                 logger.info("✅ Updated password for customer: {}", email);
                 return true;
