@@ -13,7 +13,7 @@ import java.util.Map;
 @Repository
 public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
 
-    // ✅ 1. Thống kê tổng quan (CHỈ LẤY ĐƠN ĐÃ THANH TOÁN)
+    // ✅ 1. Thống kê tổng quan
     @Query(value = """
         SELECT 
             COUNT(DISTINCT hd.id) as totalOrders,
@@ -21,7 +21,7 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
             ISNULL(SUM(hdct.so_luong), 0) as totalProducts
         FROM hoa_don hd
         LEFT JOIN hoa_don_chi_tiet hdct ON hd.id = hdct.id_hoa_don
-        WHERE hd.trang_thai = 3
+        WHERE hd.trang_thai NOT IN (0, 4)
         AND hd.ngay_tao >= :startDate 
         AND hd.ngay_tao < :endDate
         """, nativeQuery = true)
@@ -30,7 +30,7 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
             @Param("endDate") LocalDate endDate
     );
 
-    // ✅ 2. Doanh thu theo tuần trong tháng (CHỈ LẤY ĐƠN ĐÃ THANH TOÁN)
+    // ✅ 2. Doanh thu theo tuần trong tháng
     @Query(value = """
         SELECT 
             CONCAT(N'Tuần ', 
@@ -41,7 +41,7 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
         FROM hoa_don hd
         WHERE MONTH(hd.ngay_tao) = :month
         AND YEAR(hd.ngay_tao) = :year
-        AND hd.trang_thai = 3
+        AND hd.trang_thai NOT IN (0, 4)
         GROUP BY DATEPART(WEEK, hd.ngay_tao), 
                  DATEPART(WEEK, DATEADD(DAY, 1-DATEPART(DAY, hd.ngay_tao), hd.ngay_tao))
         ORDER BY DATEPART(WEEK, hd.ngay_tao)
@@ -51,20 +51,20 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
             @Param("year") int year
     );
 
-    // ✅ 3. Doanh thu theo tháng trong năm (CHỈ LẤY ĐƠN ĐÃ THANH TOÁN)
+    // ✅ 3. Doanh thu theo tháng trong năm
     @Query(value = """
         SELECT 
             CONCAT(N'Tháng ', MONTH(hd.ngay_tao)) as month,
             ISNULL(SUM(hd.tong_tien_sau_giam), 0) as revenue
         FROM hoa_don hd
         WHERE YEAR(hd.ngay_tao) = :year
-        AND hd.trang_thai = 3
+        AND hd.trang_thai NOT IN (0, 4)
         GROUP BY MONTH(hd.ngay_tao)
         ORDER BY MONTH(hd.ngay_tao)
         """, nativeQuery = true)
     List<Map<String, Object>> getMonthlyRevenue(@Param("year") int year);
 
-    // ✅ 4. Top sản phẩm bán chạy (CHỈ LẤY ĐƠN ĐÃ THANH TOÁN)
+    // ✅ 4. Top sản phẩm bán chạy
     @Query(value = """
         SELECT TOP (:limit)
             sp.id as productId,
@@ -78,7 +78,7 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
         JOIN san_pham sp ON ctsp.id_san_pham = sp.id
         WHERE hd.ngay_tao >= :startDate 
         AND hd.ngay_tao < :endDate
-        AND hd.trang_thai = 3
+        AND hd.trang_thai NOT IN (0, 4)
         GROUP BY sp.id, sp.ten_san_pham, hdct.gia_ban
         ORDER BY sold DESC
         """, nativeQuery = true)
@@ -88,7 +88,7 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
             @Param("limit") int limit
     );
 
-    // ⚠️ 5. Phân bổ trạng thái đơn hàng (GIỮ NGUYÊN - cần hiển thị cả đơn đã hủy để biết tỷ lệ)
+    // ⚠️ 5. Phân bổ trạng thái đơn hàng
     @Query(value = """
         SELECT 
             CASE 
@@ -110,12 +110,12 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
             @Param("endDate") LocalDate endDate
     );
 
-    // ✅ 6. Phân phối theo kênh (CHỈ LẤY ĐƠN ĐÃ THANH TOÁN)
+    // ✅ 6. Phân phối theo kênh
     @Query(value = """
         SELECT 
             CASE 
-                WHEN hd.loai_hoa_don = 0 THEN N'Tại quầy'
-                WHEN hd.loai_hoa_don = 1 THEN N'Online'
+                WHEN hd.loai_hoa_don = 1 THEN N'Tại quầy'
+                WHEN hd.loai_hoa_don = 0 THEN N'Online'
                 ELSE N'Khác'
             END as channelName,
             COUNT(*) as total,
@@ -123,7 +123,7 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
         FROM hoa_don hd
         WHERE hd.ngay_tao >= :startDate 
         AND hd.ngay_tao < :endDate
-        AND hd.trang_thai = 3
+        AND hd.trang_thai NOT IN (0, 4)
         GROUP BY hd.loai_hoa_don
         """, nativeQuery = true)
     List<Map<String, Object>> getChannelDistribution(
@@ -131,7 +131,7 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
             @Param("endDate") LocalDate endDate
     );
 
-    // ✅ 7. Thống kê theo brand (CHỈ LẤY ĐƠN ĐÃ THANH TOÁN)
+    // ✅ 7. Thống kê theo brand
     @Query(value = """
         SELECT 
             nsx.ten_nha_san_xuat as brandName,
@@ -144,7 +144,7 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
         JOIN nha_san_xuat nsx ON sp.id_nha_san_xuat = nsx.id
         WHERE hd.ngay_tao >= :startDate 
         AND hd.ngay_tao < :endDate
-        AND hd.trang_thai = 3
+        AND hd.trang_thai NOT IN (0, 4)
         GROUP BY nsx.id, nsx.ten_nha_san_xuat
         ORDER BY totalRevenue DESC
         """, nativeQuery = true)
@@ -153,7 +153,7 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
             @Param("endDate") LocalDate endDate
     );
 
-    // ✅ 8. Doanh thu theo ngày trong tháng (CHỈ LẤY ĐƠN ĐÃ THANH TOÁN)
+    // ✅ 8. Doanh thu theo ngày trong tháng
     @Query(value = """
         SELECT 
             DAY(hd.ngay_tao) AS day,
@@ -161,7 +161,7 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
         FROM hoa_don hd
         WHERE MONTH(hd.ngay_tao) = :month
         AND YEAR(hd.ngay_tao) = :year
-        AND hd.trang_thai = 3
+        AND hd.trang_thai NOT IN (0, 4)
         GROUP BY DAY(hd.ngay_tao)
         ORDER BY DAY(hd.ngay_tao)
         """, nativeQuery = true)
@@ -170,7 +170,7 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
             @Param("year") int year
     );
 
-    // ✅ 9. Top 10 sản phẩm bán chạy nhất (CHỈ LẤY ĐƠN ĐÃ THANH TOÁN)
+    // ✅ 9. Top 10 sản phẩm bán chạy nhất
     @Query(value = """
         SELECT TOP 10
             sp.id,
@@ -187,14 +187,14 @@ public interface ThongKeRepository extends JpaRepository<HoaDon, Integer> {
         INNER JOIN chi_tiet_san_pham ctsp ON sp.id = ctsp.id_san_pham
         INNER JOIN hoa_don_chi_tiet hdct ON ctsp.id = hdct.id_ctsp
         INNER JOIN hoa_don hd ON hdct.id_hoa_don = hd.id
-        WHERE hd.trang_thai = 3
+        WHERE hd.trang_thai NOT IN (0, 4)
         GROUP BY sp.id, sp.ten_san_pham
         HAVING SUM(hdct.so_luong) > 0
         ORDER BY tong_so_luong_ban DESC
         """, nativeQuery = true)
     List<Object[]> findTopSellingProducts();
 
-    // ✅ 10. Sản phẩm sắp hết hàng (không liên quan đến đơn hàng)
+    // ✅ 10. Sản phẩm sắp hết hàng
     @Query(value = """
         SELECT TOP 5
             sp.id, 
