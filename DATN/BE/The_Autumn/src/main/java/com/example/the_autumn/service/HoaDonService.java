@@ -389,32 +389,6 @@ public class HoaDonService {
         );
     }
 
-
-    private void addTableHeader(PdfPTable table, Font font, String... headers) {
-        for (String header : headers) {
-            PdfPCell cell = new PdfPCell(new Phrase(header, font));
-            cell.setHorizontalAlignment(Element.ALIGN_CENTER);
-            cell.setBackgroundColor(BaseColor.LIGHT_GRAY);
-            cell.setPadding(5);
-            table.addCell(cell);
-        }
-    }
-
-    private void addTableRow(PdfPTable table, Font font, String... values) {
-        for (String value : values) {
-            PdfPCell cell = new PdfPCell(new Phrase(value, font));
-            cell.setPadding(5);
-            table.addCell(cell);
-        }
-    }
-
-    private String formatMoney(BigDecimal amount) {
-        if (amount == null) return "0 d";
-        NumberFormat formatter = NumberFormat.getInstance(new Locale("vi", "VN"));
-        return formatter.format(amount) + " d";
-    }
-
-
     public HoaDonDetailResponse getHoaDonDetail(Integer id) {
         HoaDon hoaDon = hoaDonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn với ID: " + id));
@@ -427,15 +401,15 @@ public class HoaDonService {
         dto.setNgayThanhToan(hoaDon.getNgayThanhToan());
 
         if (hoaDon.getKhachHang() != null) {
-            dto.setTenKhachHang(hoaDon.getKhachHang().getHoTen());
-            dto.setSdtKhachHang(hoaDon.getKhachHang().getSdt());
-            dto.setEmailKhachHang(hoaDon.getKhachHang().getEmail());
+            KhachHangResponse kh = new KhachHangResponse(hoaDon.getKhachHang());
+            dto.setKhachHang(kh);
         } else {
-            dto.setTenKhachHang("Khách lẻ");
-            dto.setSdtKhachHang("N/A");
-            dto.setEmailKhachHang("N/A");
+            KhachHangResponse kh = new KhachHangResponse();
+            kh.setHoTen("Khách lẻ");
+            kh.setSdt("N/A");
+            kh.setEmail("N/A");
+            dto.setKhachHang(kh);
         }
-        dto.setDiaChiKhachHang(hoaDon.getDiaChiKhachHang());
 
 
         if (hoaDon.getNhanVien() != null) {
