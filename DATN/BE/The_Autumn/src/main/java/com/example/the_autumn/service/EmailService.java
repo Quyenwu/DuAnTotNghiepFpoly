@@ -184,7 +184,7 @@ public class EmailService {
             logger.error("⚠️ Failed to send email to {}: {}", to, e.getMessage());
         }
     }
-
+    @Async
     public void sendMailNhanVien(String to, String subject, String body) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
