@@ -1,0 +1,100 @@
+package com.example.the_autumn.entity;
+import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+
+import jakarta.persistence.*;
+import lombok.*;
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.time.LocalDateTime;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@Entity
+@Table(name = "hoa_don")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+public class HoaDon {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_khach_hang",referencedColumnName = "id", nullable = true)
+    @JsonIgnoreProperties({"hoaDons", "hibernateLazyInitializer", "handler"})  // ✅ Thêm
+    private KhachHang khachHang;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_nhan_vien",referencedColumnName = "id", nullable = true)
+    @JsonIgnoreProperties({"hoaDons", "hibernateLazyInitializer", "handler"})  // ✅ Thêm
+    private NhanVien nhanVien;
+
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_phieu_giam_gia",referencedColumnName = "id", nullable = true)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})  // ✅ Thêm
+    private PhieuGiamGia phieuGiamGia;
+
+    @Column(name = "ma_hoa_don", insertable = false, updatable = false)
+    private String maHoaDon;
+
+    @Column(name = "loai_hoa_don", length = 100)
+    private Boolean loaiHoaDon;
+
+    @Column(name = "phi_van_chuyen", precision = 18, scale = 2)
+    private BigDecimal phiVanChuyen;
+
+    @Column(name = "tong_tien", precision = 18, scale = 2)
+    private BigDecimal tongTien;
+
+    @Column(name = "tong_tien_sau_giam", precision = 18, scale = 2)
+    private BigDecimal tongTienSauGiam;
+
+    @Column(name = "ghi_chu", length = 200)
+    private String ghiChu;
+
+    @Column(name = "dia_chi_khach_hang",  length = 200)
+    private String diaChiKhachHang;
+
+    @Column(name = "ngay_thanh_toan")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss") 
+    private Date ngayThanhToan;  
+
+    @Column(name = "ngay_tao")
+    @JsonFormat(pattern = "yyyy-MM-dd") 
+    private Date ngayTao;
+
+    @Column(name = "ngay_sua")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date ngaySua;
+
+    @Column(name = "nguoi_tao")
+    private Integer nguoiTao;
+
+    @Column(name = "nguoi_sua")
+    private Integer nguoiSua;
+
+    @Column(name = "trang_thai")
+    private Integer trangThai;
+
+    @OneToMany(mappedBy = "hoaDon", fetch = FetchType.EAGER,cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<LichSuThanhToan> lichSuThanhToans;
+
+    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JsonIgnore
+    private List<HoaDonChiTiet> hoaDonChiTiets = new ArrayList<>();
+
+    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JsonIgnore
+    private List<LichSuHoaDon> lichSuHoaDons;
+
+    @OneToMany(mappedBy = "hoaDon", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @JsonIgnore
+    private List<HinhThucThanhToan> hinhThucThanhToans;
+
+}

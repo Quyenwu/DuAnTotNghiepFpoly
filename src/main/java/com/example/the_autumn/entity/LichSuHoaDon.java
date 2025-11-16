@@ -1,0 +1,49 @@
+package com.example.the_autumn.entity;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIdentityInfo;
+import com.fasterxml.jackson.annotation.ObjectIdGenerators;
+import jakarta.persistence.*;
+import lombok.*;
+import java.util.Date;
+
+@NoArgsConstructor
+@AllArgsConstructor
+@Getter
+@Setter
+@Entity
+@Table(name = "lich_su_hoa_don")
+@JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "id")
+public class LichSuHoaDon {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_hoa_don",referencedColumnName = "id", nullable = false)
+    private HoaDon hoaDon;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_khach_hang",referencedColumnName = "id", nullable = false)
+    private KhachHang khachHang;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "id_nhan_vien",referencedColumnName = "id", nullable = false)
+    private NhanVien nhanVien;
+
+    @Column(name = "hanh_dong", length = 200)
+    private String hanhDong;
+
+    @Column(name = "mo_ta", length = 200)
+    private String moTa;
+
+
+    @Column(name = "ngay_cap_nhat")
+    private Date ngayCapNhat;
+
+
+    @Column(name = "trang_thai")
+    private Boolean trangThai;
+}
