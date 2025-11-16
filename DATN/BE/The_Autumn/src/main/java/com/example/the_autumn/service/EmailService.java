@@ -266,4 +266,190 @@ public class EmailService {
                 mucGiamToiDa
         );
     }
+
+    @Async
+    public void sendCustomerResetPasswordEmail(String toEmail, String resetToken) {
+        String websiteLink = "http://localhost:5173/customer/login";
+        String subject = "🔐 Đặt lại mật khẩu tài khoản khách hàng - The Autumn";
+        String body = buildCustomerResetPasswordEmail(websiteLink, resetToken);
+
+        sendEmail(toEmail, subject, body);
+    }
+
+    private String buildCustomerResetPasswordEmail(String websiteLink, String resetToken) {
+        // Sử dụng String.format thay vì text block formatting
+        return String.format("""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                body { 
+                    font-family: 'Arial', sans-serif; 
+                    line-height: 1.6; 
+                    color: #333; 
+                    margin: 0; 
+                    padding: 0; 
+                    background-color: #f9f9f9;
+                }
+                .container { 
+                    max-width: 600px; 
+                    margin: 20px auto; 
+                    background: #ffffff; 
+                    border-radius: 10px;
+                    overflow: hidden;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                }
+                .header { 
+                    background: linear-gradient(135deg, #E67E22, #D35400); 
+                    color: white; 
+                    padding: 30px 20px; 
+                    text-align: center; 
+                }
+                .header h1 { 
+                    margin: 0; 
+                    font-size: 28px; 
+                    font-weight: bold;
+                }
+                .header p {
+                    margin: 10px 0 0 0;
+                    opacity: 0.9;
+                }
+                .content { 
+                    padding: 40px 30px; 
+                }
+                .welcome-text {
+                    font-size: 16px;
+                    margin-bottom: 25px;
+                    color: #555;
+                }
+                .button { 
+                    background: linear-gradient(135deg, #E67E22, #D35400); 
+                    color: white; 
+                    padding: 16px 35px; 
+                    text-decoration: none; 
+                    border-radius: 8px; 
+                    display: inline-block; 
+                    font-weight: bold;
+                    font-size: 16px;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 15px rgba(230, 126, 34, 0.3);
+                    margin: 10px 0;
+                }
+                .button:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 6px 20px rgba(230, 126, 34, 0.4);
+                }
+                .code-box { 
+                    background: #f8f9fa; 
+                    padding: 20px; 
+                    border-radius: 8px; 
+                    border-left: 4px solid #E67E22;
+                    margin: 25px 0;
+                    word-break: break-all;
+                    font-family: 'Courier New', monospace;
+                    font-size: 14px;
+                    text-align: center;
+                }
+                .footer { 
+                    text-align: center; 
+                    padding: 25px; 
+                    font-size: 12px; 
+                    color: #666; 
+                    background: #f8f9fa;
+                    border-top: 1px solid #eee;
+                }
+                .note {
+                    background: #fff3cd;
+                    padding: 20px;
+                    border-radius: 8px;
+                    border-left: 4px solid #ffc107;
+                    margin: 25px 0;
+                    font-size: 14px;
+                }
+                .note strong {
+                    color: #856404;
+                }
+                .steps {
+                    background: #e8f4fd;
+                    padding: 20px;
+                    border-radius: 8px;
+                    margin: 20px 0;
+                }
+                .step {
+                    margin: 10px 0;
+                    display: flex;
+                    align-items: center;
+                }
+                .step-number {
+                    background: #E67E22;
+                    color: white;
+                    width: 25px;
+                    height: 25px;
+                    border-radius: 50%%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    margin-right: 15px;
+                    font-weight: bold;
+                    font-size: 14px;
+                }
+                .instruction-box {
+                    background: #e7f3ff;
+                    padding: 15px;
+                    border-radius: 8px;
+                    border-left: 4px solid #1890ff;
+                    margin: 15px 0;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <div class="header">
+                    <h1>THE AUTUMN</h1>
+                    <p>Hệ thống thời trang cao cấp</p>
+                </div>
+                <div class="content">
+                    <h2 style="color: #E67E22; margin-top: 0;">🔐 Yêu Cầu Đặt Lại Mật Khẩu</h2>
+                    
+                    <p class="welcome-text">Xin chào Quý khách,</p>
+                    <p>Chúng tôi đã nhận được yêu cầu đặt lại mật khẩu cho tài khoản khách hàng của bạn tại <strong>The Autumn</strong>.</p>
+                    
+                    <div class="instruction-box">
+                        <p><strong>📝 Hướng dẫn đặt lại mật khẩu:</strong></p>
+                        <p>1. Truy cập trang đăng nhập khách hàng</p>
+                        <p>2. Nhấp vào "Quên mật khẩu?"</p>
+                        <p>3. Nhập mã xác nhận bên dưới cùng với mật khẩu mới</p>
+                    </div>
+                    
+                    <div style="text-align: center; margin: 25px 0;">
+                        <a href="%s" class="button">TRUY CẬP TRANG ĐĂNG NHẬP</a>
+                    </div>
+                    
+                    <p><strong>Mã xác nhận của bạn:</strong></p>
+                    <div class="code-box">
+                        <strong style="font-size: 18px; color: #E67E22;">%s</strong>
+                    </div>
+                    
+                    <div class="note">
+                        <p><strong>📌 Thông tin quan trọng:</strong></p>
+                        <p>• Mã xác nhận có hiệu lực trong <strong>24 giờ</strong></p>
+                        <p>• Vui lòng không chia sẻ mã này với bất kỳ ai</p>
+                        <p>• Nếu bạn không thực hiện yêu cầu này, hãy bỏ qua email</p>
+                        <p>• Liên hệ hỗ trợ nếu bạn cần trợ giúp thêm</p>
+                    </div>
+                    
+                    <p>Trân trọng,<br>
+                    <strong>Đội ngũ The Autumn</strong></p>
+                </div>
+                <div class="footer">
+                    <p><strong>The Autumn - Hệ thống thời trang cao cấp</strong></p>
+                    <p>📧 Email: TheAutumnShop@gmail.com | 📞 Hotline: 0900 123 456</p>
+                    <p>© 2025 The Autumn. All rights reserved.</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """, websiteLink, resetToken);
+    }
 }

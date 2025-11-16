@@ -3,15 +3,18 @@ package com.example.the_autumn.repository;
 import com.example.the_autumn.entity.KhachHang;
 import com.example.the_autumn.entity.SanPham;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
 public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
+
     @Query("""
         SELECT kh FROM KhachHang kh
         WHERE 
@@ -21,6 +24,7 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
         ORDER BY kh.ngayTao DESC
     """)
     List<KhachHang> searchByKeyword(@Param("keyword") String keyword);
+
     @Query("""
         SELECT kh FROM KhachHang kh
         WHERE 
@@ -32,6 +36,7 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
             @Param("gioiTinh") Boolean gioiTinh,
             @Param("trangThai") Boolean trangThai
     );
+
     boolean existsByEmail(String email);
     boolean existsBySdt(String sdt);
     boolean existsByEmailAndSdt(String email, String sdt);
@@ -39,5 +44,6 @@ public interface KhachHangRepository extends JpaRepository<KhachHang, Integer> {
     Optional<KhachHang> findByEmail(String email);
 
     Optional<KhachHang> findBySdt(String sdt);
+
     List<KhachHang> findByTrangThai(Boolean trangThai);
 }
