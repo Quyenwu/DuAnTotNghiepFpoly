@@ -17,6 +17,7 @@ public class HoaDonDetailResponse {
     private String diaChiKhachHang;
 
     private Integer idNhanVien;
+    private Integer idKhachHang;
     private String maNhanVien;
     private String tenNhanVien;
     private String sdtNhanVien;
@@ -36,6 +37,24 @@ public class HoaDonDetailResponse {
     private BigDecimal tongTienSauGiam;
     private Integer trangThai;
     private String ghiChuThanhToan;
+
+    private KhachHangResponse khachHang;
+
+    public KhachHangResponse getKhachHang() {
+        return khachHang;
+    }
+
+    public void setKhachHang(KhachHangResponse khachHang) {
+        this.khachHang = khachHang;
+    }
+
+    public Integer getIdKhachHang() {
+        return idKhachHang;
+    }
+
+    public void setIdKhachHang(Integer idKhachHang) {
+        this.idKhachHang = idKhachHang;
+    }
 
     public String getTenChuongTrinh() {
         return tenChuongTrinh;
