@@ -17,6 +17,7 @@ import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -36,7 +37,8 @@ public class NhanVienService {
 
     @Autowired
     private EmailService mailService;
-
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<NhanVienResponse> getAllNhanVien() {
         return nhanVienRepository.findAll().stream()
@@ -66,7 +68,7 @@ public class NhanVienService {
 
         NhanVien nv = MapperUtils.map(nhanVienRequest, NhanVien.class);
         String randomPassword = UUID.randomUUID().toString().replace("-", "").substring(0, 6);
-        nv.setMatKhau(randomPassword);
+        nv.setMatKhau(passwordEncoder.encode(randomPassword));
         ChucVu chucVu = chucVuRepository.findById(2)
                 .orElseThrow(() -> new ApiException("Không tìm thấy chức vụ Nhân viên", "404"));
 
@@ -88,7 +90,7 @@ public class NhanVienService {
                     <p>Vui lòng đăng nhập và thay đổi mật khẩu sau khi truy cập hệ thống lần đầu.</p>
                     <p style="color:#E67E22;">Trân trọng,<br/>Hệ thống quản lý The Autumn</p>
                 </div>
-                """.formatted(nv.getHoTen(), nv.getEmail(), nv.getMatKhau());
+                """.formatted(nv.getHoTen(), nv.getEmail(), randomPassword);;
 
         try {
             mailService.sendMailNhanVien(nv.getEmail(), subject, body);
