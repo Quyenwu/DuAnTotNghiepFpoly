@@ -10,14 +10,12 @@ public class HoaDonDetailResponse {
     private Date ngayTao;
     private Date ngayThanhToan;
 
-
     private String tenKhachHang;
     private String sdtKhachHang;
     private String emailKhachHang;
     private String diaChiKhachHang;
 
     private Integer idNhanVien;
-    private Integer idKhachHang;
     private String maNhanVien;
     private String tenNhanVien;
     private String sdtNhanVien;
@@ -48,13 +46,6 @@ public class HoaDonDetailResponse {
         this.khachHang = khachHang;
     }
 
-    public Integer getIdKhachHang() {
-        return idKhachHang;
-    }
-
-    public void setIdKhachHang(Integer idKhachHang) {
-        this.idKhachHang = idKhachHang;
-    }
 
     public String getTenChuongTrinh() {
         return tenChuongTrinh;
