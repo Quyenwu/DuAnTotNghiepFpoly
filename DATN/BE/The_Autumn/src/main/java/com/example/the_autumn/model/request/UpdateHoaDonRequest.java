@@ -26,7 +26,6 @@ public class UpdateHoaDonRequest {
     private Integer idPhieuGiamGia;
     private String ghiChu;
     private Integer trangThai;
-
     private Boolean loaiHoaDon;
     private Integer idNhanVien;
     private Integer idPhuongThucThanhToan;
