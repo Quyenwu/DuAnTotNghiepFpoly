@@ -416,22 +416,22 @@ public class HoaDonController {
             return new ResponseObject<>(savedHoaDon,"Thêm thành công");
         }
 
-    @PostMapping("/create-and-pay-vnpay")
-    public ResponseEntity<?> createHoaDonAndPayWithVNPAY(@RequestBody HoaDonRequest hoaDonRequest) {
-        try {
-            System.out.println("=== VNPay Request ===");
-            System.out.println("Amount: " + hoaDonRequest.getTongTienSauGiam());
-            System.out.println("Customer: " + hoaDonRequest.getIdKhachHang());
-
-            VNPayResponse response = hoaDonService.createHoaDonAndPayWithVNPAY(hoaDonRequest);
-
-            return ResponseEntity.ok(new BaseResponse(true, "Tạo hóa đơn và thanh toán VNPAY thành công", response));
-        } catch (Exception e) {
-            System.err.println("Error in createAndPayWithVNPAY: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(new BaseResponse(false, "Lỗi: " + e.getMessage(), null));
-        }
-    }
+//    @PostMapping("/create-and-pay-vnpay")
+//    public ResponseEntity<?> createHoaDonAndPayWithVNPAY(@RequestBody HoaDonRequest hoaDonRequest) {
+//        try {
+//            System.out.println("=== VNPay Request ===");
+//            System.out.println("Amount: " + hoaDonRequest.getTongTienSauGiam());
+//            System.out.println("Customer: " + hoaDonRequest.getIdKhachHang());
+//
+//            VNPayResponse response = hoaDonService.createHoaDonAndPayWithVNPAY(hoaDonRequest);
+//
+//            return ResponseEntity.ok(new BaseResponse(true, "Tạo hóa đơn và thanh toán VNPAY thành công", response));
+//        } catch (Exception e) {
+//            System.err.println("Error in createAndPayWithVNPAY: " + e.getMessage());
+//            e.printStackTrace();
+//            return ResponseEntity.badRequest().body(new BaseResponse(false, "Lỗi: " + e.getMessage(), null));
+//        }
+//    }
 
     @GetMapping("/vnpay-return")
     public ResponseEntity<?> vnpayReturn(
@@ -460,15 +460,15 @@ public class HoaDonController {
         }
     }
 
-    @PostMapping("/vnpay-ipn")
-    public ResponseEntity<?> vnpayIPN(@RequestParam Map<String, String> params) {
-        try {
-            String result = hoaDonService.handleVNPayIPN(params);
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body("error");
-        }
-    }
+//    @PostMapping("/vnpay-ipn")
+//    public ResponseEntity<?> vnpayIPN(@RequestParam Map<String, String> params) {
+//        try {
+//            String result = hoaDonService.handleVNPayIPN(params);
+//            return ResponseEntity.ok(result);
+//        } catch (Exception e) {
+//            return ResponseEntity.badRequest().body("error");
+//        }
+//    }
 
 }
 

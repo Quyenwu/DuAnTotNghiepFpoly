@@ -1,7 +1,5 @@
 package com.example.the_autumn.service;
 
-import com.cloudinary.Cloudinary;
-import com.cloudinary.utils.ObjectUtils;
 import com.example.the_autumn.dto.KhachHangDTO;
 import com.example.the_autumn.dto.NhanVienDTO;
 import com.example.the_autumn.entity.ChiTietSanPham;
@@ -43,10 +41,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
@@ -107,7 +103,7 @@ public class HoaDonService {
     private EmailService emailService;
 
     @Autowired
-    private VNPayService vnPayService;
+    private VnPayService vnPayService;
 
     public PageHoaDonRequest<HoaDonRespone> getAll(Pageable pageable) {
         Page<HoaDon> page = hoaDonRepository.findAll(pageable);
@@ -1204,51 +1200,51 @@ public class HoaDonService {
         }
     }
 
-    @Transactional
-    public VNPayResponse createHoaDonAndPayWithVNPAY(HoaDonRequest request) {
-        try {
-            Integer trangThai;
-            if (request.getLoaiHoaDon() == null) {
-                trangThai = request.getTrangThai();
-                System.out.println("✅ Sử dụng trạng thái từ FE: " + trangThai);
-            }else {
-                if (Boolean.TRUE.equals(request.getLoaiHoaDon())) {
-                    trangThai = 3;
-                } else {
-                    trangThai = 1;
-                }
-            }
-            request.setTrangThai(trangThai);
-            request.setNgayTao(new Date());
-            request.setNgayThanhToan(null);
-
-            HoaDon savedHoaDon = add(request);
-
-            System.out.println("Invoice created - ID: " + savedHoaDon.getId() + ", Code: " + savedHoaDon.getMaHoaDon());
-
-            int amount = request.getTongTienSauGiam().intValue();
-            String orderInfo = "Thanh toan don hang " + savedHoaDon.getMaHoaDon();
-
-            System.out.println("Calling VNPay Service - Amount: " + amount + " (" + (amount * 100) + " VND)");
-            System.out.println("Order Info: " + orderInfo);
-
-            String paymentUrl = vnPayService.createOrder(amount, orderInfo, savedHoaDon.getId().toString());
-
-            VNPayResponse response = new VNPayResponse();
-            response.setPaymentUrl(paymentUrl);
-            response.setOrderId(savedHoaDon.getId());
-            response.setAmount(request.getTongTienSauGiam());
-            response.setOrderInfo(orderInfo);
-
-            System.out.println("=== VNPay Order Created Successfully ===");
-            return response;
-
-        } catch (Exception e) {
-            System.err.println("Error in createHoaDonAndPayWithVNPAY: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Lỗi tạo thanh toán VNPay: " + e.getMessage(), e);
-        }
-    }
+//    @Transactional
+//    public VNPayResponse createHoaDonAndPayWithVNPAY(HoaDonRequest request) {
+//        try {
+//            Integer trangThai;
+//            if (request.getLoaiHoaDon() == null) {
+//                trangThai = request.getTrangThai();
+//                System.out.println("✅ Sử dụng trạng thái từ FE: " + trangThai);
+//            }else {
+//                if (Boolean.TRUE.equals(request.getLoaiHoaDon())) {
+//                    trangThai = 3;
+//                } else {
+//                    trangThai = 1;
+//                }
+//            }
+//            request.setTrangThai(trangThai);
+//            request.setNgayTao(new Date());
+//            request.setNgayThanhToan(null);
+//
+//            HoaDon savedHoaDon = add(request);
+//
+//            System.out.println("Invoice created - ID: " + savedHoaDon.getId() + ", Code: " + savedHoaDon.getMaHoaDon());
+//
+//            int amount = request.getTongTienSauGiam().intValue();
+//            String orderInfo = "Thanh toan don hang " + savedHoaDon.getMaHoaDon();
+//
+//            System.out.println("Calling VNPay Service - Amount: " + amount + " (" + (amount * 100) + " VND)");
+//            System.out.println("Order Info: " + orderInfo);
+//
+//            String paymentUrl = vnPayService.createOrder(amount, orderInfo, savedHoaDon.getId().toString());
+//
+//            VNPayResponse response = new VNPayResponse();
+//            response.setPaymentUrl(paymentUrl);
+//            response.setOrderId(savedHoaDon.getId());
+//            response.setAmount(request.getTongTienSauGiam());
+//            response.setOrderInfo(orderInfo);
+//
+//            System.out.println("=== VNPay Order Created Successfully ===");
+//            return response;
+//
+//        } catch (Exception e) {
+//            System.err.println("Error in createHoaDonAndPayWithVNPAY: " + e.getMessage());
+//            e.printStackTrace();
+//            throw new RuntimeException("Lỗi tạo thanh toán VNPay: " + e.getMessage(), e);
+//        }
+//    }
 
     public String handleVNPayReturn(Map<String, String> params) {
         String vnp_ResponseCode = params.get("vnp_ResponseCode");
@@ -1283,32 +1279,32 @@ public class HoaDonService {
         }
     }
 
-    public String handleVNPayIPN(Map<String, String> params) {
-        boolean isValid = vnPayService.validateIPN(params);
-
-        if (!isValid) {
-            return "Invalid signature";
-        }
-
-        String vnp_ResponseCode = params.get("vnp_ResponseCode");
-        String vnp_TxnRef = params.get("vnp_TxnRef");
-
-        try {
-            Integer orderId = Integer.parseInt(vnp_TxnRef);
-            HoaDon hoaDon = hoaDonRepository.findById(orderId)
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
-
-            if ("00".equals(vnp_ResponseCode)) {
-                hoaDon.setTrangThai(3);
-                hoaDon.setNgayThanhToan(new Date());
-                hoaDonRepository.save(hoaDon);
-            }
-
-            return "OK";
-        } catch (Exception e) {
-            return "ERROR";
-        }
-    }
+//    public String handleVNPayIPN(Map<String, String> params) {
+//        boolean isValid = vnPayService.validateIPN(params);
+//
+//        if (!isValid) {
+//            return "Invalid signature";
+//        }
+//
+//        String vnp_ResponseCode = params.get("vnp_ResponseCode");
+//        String vnp_TxnRef = params.get("vnp_TxnRef");
+//
+//        try {
+//            Integer orderId = Integer.parseInt(vnp_TxnRef);
+//            HoaDon hoaDon = hoaDonRepository.findById(orderId)
+//                    .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
+//
+//            if ("00".equals(vnp_ResponseCode)) {
+//                hoaDon.setTrangThai(3);
+//                hoaDon.setNgayThanhToan(new Date());
+//                hoaDonRepository.save(hoaDon);
+//            }
+//
+//            return "OK";
+//        } catch (Exception e) {
+//            return "ERROR";
+//        }
+//    }
 
 }
 

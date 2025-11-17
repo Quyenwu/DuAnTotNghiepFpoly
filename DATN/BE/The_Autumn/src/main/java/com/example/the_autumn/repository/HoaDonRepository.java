@@ -56,5 +56,11 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer>, JpaSpe
             Integer phieuGiamGiaId,
             Integer trangThai
     );
+
+    @Query("SELECT h FROM HoaDon h WHERE h.khachHang.id = :khachHangId ORDER BY h.ngayTao DESC")
+    List<HoaDon> findByKhachHangIdOrderByNgayTaoDesc(@Param("khachHangId") Integer khachHangId);
+
+    @Query("SELECT h FROM HoaDon h WHERE h.maHoaDon IN :maHoaDonList ORDER BY h.ngayTao DESC")
+    List<HoaDon> findByMaHoaDonInOrderByNgayTaoDesc(@Param("maHoaDonList") List<String> maHoaDonList);
 }
 
