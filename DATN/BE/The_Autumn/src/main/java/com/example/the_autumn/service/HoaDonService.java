@@ -711,24 +711,64 @@ public class HoaDonService {
         }
 
         hoaDon.setNgaySua(new Date());
+
+        if (request.getChiTietSanPhams() != null) {
+
+            List<HoaDonChiTiet> chiTietCu = hoaDonChiTietRepository.findByHoaDonId(id);
+
+            Set<Integer> idConLai = new HashSet<>();
+
+            for (UpdateHoaDonRequest.ChiTietSanPhamRequest spReq : request.getChiTietSanPhams()) {
+
+                if (spReq.getId() != null) {
+                    HoaDonChiTiet chiTiet = chiTietCu.stream()
+                            .filter(ct -> ct.getId().equals(spReq.getId()))
+                            .findFirst()
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết sản phẩm ID " + spReq.getId()));
+
+                    chiTiet.setSoLuong(spReq.getSoLuong());
+                    chiTiet.setGiaBan(spReq.getGiaBan());
+                    chiTiet.setGhiChu(spReq.getGhiChu());
+                    hoaDonChiTietRepository.save(chiTiet);
+
+                    idConLai.add(chiTiet.getId());
+
+                } else {
+                    ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(spReq.getIdChiTietSanPham())
+                            .orElseThrow(() -> new RuntimeException("Không tìm thấy ChiTietSanPham ID " + spReq.getIdChiTietSanPham()));
+
+                    HoaDonChiTiet newCT = new HoaDonChiTiet();
+                    newCT.setHoaDon(hoaDon);
+                    newCT.setChiTietSanPham(ctsp);
+                    newCT.setSoLuong(spReq.getSoLuong());
+                    newCT.setGiaBan(spReq.getGiaBan());
+                    newCT.setGhiChu(spReq.getGhiChu());
+
+                    hoaDonChiTietRepository.save(newCT);
+
+                    idConLai.add(newCT.getId());
+                }
+            }
+
+            for (HoaDonChiTiet ct : chiTietCu) {
+                if (!idConLai.contains(ct.getId())) {
+                    hoaDonChiTietRepository.delete(ct);
+                }
+            }
+        }
+
         hoaDonRepository.save(hoaDon);
 
         return new UpdateHoaDonResponse(true, "Cập nhật hóa đơn thành công");
     }
 
-
-
     public Optional<HoaDon> findById(Integer id) {
         return hoaDonRepository.findById(id);
     }
 
-
     public HoaDon save(HoaDon hoaDon) {
         return hoaDonRepository.save(hoaDon);
     }
-
-
-
 
     public void luuLichSu(HoaDon hoaDon, String hanhDong, String moTa, Integer nguoiThucHien) {
         try {
