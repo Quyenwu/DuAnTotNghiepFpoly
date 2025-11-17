@@ -100,15 +100,29 @@ public class NhanVienService {
     }
 
 
-    public void update(Integer id, NhanVienRequest nhanVienRequest) {
-        NhanVien nv = nhanVienRepository.findById(id).get();
-        MapperUtils.mapToExisting(nhanVienRequest, nv);
-        ChucVu chucVu = chucVuRepository.findById(nhanVienRequest.getChucVuId()).orElse(null);
+    public void update(Integer id, NhanVienRequest request) {
+
+        NhanVien nv = nhanVienRepository.findById(id)
+                .orElseThrow(() -> new ApiException("Không tìm thấy nhân viên", "404"));
+
+        ChucVu chucVu = chucVuRepository.findById(request.getChucVuId())
+                .orElseThrow(() -> new ApiException("Không tìm thấy chức vụ", "404"));
+
         nv.setChucVu(chucVu);
-        nv.setId(id);
+        nv.setHoTen(request.getHoTen());
+        nv.setGioiTinh(request.getGioiTinh());
+        nv.setSdt(request.getSdt());
+        nv.setDiaChi(request.getDiaChi());
+        nv.setEmail(request.getEmail());
+        nv.setCccd(request.getCccd());
+        nv.setNgaySinh(request.getNgaySinh());
+        nv.setHinhAnh(request.getHinhAnh());
+        nv.setTrangThai(request.getTrangThai());
         nv.setNgaySua(new Date());
+
         nhanVienRepository.save(nv);
     }
+
 
     public void updateTrangThai(Integer id, Boolean trangThai) {
         NhanVien nv = nhanVienRepository.findById(id).orElseThrow(
