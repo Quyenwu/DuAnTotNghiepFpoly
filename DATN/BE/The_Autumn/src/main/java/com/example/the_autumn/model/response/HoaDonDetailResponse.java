@@ -9,24 +9,19 @@ public class HoaDonDetailResponse {
     private String maHoaDon;
     private Date ngayTao;
     private Date ngayThanhToan;
-
     private String tenKhachHang;
     private String sdtKhachHang;
     private String emailKhachHang;
     private String diaChiKhachHang;
-
     private Integer idNhanVien;
     private String maNhanVien;
     private String tenNhanVien;
     private String sdtNhanVien;
-
     private String maGiamGia;
     private String tenChuongTrinh;
-
     private String maGiaoDich;
     private BigDecimal soTien;
     private String ghiChu;
-
     private Boolean loaiHoaDon;
     private Integer idPhuongThucThanhToan;
     private String hinhThucThanhToan;
@@ -159,6 +154,7 @@ public class HoaDonDetailResponse {
 
 
     public static class ChiTietSanPhamResponse {
+        private Integer id;
         private Integer idChiTietSanPham;
         private String tenSanPham;
         private String mauSac;
@@ -170,6 +166,13 @@ public class HoaDonDetailResponse {
 
         private List<String> anhUrls;
 
+        public Integer getId() {
+            return id;
+        }
+
+        public void setId(Integer id) {
+            this.id = id;
+        }
 
         public Integer getIdChiTietSanPham() { return idChiTietSanPham; }
         public void setIdChiTietSanPham(Integer idChiTietSanPham) { this.idChiTietSanPham = idChiTietSanPham; }
