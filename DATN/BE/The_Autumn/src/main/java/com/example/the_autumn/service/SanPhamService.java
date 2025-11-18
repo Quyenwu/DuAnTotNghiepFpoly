@@ -1,5 +1,6 @@
 package com.example.the_autumn.service;
 
+import com.example.the_autumn.dto.*;
 import com.example.the_autumn.entity.*;
 import com.example.the_autumn.model.request.SanPhamRequest;
 import com.example.the_autumn.model.request.UpdateSanPhamRequest;
@@ -13,10 +14,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.expression.ExpressionException;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -247,5 +252,107 @@ public class SanPhamService {
         System.out.println("✅ Service: Đã cập nhật sản phẩm ID=" + id);
 
         return new SanPhamResponse(saved);
+    }
+
+    private SanPhamGiamGiaDTO mapToDTO(Object[] row) {
+        return new SanPhamGiamGiaDTO(
+                (Integer) row[0],
+                (String) row[1],
+                (String) row[2],
+                (BigDecimal) row[3],
+                (BigDecimal) row[4],
+                (Integer) row[5],
+                (String) row[6]
+        );
+    }
+
+    public List<SanPhamGiamGiaDTO> getSanPhamDangGiamGia() {
+        List<Object[]> results = spRepo.findSanPhamDangGiamGiaNative();
+        return results.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<SanPhamGiamGiaDTO> getSanPhamGiamGiaTheoPercent(double minPercent) {
+        List<Object[]> results = spRepo.findSanPhamGiamGiaTheoPercentNative(minPercent);
+        return results.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    public List<SanPhamTrangChuProjection> getTrangChuSanPham() {
+        return spRepo.findSanPhamTrangChu();
+    }
+
+    public SanPhamDetailDTO getSanPhamDetail(Integer idSanPham) {
+        SanPham sanPham = spRepo.findById(idSanPham)
+                .orElseThrow(() -> new ExpressionException("Không tìm thấy sản phẩm với ID: " + idSanPham));
+
+        List<ChiTietSanPham> allVariants = ctspRepo.findBySanPhamIdAndTrangThai(idSanPham, true);
+
+        // Tính giá min và max của toàn bộ sản phẩm
+        BigDecimal giaMin = allVariants.stream()
+                .map(ChiTietSanPham::getGiaBan)
+                .min(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
+
+        BigDecimal giaMax = allVariants.stream()
+                .map(ChiTietSanPham::getGiaBan)
+                .max(BigDecimal::compareTo)
+                .orElse(BigDecimal.ZERO);
+
+        Map<MauSac, List<ChiTietSanPham>> variantsByColor = allVariants.stream()
+                .filter(ctsp -> ctsp.getMauSac() != null)
+                .collect(Collectors.groupingBy(ChiTietSanPham::getMauSac));
+
+        List<MauSacVariantDTO> mauSacList = variantsByColor.entrySet().stream()
+                .map(entry -> {
+                    MauSac mauSac = entry.getKey();
+                    List<ChiTietSanPham> colorVariants = entry.getValue();
+
+                    MauSacVariantDTO mauSacDTO = new MauSacVariantDTO();
+                    mauSacDTO.setIdMauSac(mauSac.getId());
+                    mauSacDTO.setTenMauSac(mauSac.getTenMauSac());
+
+                    List<KichThuocVariantDTO> kichThuocList = colorVariants.stream()
+                            .map(ctsp -> {
+                                KichThuocVariantDTO ktDTO = new KichThuocVariantDTO();
+                                ktDTO.setIdCtsp(ctsp.getId());
+                                ktDTO.setSoLuongTon(ctsp.getSoLuongTon());
+                                ktDTO.setGiaBan(ctsp.getGiaBan());
+                                if (ctsp.getKichThuoc() != null) {
+                                    ktDTO.setTenKichThuoc(ctsp.getKichThuoc().getTenKichThuoc());
+                                }
+                                return ktDTO;
+                            })
+                            .sorted(Comparator.comparing(KichThuocVariantDTO::getTenKichThuoc)) // Sắp xếp size
+                            .collect(Collectors.toList());
+
+                    mauSacDTO.setKichThuocList(kichThuocList);
+                    mauSacDTO.setDuongDanAnh(findImageForColor(colorVariants));
+
+                    return mauSacDTO;
+                })
+                .collect(Collectors.toList());
+
+        SanPhamDetailDTO detailDTO = new SanPhamDetailDTO();
+        detailDTO.setIdSanPham(sanPham.getId());
+        detailDTO.setTenSanPham(sanPham.getTenSanPham());
+        detailDTO.setMauSacList(mauSacList);
+
+        return detailDTO;
+    }
+
+    private String findImageForColor(List<ChiTietSanPham> colorVariants) {
+        if (colorVariants == null || colorVariants.isEmpty()) {
+            return null;
+        }
+        for (ChiTietSanPham ctsp : colorVariants) {
+            if (ctsp.getAnhs() != null && !ctsp.getAnhs().isEmpty()) {
+                return ctsp.getAnhs().stream().findFirst().map(Anh::getDuongDanAnh).orElse(null);
+            }
+        }
+        // Nếu không có, trả về null
+        return null;
     }
 }

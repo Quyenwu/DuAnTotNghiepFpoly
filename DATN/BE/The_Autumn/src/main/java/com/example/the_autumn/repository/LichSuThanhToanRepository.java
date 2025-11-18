@@ -1,5 +1,6 @@
 package com.example.the_autumn.repository;
 
+import com.example.the_autumn.entity.HoaDon;
 import com.example.the_autumn.entity.LichSuThanhToan;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,4 +16,13 @@ public interface LichSuThanhToanRepository extends JpaRepository<LichSuThanhToan
 
     @Query("SELECT COUNT(lst) > 0 FROM LichSuThanhToan lst WHERE lst.hoaDon.id = :hoaDonId")
     boolean existsByHoaDonId(@Param("hoaDonId") Integer hoaDonId);
+
+    List<LichSuThanhToan> findByHoaDonId(Integer hoaDonId);
+
+    List<LichSuThanhToan> findByHoaDonIdAndTrangThai(Integer hoaDonId, Boolean trangThai);
+
+    List<LichSuThanhToan> findByHoaDonAndTrangThai(HoaDon hoaDon, Boolean trangThai);
+
+    List<LichSuThanhToan> findByHoaDon(HoaDon hoaDon);
+
 }
