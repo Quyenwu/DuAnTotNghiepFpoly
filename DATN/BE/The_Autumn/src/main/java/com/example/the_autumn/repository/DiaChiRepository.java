@@ -21,4 +21,5 @@ public interface DiaChiRepository extends JpaRepository<DiaChi,Integer> {
     void disableAllExcept(@Param("khachHangId") Integer khachHangId,
                           @Param("diaChiDuocChonId") Integer diaChiDuocChonId);
 
+    Optional<DiaChi> findByKhachHangAndDiaChiCuThe(KhachHang khachHang, String diaChiKhachHang);
 }

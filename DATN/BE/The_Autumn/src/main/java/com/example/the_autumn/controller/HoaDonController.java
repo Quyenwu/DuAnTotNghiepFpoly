@@ -32,15 +32,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -479,6 +471,29 @@ public class HoaDonController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Lỗi khi lấy lịch sử thanh toán: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/{idHoaDon}/chi-tiet/{idChiTietSanPham}")
+    public ResponseEntity<?> xoaChiTietSanPhamKhoiHoaDon(
+            @PathVariable Integer idHoaDon,
+            @PathVariable Integer idChiTietSanPham) {
+        try {
+            hoaDonService.xoaChiTietSanPhamKhoiHoaDon(idHoaDon, idChiTietSanPham);
+            return ResponseEntity.ok().body(Map.of(
+                    "success", true,
+                    "message", "Đã xóa sản phẩm khỏi hóa đơn thành công"
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi hệ thống khi xóa sản phẩm"
+            ));
         }
     }
 
