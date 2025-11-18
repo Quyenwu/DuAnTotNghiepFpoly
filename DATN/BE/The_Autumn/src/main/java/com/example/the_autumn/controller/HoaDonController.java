@@ -1,15 +1,13 @@
 package com.example.the_autumn.controller;
 
 
-import com.example.the_autumn.entity.HoaDon;
-import com.example.the_autumn.entity.LichSuHoaDon;
-import com.example.the_autumn.entity.NhanVien;
-import com.example.the_autumn.entity.PhuongThucThanhToan;
+import com.example.the_autumn.entity.*;
 import com.example.the_autumn.model.request.HoaDonRequest;
 import com.example.the_autumn.model.request.PageHoaDonRequest;
 import com.example.the_autumn.model.request.UpdateHoaDonRequest;
 import com.example.the_autumn.model.response.*;
 import com.example.the_autumn.repository.HoaDonRepository;
+import com.example.the_autumn.repository.LichSuThanhToanRepository;
 import com.example.the_autumn.repository.NhanVienRepository;
 import com.example.the_autumn.repository.PhuongThucThanhToanRepository;
 import com.example.the_autumn.service.AnhService;
@@ -74,6 +72,9 @@ public class HoaDonController {
 
     @Autowired
     private PhuongThucThanhToanRepository phuongThucRepository;
+
+    @Autowired
+    private LichSuThanhToanRepository lichSuThanhToanRepository;
 
     @Autowired
     private  AnhService anhService;
@@ -240,12 +241,12 @@ public class HoaDonController {
     @GetMapping("/detail/{id}")
     public ResponseEntity<?> getHoaDonDetail(@PathVariable Integer id) {
         try {
-            System.out.println("🔍 Đang tìm hóa đơn ID: " + id);  // ⭐ Log để debug
+            System.out.println("🔍 Đang tìm hóa đơn ID: " + id);
             HoaDonDetailResponse detail = hoaDonService.getHoaDonDetail(id);
             System.out.println("✅ Tìm thấy hóa đơn: " + detail.getMaHoaDon());
             return ResponseEntity.ok(detail);
         } catch (RuntimeException e) {
-            System.err.println("❌ Lỗi: " + e.getMessage());  // ⭐ In ra lỗi chi tiết
+            System.err.println("❌ Lỗi: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(500).body("Lỗi: " + e.getMessage());
         }
@@ -467,6 +468,17 @@ public class HoaDonController {
             return ResponseEntity.ok(result);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body("error");
+        }
+    }
+
+    @GetMapping("/{id}/lich-su-thanh-toan")
+    public ResponseEntity<?> getLichSuThanhToan(@PathVariable Integer id) {
+        try {
+            List<LichSuThanhToan> lichSuThanhToan = lichSuThanhToanRepository.findByHoaDonIdOrderByNgayThanhToanDesc(id);
+            return ResponseEntity.ok(lichSuThanhToan);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Lỗi khi lấy lịch sử thanh toán: " + e.getMessage());
         }
     }
 

@@ -1,6 +1,9 @@
 package com.example.the_autumn.model.response;
 
+import jakarta.persistence.Column;
+
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
@@ -19,6 +22,56 @@ public class HoaDonDetailResponse {
     private String sdtNhanVien;
     private String maGiamGia;
     private String tenChuongTrinh;
+
+    public Boolean getLoaiGiamGia() {
+        return loaiGiamGia;
+    }
+
+    public void setLoaiGiamGia(Boolean loaiGiamGia) {
+        this.loaiGiamGia = loaiGiamGia;
+    }
+
+    private BigDecimal giaTriGiamGia;
+    private Boolean loaiGiamGia;
+    private BigDecimal mucGiaGiamToiDa;
+    private BigDecimal giaTriDonHangToiThieu;
+    private Integer soLuongDung;
+    private LocalDate ngayBatDau;
+    private LocalDate ngayKetThuc;
+    private Integer trangThaiPhieuGiamGia;
+
+    public Integer getSoLuongDung() {
+        return soLuongDung;
+    }
+
+    public void setSoLuongDung(Integer soLuongDung) {
+        this.soLuongDung = soLuongDung;
+    }
+
+    public LocalDate getNgayBatDau() {
+        return ngayBatDau;
+    }
+
+    public void setNgayBatDau(LocalDate ngayBatDau) {
+        this.ngayBatDau = ngayBatDau;
+    }
+
+    public LocalDate getNgayKetThuc() {
+        return ngayKetThuc;
+    }
+
+    public void setNgayKetThuc(LocalDate ngayKetThuc) {
+        this.ngayKetThuc = ngayKetThuc;
+    }
+
+    public Integer getTrangThaiPhieuGiamGia() {
+        return trangThaiPhieuGiamGia;
+    }
+
+    public void setTrangThaiPhieuGiamGia(Integer trangThaiPhieuGiamGia) {
+        this.trangThaiPhieuGiamGia = trangThaiPhieuGiamGia;
+    }
+
     private String maGiaoDich;
     private BigDecimal soTien;
     private String ghiChu;
@@ -32,6 +85,30 @@ public class HoaDonDetailResponse {
     private String ghiChuThanhToan;
 
     private KhachHangResponse khachHang;
+
+    public BigDecimal getGiaTriGiamGia() {
+        return giaTriGiamGia;
+    }
+
+    public void setGiaTriGiamGia(BigDecimal giaTriGiamGia) {
+        this.giaTriGiamGia = giaTriGiamGia;
+    }
+
+    public BigDecimal getMucGiaGiamToiDa() {
+        return mucGiaGiamToiDa;
+    }
+
+    public void setMucGiaGiamToiDa(BigDecimal mucGiaGiamToiDa) {
+        this.mucGiaGiamToiDa = mucGiaGiamToiDa;
+    }
+
+    public BigDecimal getGiaTriDonHangToiThieu() {
+        return giaTriDonHangToiThieu;
+    }
+
+    public void setGiaTriDonHangToiThieu(BigDecimal giaTriDonHangToiThieu) {
+        this.giaTriDonHangToiThieu = giaTriDonHangToiThieu;
+    }
 
     public KhachHangResponse getKhachHang() {
         return khachHang;
