@@ -11,12 +11,15 @@ import java.util.List;
 
 @Repository
 public interface LichSuThanhToanRepository extends JpaRepository<LichSuThanhToan, Integer> {
+    @Query("SELECT lst FROM LichSuThanhToan lst WHERE lst.hoaDon.id = :hoaDonId ORDER BY lst.ngayThanhToan DESC")
+    List<LichSuThanhToan> findByHoaDonIdOrderByNgayThanhToanDesc(@Param("hoaDonId") Integer hoaDonId);
+
+    @Query("SELECT COUNT(lst) > 0 FROM LichSuThanhToan lst WHERE lst.hoaDon.id = :hoaDonId")
+    boolean existsByHoaDonId(@Param("hoaDonId") Integer hoaDonId);
 
     List<LichSuThanhToan> findByHoaDonId(Integer hoaDonId);
 
     List<LichSuThanhToan> findByHoaDonIdAndTrangThai(Integer hoaDonId, Boolean trangThai);
-    @Query("SELECT lst FROM LichSuThanhToan lst WHERE lst.hoaDon.maHoaDon = :maHoaDon ORDER BY lst.ngayThanhToan DESC")
-    List<LichSuThanhToan> findByHoaDonMaHoaDonOrderByNgayThanhToanDesc(@Param("maHoaDon") String maHoaDon);
 
     List<LichSuThanhToan> findByHoaDonAndTrangThai(HoaDon hoaDon, Boolean trangThai);
 
