@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Transactional(rollbackFor = Exception.class)
 @Service
 public class ChiTietSanPhamService {
 
