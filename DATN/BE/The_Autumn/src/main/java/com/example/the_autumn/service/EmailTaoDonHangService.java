@@ -9,6 +9,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.text.NumberFormat;
@@ -34,6 +35,7 @@ public class EmailTaoDonHangService {
     }
 
     @Async
+    @Transactional
     public void sendOrderConfirmationEmail(HoaDon hoaDon, String recipientEmail) {
         try {
             log.info("📧 Preparing to send order confirmation email to: {}", recipientEmail);
@@ -271,3 +273,4 @@ public class EmailTaoDonHangService {
         return html.toString();
     }
 }
+

@@ -20,4 +20,5 @@ public interface GiamGiaKhachHangRepository extends JpaRepository<GiamGiaKhachHa
     void deleteByPhieuGiamGiaId(@Param("phieuGiamGiaId") Integer phieuGiamGiaId);
 
     Optional<GiamGiaKhachHang> findByPhieuGiamGiaIdAndKhachHangId(Long phieuGiamGiaId, Long khachHangId);
+    List<GiamGiaKhachHang> findByKhachHangId(Integer khachHangId);
 }

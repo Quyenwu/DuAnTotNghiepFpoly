@@ -15,11 +15,11 @@ public interface LichSuThanhToanRepository extends JpaRepository<LichSuThanhToan
     List<LichSuThanhToan> findByHoaDonId(Integer hoaDonId);
 
     List<LichSuThanhToan> findByHoaDonIdAndTrangThai(Integer hoaDonId, Boolean trangThai);
-    @Query("SELECT lst FROM LichSuThanhToan lst WHERE lst.hoaDon.maHoaDon = :maHoaDon ORDER BY lst.ngayThanhToan DESC")
-    List<LichSuThanhToan> findByHoaDonMaHoaDonOrderByNgayThanhToanDesc(@Param("maHoaDon") String maHoaDon);
+
 
     List<LichSuThanhToan> findByHoaDonAndTrangThai(HoaDon hoaDon, Boolean trangThai);
 
     List<LichSuThanhToan> findByHoaDon(HoaDon hoaDon);
-
+    @Query("SELECT lst FROM LichSuThanhToan lst WHERE lst.hoaDon.maHoaDon = :maHoaDon ORDER BY lst.ngayThanhToan DESC")
+    List<LichSuThanhToan> findByHoaDonMaHoaDonOrderByNgayThanhToanDesc(@Param("maHoaDon") String maHoaDon);
 }
