@@ -447,6 +447,11 @@ public class ChiTietSanPhamService {
         ctspRepo.save(ctsp);
     }
 
+    @Transactional
+    public int updateTrangThaiByIdSanPham(Integer idSanPham, Boolean trangThai) {
+        return ctspRepo.updateTrangThaiByIdSanPham(idSanPham, trangThai);
+    }
+
 
 
 }

@@ -115,6 +115,7 @@ public class SanPhamController {
     @PutMapping("/update-trang-thai/{id}")
     public ResponseObject<?> updateTrangThai(@PathVariable Integer id, @RequestParam Boolean trangThai) {
         spService.updateTrangThai(id, trangThai);
+        ctspService.updateTrangThaiByIdSanPham(id, trangThai);
         return new ResponseObject<>(null, "Cập nhập trạng thái thành công");
     }
 
