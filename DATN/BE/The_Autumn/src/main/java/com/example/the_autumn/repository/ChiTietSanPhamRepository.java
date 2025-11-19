@@ -71,5 +71,10 @@ public interface ChiTietSanPhamRepository extends JpaRepository<ChiTietSanPham, 
     List<ChiTietSanPham> findBySanPhamId(@Param("sanPhamId") Integer sanPhamId);
 
     List<ChiTietSanPham> findBySanPhamIdAndTrangThai(Integer idSanPham, Boolean trangThai);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE ChiTietSanPham ctsp SET ctsp.trangThai = :trangThai WHERE ctsp.sanPham.id = :idSanPham")
+    int updateTrangThaiByIdSanPham(@Param("idSanPham") Integer idSanPham, @Param("trangThai") Boolean trangThai);
 }
 
