@@ -102,17 +102,45 @@ public class DotGiamGiaService {
 
             int maxDoUuTien = dotGiamGiaChiTietRepository.findMaxDoUuTienByCtspId(idCtsp);
 
+            BigDecimal giaSauGiam = tinhGiaSauGiam(ctsp.getGiaBan(), savedDot);
+
             DotGiamGiaChiTiet chiTiet = new DotGiamGiaChiTiet();
             chiTiet.setDotGiamGia(savedDot);
             chiTiet.setChiTietSanPham(ctsp);
             chiTiet.setDoUuTien(maxDoUuTien + 1);
-            chiTiet.setGiaSauGiam(null);
+            chiTiet.setGiaSauGiam(giaSauGiam);
 
             chiTietList.add(chiTiet);
         }
         dotGiamGiaChiTietRepository.saveAll(chiTietList);
         logger.info("✅ Đã lưu {} chi tiết giảm giá cho đợt ID={}", chiTietList.size(), savedDot.getId());
         capNhatDoUuTienTheoGiaTriGiam();
+    }
+
+    private BigDecimal tinhGiaSauGiam(BigDecimal giaBanGoc, DotGiamGia dotGiamGia) {
+        if (giaBanGoc == null || dotGiamGia == null || dotGiamGia.getGiaTriGiam() == null) {
+            return giaBanGoc;
+        }
+
+        BigDecimal giaSauGiam;
+
+        if (!dotGiamGia.getLoaiGiamGia()) {
+            BigDecimal phanTramGiam = dotGiamGia.getGiaTriGiam();
+            BigDecimal soTienGiam = giaBanGoc.multiply(phanTramGiam.divide(BigDecimal.valueOf(100)));
+            giaSauGiam = giaBanGoc.subtract(soTienGiam);
+        } else {
+            giaSauGiam = giaBanGoc.subtract(dotGiamGia.getGiaTriGiam());
+        }
+
+        if (giaSauGiam.compareTo(BigDecimal.ZERO) < 0) {
+            giaSauGiam = BigDecimal.ZERO;
+        }
+
+        if (dotGiamGia.getGiaTriToiThieu() != null && giaSauGiam.compareTo(dotGiamGia.getGiaTriToiThieu()) < 0) {
+            giaSauGiam = dotGiamGia.getGiaTriToiThieu();
+        }
+
+        return giaSauGiam;
     }
 
 
