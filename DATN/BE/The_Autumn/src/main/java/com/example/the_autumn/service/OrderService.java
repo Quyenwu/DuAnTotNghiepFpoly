@@ -303,12 +303,22 @@ public class OrderService {
         lichSuHoaDonRepo.save(lshd);
 
         // === 13. GỬI EMAIL XÁC NHẬN ===
+        // === 13. GỬI EMAIL XÁC NHẬN ===
         if (customerEmail != null && !customerEmail.isEmpty() && !customerEmail.startsWith("guest_")) {
             try {
+                // ⭐ EAGER LOAD tất cả dữ liệu cần thiết TRƯỚC KHI gọi async
                 entityManager.refresh(savedHoaDon);
                 if (savedHoaDon.getHoaDonChiTiets() != null) {
-                    savedHoaDon.getHoaDonChiTiets().size();
+                    savedHoaDon.getHoaDonChiTiets().forEach(hdct -> {
+                        // Force load ChiTietSanPham
+                        hdct.getChiTietSanPham().getId();
+                        // Force load SanPham
+                        hdct.getChiTietSanPham().getSanPham().getTenSanPham();
+                        // Force load KichThuoc
+                        hdct.getChiTietSanPham().getKichThuoc().getTenKichThuoc();
+                    });
                 }
+
                 emailTaoDonHangService.sendOrderConfirmationEmail(savedHoaDon, customerEmail);
                 log.info("📧 Order confirmation email queued for: {}", customerEmail);
             } catch (Exception e) {

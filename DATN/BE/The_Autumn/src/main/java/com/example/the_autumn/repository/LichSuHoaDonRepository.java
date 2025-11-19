@@ -3,6 +3,7 @@ package com.example.the_autumn.repository;
 import com.example.the_autumn.entity.LichSuHoaDon;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Collection;
@@ -26,5 +27,6 @@ public interface LichSuHoaDonRepository extends JpaRepository<LichSuHoaDon, Inte
 
     // Lấy lịch sử theo trạng thái
     List<LichSuHoaDon> findByHoaDon_IdAndTrangThaiOrderByNgayCapNhatDesc(Integer hoaDonId, Boolean trangThai);
-
+    @Query("SELECT lsh FROM LichSuHoaDon lsh WHERE lsh.hoaDon.maHoaDon = :maHoaDon ORDER BY lsh.ngayCapNhat DESC")
+    List<LichSuHoaDon> findByHoaDonMaHoaDonOrderByNgayCapNhatDesc(@Param("maHoaDon") String maHoaDon);
 }
