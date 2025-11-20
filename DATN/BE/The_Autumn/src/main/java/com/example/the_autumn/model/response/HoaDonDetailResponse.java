@@ -10,6 +10,7 @@ import java.util.List;
 public class HoaDonDetailResponse {
     private Integer id;
     private String maHoaDon;
+
     private Date ngayTao;
     private Date ngayThanhToan;
     private String tenKhachHang;
@@ -43,6 +44,7 @@ public class HoaDonDetailResponse {
     public Integer getSoLuongDung() {
         return soLuongDung;
     }
+
 
     public void setSoLuongDung(Integer soLuongDung) {
         this.soLuongDung = soLuongDung;
@@ -240,6 +242,24 @@ public class HoaDonDetailResponse {
         private BigDecimal giaBan;
         private BigDecimal thanhTien;
         private String ghiChu;
+        private String maVach;
+        private BigDecimal giaSauGiam;
+
+        public BigDecimal getGiaSauGiam() {
+            return giaSauGiam;
+        }
+
+        public void setGiaSauGiam(BigDecimal giaSauGiam) {
+            this.giaSauGiam = giaSauGiam;
+        }
+
+        public String getMaVach() {
+            return maVach;
+        }
+
+        public void setMaVach(String maVach) {
+            this.maVach = maVach;
+        }
 
         private List<String> anhUrls;
 
