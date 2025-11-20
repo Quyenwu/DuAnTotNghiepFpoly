@@ -417,18 +417,15 @@ public class HoaDonService {
             dto.setSdtNhanVien(hoaDon.getNhanVien().getSdt());
         }
 
-        // BỔ SUNG: Load chi tiết phiếu giảm giá
         if (hoaDon.getPhieuGiamGia() != null) {
             PhieuGiamGia phieuGiamGia = hoaDon.getPhieuGiamGia();
             dto.setMaGiamGia(phieuGiamGia.getMaGiamGia());
             dto.setTenChuongTrinh(phieuGiamGia.getTenChuongTrinh());
 
-            // BỔ SUNG CÁC TRƯỜNG MỚI
             dto.setGiaTriGiamGia(phieuGiamGia.getGiaTriGiamGia());
             dto.setMucGiaGiamToiDa(phieuGiamGia.getMucGiaGiamToiDa());
             dto.setGiaTriDonHangToiThieu(phieuGiamGia.getGiaTriDonHangToiThieu());
 
-            // Thêm các thông tin khác của phiếu giảm giá nếu cần
             dto.setLoaiGiamGia(phieuGiamGia.getLoaiGiamGia());
             dto.setSoLuongDung(phieuGiamGia.getSoLuongDung());
             dto.setNgayBatDau(phieuGiamGia.getNgayBatDau());
@@ -481,12 +478,17 @@ public class HoaDonService {
                     HoaDonDetailResponse.ChiTietSanPhamResponse ctDTO = new HoaDonDetailResponse.ChiTietSanPhamResponse();
                     ctDTO.setIdChiTietSanPham(ct.getChiTietSanPham().getId());
                     ctDTO.setSoLuong(ct.getSoLuong());
-                    ctDTO.setGiaBan(ct.getGiaBan());
                     ctDTO.setThanhTien(ct.getThanhTien());
                     ctDTO.setGhiChu(ct.getGhiChu());
 
                     if (ct.getChiTietSanPham() != null) {
                         ChiTietSanPham ctsp = ct.getChiTietSanPham();
+                        ctDTO.setMaVach(ctsp.getMaVach());
+
+                        ctDTO.setGiaBan(ctsp.getGiaBan());
+
+                        ctDTO.setGiaSauGiam(ct.getGiaBan());
+
                         if (ctsp.getSanPham() != null) {
                             ctDTO.setTenSanPham(ctsp.getSanPham().getTenSanPham());
                         }
@@ -499,7 +501,7 @@ public class HoaDonService {
                         if (ctsp.getAnhs() != null) {
                             List<String> anhUrls = ctsp.getAnhs()
                                     .stream()
-                                    .map(anh -> anh.getDuongDanAnh()) // lấy đường dẫn ảnh
+                                    .map(anh -> anh.getDuongDanAnh())
                                     .collect(Collectors.toList());
                             ctDTO.setAnhUrls(anhUrls);
                         }
