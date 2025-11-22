@@ -19,6 +19,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Transactional(rollbackFor = Exception.class)
 @Service
 public class ChiTietSanPhamService {
 
@@ -444,6 +445,11 @@ public class ChiTietSanPhamService {
 
     public void save(ChiTietSanPham ctsp) {
         ctspRepo.save(ctsp);
+    }
+
+    @Transactional
+    public int updateTrangThaiByIdSanPham(Integer idSanPham, Boolean trangThai) {
+        return ctspRepo.updateTrangThaiByIdSanPham(idSanPham, trangThai);
     }
 
 

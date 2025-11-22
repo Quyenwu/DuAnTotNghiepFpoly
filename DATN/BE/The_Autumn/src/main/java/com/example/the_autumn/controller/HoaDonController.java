@@ -1,15 +1,13 @@
 package com.example.the_autumn.controller;
 
 
-import com.example.the_autumn.entity.HoaDon;
-import com.example.the_autumn.entity.LichSuHoaDon;
-import com.example.the_autumn.entity.NhanVien;
-import com.example.the_autumn.entity.PhuongThucThanhToan;
+import com.example.the_autumn.entity.*;
 import com.example.the_autumn.model.request.HoaDonRequest;
 import com.example.the_autumn.model.request.PageHoaDonRequest;
 import com.example.the_autumn.model.request.UpdateHoaDonRequest;
 import com.example.the_autumn.model.response.*;
 import com.example.the_autumn.repository.HoaDonRepository;
+import com.example.the_autumn.repository.LichSuThanhToanRepository;
 import com.example.the_autumn.repository.NhanVienRepository;
 import com.example.the_autumn.repository.PhuongThucThanhToanRepository;
 import com.example.the_autumn.service.AnhService;
@@ -34,15 +32,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -74,6 +64,9 @@ public class HoaDonController {
 
     @Autowired
     private PhuongThucThanhToanRepository phuongThucRepository;
+
+    @Autowired
+    private LichSuThanhToanRepository lichSuThanhToanRepository;
 
     @Autowired
     private  AnhService anhService;
@@ -240,12 +233,12 @@ public class HoaDonController {
     @GetMapping("/detail/{id}")
     public ResponseEntity<?> getHoaDonDetail(@PathVariable Integer id) {
         try {
-            System.out.println("🔍 Đang tìm hóa đơn ID: " + id);  // ⭐ Log để debug
+            System.out.println("🔍 Đang tìm hóa đơn ID: " + id);
             HoaDonDetailResponse detail = hoaDonService.getHoaDonDetail(id);
             System.out.println("✅ Tìm thấy hóa đơn: " + detail.getMaHoaDon());
             return ResponseEntity.ok(detail);
         } catch (RuntimeException e) {
-            System.err.println("❌ Lỗi: " + e.getMessage());  // ⭐ In ra lỗi chi tiết
+            System.err.println("❌ Lỗi: " + e.getMessage());
             e.printStackTrace();
             return ResponseEntity.status(500).body("Lỗi: " + e.getMessage());
         }
@@ -416,22 +409,22 @@ public class HoaDonController {
             return new ResponseObject<>(savedHoaDon,"Thêm thành công");
         }
 
-    @PostMapping("/create-and-pay-vnpay")
-    public ResponseEntity<?> createHoaDonAndPayWithVNPAY(@RequestBody HoaDonRequest hoaDonRequest) {
-        try {
-            System.out.println("=== VNPay Request ===");
-            System.out.println("Amount: " + hoaDonRequest.getTongTienSauGiam());
-            System.out.println("Customer: " + hoaDonRequest.getIdKhachHang());
-
-            VNPayResponse response = hoaDonService.createHoaDonAndPayWithVNPAY(hoaDonRequest);
-
-            return ResponseEntity.ok(new BaseResponse(true, "Tạo hóa đơn và thanh toán VNPAY thành công", response));
-        } catch (Exception e) {
-            System.err.println("Error in createAndPayWithVNPAY: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(new BaseResponse(false, "Lỗi: " + e.getMessage(), null));
-        }
-    }
+//    @PostMapping("/create-and-pay-vnpay")
+//    public ResponseEntity<?> createHoaDonAndPayWithVNPAY(@RequestBody HoaDonRequest hoaDonRequest) {
+//        try {
+//            System.out.println("=== VNPay Request ===");
+//            System.out.println("Amount: " + hoaDonRequest.getTongTienSauGiam());
+//            System.out.println("Customer: " + hoaDonRequest.getIdKhachHang());
+//
+//            VNPayResponse response = hoaDonService.createHoaDonAndPayWithVNPAY(hoaDonRequest);
+//
+//            return ResponseEntity.ok(new BaseResponse(true, "Tạo hóa đơn và thanh toán VNPAY thành công", response));
+//        } catch (Exception e) {
+//            System.err.println("Error in createAndPayWithVNPAY: " + e.getMessage());
+//            e.printStackTrace();
+//            return ResponseEntity.badRequest().body(new BaseResponse(false, "Lỗi: " + e.getMessage(), null));
+//        }
+//    }
 
     @GetMapping("/vnpay-return")
     public ResponseEntity<?> vnpayReturn(
@@ -460,16 +453,53 @@ public class HoaDonController {
         }
     }
 
-    @PostMapping("/vnpay-ipn")
-    public ResponseEntity<?> vnpayIPN(@RequestParam Map<String, String> params) {
+//    @PostMapping("/vnpay-ipn")
+//    public ResponseEntity<?> vnpayIPN(@RequestParam Map<String, String> params) {
+//        try {
+//            String result = hoaDonService.handleVNPayIPN(params);
+//            return ResponseEntity.ok(result);
+//        } catch (Exception e) {
+//            return ResponseEntity.badRequest().body("error");
+//        }
+//    }
+
+    @GetMapping("/{id}/lich-su-thanh-toan")
+    public ResponseEntity<?> getLichSuThanhToan(@PathVariable Integer id) {
         try {
-            String result = hoaDonService.handleVNPayIPN(params);
-            return ResponseEntity.ok(result);
+            List<LichSuThanhToan> lichSuThanhToan = lichSuThanhToanRepository.findByHoaDonIdOrderByNgayThanhToanDesc(id);
+            return ResponseEntity.ok(lichSuThanhToan);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body("error");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Lỗi khi lấy lịch sử thanh toán: " + e.getMessage());
         }
     }
 
+<<<<<<< HEAD
+=======
+    @DeleteMapping("/{idHoaDon}/chi-tiet/{idChiTietSanPham}")
+    public ResponseEntity<?> xoaChiTietSanPhamKhoiHoaDon(
+            @PathVariable Integer idHoaDon,
+            @PathVariable Integer idChiTietSanPham) {
+        try {
+            hoaDonService.xoaChiTietSanPhamKhoiHoaDon(idHoaDon, idChiTietSanPham);
+            return ResponseEntity.ok().body(Map.of(
+                    "success", true,
+                    "message", "Đã xóa sản phẩm khỏi hóa đơn thành công"
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(Map.of(
+                    "success", false,
+                    "message", "Lỗi hệ thống khi xóa sản phẩm"
+            ));
+        }
+    }
+
+>>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
 }
 
 

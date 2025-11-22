@@ -1,5 +1,8 @@
 package com.example.the_autumn.controller;
 
+import com.example.the_autumn.dto.SanPhamDetailDTO;
+import com.example.the_autumn.dto.SanPhamGiamGiaDTO;
+import com.example.the_autumn.dto.SanPhamTrangChuProjection;
 import com.example.the_autumn.model.response.PageableObject;
 import com.example.the_autumn.model.response.ResponseObject;
 import com.example.the_autumn.model.response.SanPhamResponse;
@@ -18,9 +21,9 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/san-pham")
+@RequestMapping("/api/san-pham/customer")
 @CrossOrigin(origins = {"http://localhost:5173","http://localhost:5174/" , "http://localhost:3000"})
-public class SanPhamController {
+public class CustomerProductController {
 
     @Autowired
     private ChiTietSanPhamService ctspService;
@@ -46,7 +49,37 @@ public class SanPhamController {
 
         return new ResponseObject<>(result);
     }
+    @GetMapping("/dang-giam-gia")
+    public ResponseObject<?> getSanPhamDangGiamGia() {
+        try {
+            List<SanPhamGiamGiaDTO> products = spService.getSanPhamDangGiamGia();
+            return ResponseObject.success(products, "Lấy danh sách sản phẩm giảm giá thành công.");
+        } catch (Exception e) {
+            e.printStackTrace(); // In ra log để debug
+            return ResponseObject.error("Lỗi: " + e.getMessage());
+        }
+    }
 
+    @GetMapping("/giam-gia-tren/{percent}")
+    public ResponseObject<?> getSanPhamGiamGiaTren(@PathVariable double percent) {
+        try {
+            List<SanPhamGiamGiaDTO> products = spService.getSanPhamGiamGiaTheoPercent(percent);
+            return ResponseObject.success(products, "Lấy danh sách sản phẩm giảm giá trên " + percent + "% thành công.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseObject.error("Lỗi: " + e.getMessage());
+        }
+    }
+    @GetMapping("/trang-chu")
+    public ResponseObject<?> getTrangChuSanPham() {
+        List<SanPhamTrangChuProjection> data = spService.getTrangChuSanPham();
+        return ResponseObject.success(data, "Tải danh sách sản phẩm thành công.");
+    }
+    @GetMapping("/detail/{idSanPham}")
+    public ResponseObject<?> getSanPhamDetaill(@PathVariable Integer idSanPham) {
+        SanPhamDetailDTO data = spService.getSanPhamDetail(idSanPham);
+        return ResponseObject.success(data, "Tải chi tiết sản phẩm thành công.");
+    }
     @GetMapping("/filter")
     public ResponseObject<?> filterSanPham(
             @RequestParam(value = "pageNo1", defaultValue = "0") Integer pageNo,
@@ -115,7 +148,6 @@ public class SanPhamController {
     @PutMapping("/update-trang-thai/{id}")
     public ResponseObject<?> updateTrangThai(@PathVariable Integer id, @RequestParam Boolean trangThai) {
         spService.updateTrangThai(id, trangThai);
-        ctspService.updateTrangThaiByIdSanPham(id, trangThai);
         return new ResponseObject<>(null, "Cập nhập trạng thái thành công");
     }
 

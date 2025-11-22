@@ -1,12 +1,16 @@
 package com.example.the_autumn.model.response;
 
+import jakarta.persistence.Column;
+
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.List;
 
 public class HoaDonDetailResponse {
     private Integer id;
     private String maHoaDon;
+
     private Date ngayTao;
     private Date ngayThanhToan;
     private String tenKhachHang;
@@ -19,6 +23,60 @@ public class HoaDonDetailResponse {
     private String sdtNhanVien;
     private String maGiamGia;
     private String tenChuongTrinh;
+<<<<<<< HEAD
+=======
+
+    public Boolean getLoaiGiamGia() {
+        return loaiGiamGia;
+    }
+
+    public void setLoaiGiamGia(Boolean loaiGiamGia) {
+        this.loaiGiamGia = loaiGiamGia;
+    }
+
+    private BigDecimal giaTriGiamGia;
+    private Boolean loaiGiamGia;
+    private BigDecimal mucGiaGiamToiDa;
+    private BigDecimal giaTriDonHangToiThieu;
+    private Integer soLuongDung;
+    private LocalDate ngayBatDau;
+    private LocalDate ngayKetThuc;
+    private Integer trangThaiPhieuGiamGia;
+
+    public Integer getSoLuongDung() {
+        return soLuongDung;
+    }
+
+
+    public void setSoLuongDung(Integer soLuongDung) {
+        this.soLuongDung = soLuongDung;
+    }
+
+    public LocalDate getNgayBatDau() {
+        return ngayBatDau;
+    }
+
+    public void setNgayBatDau(LocalDate ngayBatDau) {
+        this.ngayBatDau = ngayBatDau;
+    }
+
+    public LocalDate getNgayKetThuc() {
+        return ngayKetThuc;
+    }
+
+    public void setNgayKetThuc(LocalDate ngayKetThuc) {
+        this.ngayKetThuc = ngayKetThuc;
+    }
+
+    public Integer getTrangThaiPhieuGiamGia() {
+        return trangThaiPhieuGiamGia;
+    }
+
+    public void setTrangThaiPhieuGiamGia(Integer trangThaiPhieuGiamGia) {
+        this.trangThaiPhieuGiamGia = trangThaiPhieuGiamGia;
+    }
+
+>>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
     private String maGiaoDich;
     private BigDecimal soTien;
     private String ghiChu;
@@ -33,6 +91,33 @@ public class HoaDonDetailResponse {
 
     private KhachHangResponse khachHang;
 
+<<<<<<< HEAD
+=======
+    public BigDecimal getGiaTriGiamGia() {
+        return giaTriGiamGia;
+    }
+
+    public void setGiaTriGiamGia(BigDecimal giaTriGiamGia) {
+        this.giaTriGiamGia = giaTriGiamGia;
+    }
+
+    public BigDecimal getMucGiaGiamToiDa() {
+        return mucGiaGiamToiDa;
+    }
+
+    public void setMucGiaGiamToiDa(BigDecimal mucGiaGiamToiDa) {
+        this.mucGiaGiamToiDa = mucGiaGiamToiDa;
+    }
+
+    public BigDecimal getGiaTriDonHangToiThieu() {
+        return giaTriDonHangToiThieu;
+    }
+
+    public void setGiaTriDonHangToiThieu(BigDecimal giaTriDonHangToiThieu) {
+        this.giaTriDonHangToiThieu = giaTriDonHangToiThieu;
+    }
+
+>>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
     public KhachHangResponse getKhachHang() {
         return khachHang;
     }
@@ -163,6 +248,24 @@ public class HoaDonDetailResponse {
         private BigDecimal giaBan;
         private BigDecimal thanhTien;
         private String ghiChu;
+        private String maVach;
+        private BigDecimal giaSauGiam;
+
+        public BigDecimal getGiaSauGiam() {
+            return giaSauGiam;
+        }
+
+        public void setGiaSauGiam(BigDecimal giaSauGiam) {
+            this.giaSauGiam = giaSauGiam;
+        }
+
+        public String getMaVach() {
+            return maVach;
+        }
+
+        public void setMaVach(String maVach) {
+            this.maVach = maVach;
+        }
 
         private List<String> anhUrls;
 

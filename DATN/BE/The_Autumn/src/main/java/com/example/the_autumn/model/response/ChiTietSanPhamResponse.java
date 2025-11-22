@@ -74,44 +74,70 @@ public class ChiTietSanPhamResponse {
         this.giaSauGiam = tinhGiaSauGiam(ctsp);
     }
 
-    public BigDecimal tinhGiaSauGiam(ChiTietSanPham ctsp) {
-        LocalDate now = LocalDate.now();
+    public BigDecimal tinhGiaSauGiamSafe(ChiTietSanPham ctsp) {
+        try {
+            LocalDate now = LocalDate.now();
 
-        List<DotGiamGiaChiTiet> activeDiscounts = ctsp.getDotGiamGiaChiTiets().stream()
-                .filter(dggct -> {
-                    DotGiamGia dgg = dggct.getDotGiamGia();
-                    return dgg != null
-                            && dgg.getTrangThai() == 1
-                            && (now.isEqual(dgg.getNgayBatDau()) || now.isAfter(dgg.getNgayBatDau()))
-                            && (now.isEqual(dgg.getNgayKetThuc()) || now.isBefore(dgg.getNgayKetThuc()));
-                })
-                .collect(Collectors.toList());
+            List<DotGiamGiaChiTiet> dotGiamGiaChiTiets = ctsp.getDotGiamGiaChiTiets();
+            if (dotGiamGiaChiTiets == null) {
+                return ctsp.getGiaBan();
+            }
 
-        if (activeDiscounts.isEmpty()) {
+            List<DotGiamGiaChiTiet> activeDiscounts = dotGiamGiaChiTiets.stream()
+                    .filter(dggct -> {
+                        if (dggct == null) return false;
+
+                        DotGiamGia dgg = dggct.getDotGiamGia();
+                        return dgg != null
+                                && dgg.getTrangThai() == 1
+                                && (now.isEqual(dgg.getNgayBatDau()) || now.isAfter(dgg.getNgayBatDau()))
+                                && (now.isEqual(dgg.getNgayKetThuc()) || now.isBefore(dgg.getNgayKetThuc()));
+                    })
+                    .collect(Collectors.toList());
+
+            if (activeDiscounts.isEmpty()) {
+                return ctsp.getGiaBan();
+            }
+
+            BigDecimal giaBanGoc = ctsp.getGiaBan();
+            BigDecimal giaThapNhat = giaBanGoc;
+
+            for (DotGiamGiaChiTiet dggct : activeDiscounts) {
+                DotGiamGia dgg = dggct.getDotGiamGia();
+                BigDecimal giaSauGiam;
+
+                if (!dgg.getLoaiGiamGia()) {
+                    // Giảm giá theo phần trăm
+                    giaSauGiam = giaBanGoc.subtract(
+                            giaBanGoc.multiply(dgg.getGiaTriGiam().divide(BigDecimal.valueOf(100)))
+                    );
+                } else {
+                    // Giảm giá trực tiếp
+                    giaSauGiam = giaBanGoc.subtract(dgg.getGiaTriGiam());
+                }
+
+                // Đảm bảo giá sau giảm không âm
+                if (giaSauGiam.compareTo(BigDecimal.ZERO) < 0) {
+                    giaSauGiam = BigDecimal.ZERO;
+                }
+
+                if (giaSauGiam.compareTo(giaThapNhat) < 0) {
+                    giaThapNhat = giaSauGiam;
+                }
+            }
+
+            return giaThapNhat;
+
+        } catch (Exception e) {
+            // Fallback an toàn nếu có lỗi
+            System.err.println("Lỗi khi tính giá sau giảm cho CTSP ID " + ctsp.getId() + ": " + e.getMessage());
             return ctsp.getGiaBan();
         }
+    }
 
-        BigDecimal giaBanGoc = ctsp.getGiaBan();
-        BigDecimal giaThapNhat = giaBanGoc;
-
-        for (DotGiamGiaChiTiet dggct : activeDiscounts) {
-            DotGiamGia dgg = dggct.getDotGiamGia();
-            BigDecimal giaSauGiam;
-
-            if (!dgg.getLoaiGiamGia()) {
-                giaSauGiam = giaBanGoc.subtract(
-                        giaBanGoc.multiply(dgg.getGiaTriGiam().divide(BigDecimal.valueOf(100)))
-                );
-            } else {
-                giaSauGiam = giaBanGoc.subtract(dgg.getGiaTriGiam());
-            }
-
-            if (giaSauGiam.compareTo(giaThapNhat) < 0) {
-                giaThapNhat = giaSauGiam;
-            }
-        }
-
-        return giaThapNhat;
+    @Deprecated
+    public BigDecimal tinhGiaSauGiam(ChiTietSanPham ctsp) {
+        return tinhGiaSauGiamSafe(ctsp);
     }
 
 }
