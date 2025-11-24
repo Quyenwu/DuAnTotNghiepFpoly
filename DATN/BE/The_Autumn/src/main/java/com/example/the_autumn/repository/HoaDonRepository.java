@@ -10,6 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -62,5 +65,11 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer>, JpaSpe
 
     @Query("SELECT h FROM HoaDon h WHERE h.maHoaDon IN :maHoaDonList ORDER BY h.ngayTao DESC")
     List<HoaDon> findByMaHoaDonInOrderByNgayTaoDesc(@Param("maHoaDonList") List<String> maHoaDonList);
+
+    @Query("SELECT SUM(h.tongTien) FROM HoaDon h " +
+            "WHERE h.nhanVien.id = :idNhanVien " +
+            "AND h.ngayTao >= :thoiGianBatDau " +
+            "AND h.trangThai = 1")
+    BigDecimal tinhTongTienTheoCa(Integer idNhanVien, LocalDateTime thoiGianBatDau);
 }
 
