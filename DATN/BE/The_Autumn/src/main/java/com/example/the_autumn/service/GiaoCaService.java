@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Service
 public class GiaoCaService {
@@ -42,7 +43,7 @@ public class GiaoCaService {
         caMoi.setSoTienBatDau(soTienBatDau);
         caMoi.setTrangThai(true);
         caMoi.setGhiChu(ghiChu);
-
+        caMoi.setThoiGianBatDau(LocalDateTime.now());
         return giaoCaRepository.save(caMoi);
     }
 

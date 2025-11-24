@@ -28,7 +28,7 @@ public class GiaoCa {
     @Column(name = "thoi_gian_bat_dau")
     private LocalDateTime  thoiGianBatDau;
 
-    @Column(name = "thoi_gian_ket_thucv")
+    @Column(name = "thoi_gian_ket_thuc")
     private LocalDateTime thoiGianKetThuc;
 
     @Column(name = "so_tien_bat_dau")
