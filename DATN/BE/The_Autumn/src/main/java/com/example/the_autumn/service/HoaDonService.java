@@ -410,10 +410,6 @@ public class HoaDonService {
             kh.setEmail("N/A");
             dto.setKhachHang(kh);
         }
-<<<<<<< HEAD
-
-=======
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
 
         if (hoaDon.getNhanVien() != null) {
             dto.setMaNhanVien(hoaDon.getNhanVien().getMaNhanVien());
@@ -535,11 +531,7 @@ public class HoaDonService {
         HoaDon hoaDon = hoaDonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn ID " + id));
 
-<<<<<<< HEAD
-        // ==================== CẬP NHẬT THÔNG TIN CƠ BẢN ====================
-=======
         // ==================== CẬP NHẬT LOẠI HÓA ĐƠN ====================
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
         if (request.getLoaiHoaDon() != null && !request.getLoaiHoaDon().equals(hoaDon.getLoaiHoaDon())) {
             Boolean oldLoai = hoaDon.getLoaiHoaDon();
             hoaDon.setLoaiHoaDon(request.getLoaiHoaDon());
@@ -549,11 +541,7 @@ public class HoaDonService {
                             request.getLoaiHoaDon() ? "Tại quầy" : "Online"), null);
         }
 
-<<<<<<< HEAD
-        // Cập nhật thông tin khách hàng (nếu có)
-=======
         // ==================== CẬP NHẬT THÔNG TIN KHÁCH HÀNG ====================
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
         if (hoaDon.getKhachHang() != null) {
             KhachHang kh = hoaDon.getKhachHang();
             StringBuilder logKH = new StringBuilder();
@@ -580,72 +568,6 @@ public class HoaDonService {
             }
         }
 
-<<<<<<< HEAD
-        // ==================== CẬP NHẬT ĐỊA CHỈ GIAO HÀNG ====================
-        if (request.getDiaChiCuThe() != null || request.getThanhPho() != null || request.getQuan() != null || request.getIdDiaChi() != null) {
-            String diaChiCuThe = request.getDiaChiCuThe() != null ? request.getDiaChiCuThe().trim() : "";
-            Integer idTinh = request.getThanhPho();
-            Integer idQuan = request.getQuan();
-            Integer idDiaChi = request.getIdDiaChi();
-
-            StringBuilder fullAddress = new StringBuilder();
-            if (!diaChiCuThe.isEmpty()) fullAddress.append(diaChiCuThe);
-            if (idQuan != null) {
-                QuanHuyen quan = quanHuyenRepository.findById(idQuan)
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy quận/huyện ID: " + idQuan));
-                if (fullAddress.length() > 0) fullAddress.append(", ");
-                fullAddress.append(quan.getTenQuan());
-            }
-            if (idTinh != null) {
-                TinhThanh tinh = tinhThanhRepository.findById(idTinh)
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy tỉnh/thành ID: " + idTinh));
-                if (fullAddress.length() > 0) fullAddress.append(", ");
-                fullAddress.append(tinh.getTenTinh());
-            }
-
-            String newAddress = fullAddress.toString();
-            String oldAddress = hoaDon.getDiaChiKhachHang();
-            hoaDon.setDiaChiKhachHang(newAddress);
-            luuLichSu(hoaDon, "Cập nhật địa chỉ giao hàng",
-                    String.format("Địa chỉ: '%s' → '%s'",
-                            oldAddress != null ? oldAddress : "(Trống)", newAddress), null);
-
-            if (hoaDon.getKhachHang() != null) {
-                KhachHang kh = hoaDon.getKhachHang();
-                DiaChi diaChiMacDinh;
-
-                if (idDiaChi != null) {
-                    diaChiMacDinh = diaChiRepository.findById(idDiaChi)
-                            .orElseThrow(() -> new RuntimeException("Địa chỉ ID không tồn tại: " + idDiaChi));
-                    if (!diaChiMacDinh.getKhachHang().getId().equals(kh.getId())) {
-                        throw new RuntimeException("Không được sửa địa chỉ của khách hàng khác!");
-                    }
-                } else {
-                    diaChiMacDinh = new DiaChi();
-                    diaChiMacDinh.setKhachHang(kh);
-                    diaChiMacDinh.setTenDiaChi("Địa chỉ từ hóa đơn #" + hoaDon.getMaHoaDon());
-                }
-
-                diaChiMacDinh.setDiaChiCuThe(diaChiCuThe);
-                if (idTinh != null) {
-                    diaChiMacDinh.setTinhThanh(tinhThanhRepository.getById(idTinh));
-                }
-                if (idQuan != null) {
-                    diaChiMacDinh.setQuanHuyen(quanHuyenRepository.getById(idQuan));
-                }
-
-                diaChiRepository.updateTrangThaiByKhachHangId(kh.getId(), false);
-                diaChiMacDinh.setTrangThai(true);
-                diaChiRepository.save(diaChiMacDinh);
-
-                luuLichSu(hoaDon, "Đồng bộ địa chỉ khách hàng",
-                        idDiaChi != null ? "Cập nhật & đặt làm mặc định địa chỉ ID: " + idDiaChi
-                                : "Tạo mới & đặt làm mặc định địa chỉ từ hóa đơn", null);
-            }
-        }
-
-        // ==================== CẬP NHẬT GHI CHÚ, TRẠNG THÁI, NHÂN VIÊN, PTT ====================
-=======
         if (hoaDon.getKhachHang() != null) {
             KhachHang kh = hoaDon.getKhachHang();
 
@@ -739,7 +661,6 @@ public class HoaDonService {
         }
 
         // ==================== CẬP NHẬT GHI CHÚ, TRẠNG THÁI, NHÂN VIÊN, PHƯƠNG THỨC THANH TOÁN ====================
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
         if (request.getGhiChu() != null && !request.getGhiChu().equals(hoaDon.getGhiChu())) {
             String old = hoaDon.getGhiChu();
             hoaDon.setGhiChu(request.getGhiChu());
@@ -785,18 +706,6 @@ public class HoaDonService {
 
         hoaDon.setNgaySua(new Date());
 
-<<<<<<< HEAD
-        // ==================== CẬP NHẬT CHI TIẾT SẢN PHẨM (QUAN TRỌNG NHẤT) ====================
-        if (request.getChiTietSanPhams() != null && !request.getChiTietSanPhams().isEmpty()) {
-
-            List<HoaDonChiTiet> chiTietHienTai = hoaDonChiTietRepository.findByHoaDonId(id);
-            Map<Integer, HoaDonChiTiet> mapTonTai = chiTietHienTai.stream()
-                    .collect(Collectors.toMap(ct -> ct.getChiTietSanPham().getId(), ct -> ct));
-
-            Map<Integer, UpdateHoaDonRequest.ChiTietSanPhamRequest> requestMap = new HashMap<>();
-
-            // 1. Xử lý các request có id (HoaDonChiTiet) → cập nhật chính xác dòng đó
-=======
         boolean hasProductChanges = false;
         if (request.getChiTietSanPhams() != null && !request.getChiTietSanPhams().isEmpty()) {
             System.out.println("🔄 Bắt đầu xử lý cập nhật sản phẩm...");
@@ -811,78 +720,11 @@ public class HoaDonService {
                     ));
 
             // Xử lý từng sản phẩm trong request
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
             for (UpdateHoaDonRequest.ChiTietSanPhamRequest spReq : request.getChiTietSanPhams()) {
                 if (spReq.getIdChiTietSanPham() == null) {
                     throw new RuntimeException("idChiTietSanPham không được null");
                 }
 
-<<<<<<< HEAD
-                if (spReq.getId() != null) {
-                    HoaDonChiTiet existing = hoaDonChiTietRepository.findById(spReq.getId())
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết hóa đơn ID: " + spReq.getId()));
-
-                    int soLuongCu = existing.getSoLuong();
-                    int soLuongMoi = spReq.getSoLuong();
-
-                    ChiTietSanPham ctsp = existing.getChiTietSanPham();
-
-                    if (soLuongMoi > soLuongCu) {
-                        // Tăng số lượng trong hóa đơn → bán thêm → chiếm thêm kho → GIẢM tồn kho
-                        int them = soLuongMoi - soLuongCu;
-                        ctsp.setSoLuongTon(ctsp.getSoLuongTon() - them);
-                    } else if (soLuongMoi < soLuongCu) {
-                        // Giảm số lượng trong hóa đơn → hủy bán → trả lại kho → TĂNG tồn kho
-                        int bot = soLuongCu - soLuongMoi;
-                        ctsp.setSoLuongTon(ctsp.getSoLuongTon() + bot);
-                    }
-
-                    chiTietSanPhamRepository.save(ctsp);
-                    existing.setSoLuong(soLuongMoi);
-                    existing.setGiaBan(spReq.getGiaBan());
-                    existing.setGhiChu(spReq.getGhiChu());
-                    hoaDonChiTietRepository.save(existing);
-
-                    mapTonTai.remove(ctsp.getId());
-                } else {
-                    requestMap.merge(spReq.getIdChiTietSanPham(), spReq, (old, neu) -> {
-                        neu.setSoLuong(old.getSoLuong() + neu.getSoLuong());
-                        return neu;
-                    });
-                }
-            }
-
-            for (Map.Entry<Integer, UpdateHoaDonRequest.ChiTietSanPhamRequest> e : requestMap.entrySet()) {
-                Integer idCtsp = e.getKey();
-                UpdateHoaDonRequest.ChiTietSanPhamRequest spReq = e.getValue();
-
-                ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(idCtsp)
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy ChiTietSanPham ID: " + idCtsp));
-
-                HoaDonChiTiet chiTiet = mapTonTai.get(idCtsp);
-
-                if (chiTiet != null) {
-                    // Cộng dồn số lượng
-                    int slCu = chiTiet.getSoLuong();
-                    int slThem = spReq.getSoLuong();
-                    if (ctsp.getSoLuongTon() < slThem) {
-                        throw new RuntimeException("Không đủ tồn kho cho sản phẩm: " + ctsp.getSanPham().getTenSanPham());
-                    }
-                    ctsp.setSoLuongTon(ctsp.getSoLuongTon() - slThem);
-                    chiTiet.setSoLuong(slCu + slThem);
-                    chiTiet.setGiaBan(spReq.getGiaBan());
-                    chiTiet.setGhiChu(spReq.getGhiChu());
-                    hoaDonChiTietRepository.save(chiTiet);
-
-                    luuLichSu(hoaDon, "Cập nhật số lượng sản phẩm",
-                            String.format("Cộng thêm %d sản phẩm: %s (Tổng: %d)", slThem, ctsp.getSanPham().getTenSanPham(), slCu + slThem), null);
-                } else {
-                    // Thêm mới
-                    if (ctsp.getSoLuongTon() < spReq.getSoLuong()) {
-                        throw new RuntimeException("Không đủ tồn kho cho sản phẩm: " + ctsp.getSanPham().getTenSanPham());
-                    }
-                    ctsp.setSoLuongTon(ctsp.getSoLuongTon() - spReq.getSoLuong());
-=======
                 ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(spReq.getIdChiTietSanPham())
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy ChiTietSanPham ID: " + spReq.getIdChiTietSanPham()));
 
@@ -928,7 +770,6 @@ public class HoaDonService {
 
                     System.out.println("➕ Thêm mới sản phẩm: " + ctsp.getSanPham().getTenSanPham());
 //                    ctsp.setSoLuongTon(ctsp.getSoLuongTon() - spReq.getSoLuong());
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
                     chiTietSanPhamRepository.save(ctsp);
 
                     HoaDonChiTiet newCT = new HoaDonChiTiet();
@@ -941,27 +782,6 @@ public class HoaDonService {
                     hoaDonChiTietRepository.save(newCT);
 
                     luuLichSu(hoaDon, "Thêm sản phẩm vào hóa đơn",
-<<<<<<< HEAD
-                            String.format("Thêm %d %s", spReq.getSoLuong(), ctsp.getSanPham().getTenSanPham()), null);
-                }
-                mapTonTai.remove(idCtsp);
-            }
-
-            for (HoaDonChiTiet ct : mapTonTai.values()) {
-                ChiTietSanPham ctsp = ct.getChiTietSanPham();
-                ctsp.setSoLuongTon(ctsp.getSoLuongTon() + ct.getSoLuong());
-                chiTietSanPhamRepository.save(ctsp);
-
-                luuLichSu(hoaDon, "Xóa sản phẩm khỏi hóa đơn",
-                        String.format("Xóa %d %s (Màu: %s, Size: %s) - Đã trả tồn kho",
-                                ct.getSoLuong(),
-                                ctsp.getSanPham().getTenSanPham(),
-                                ctsp.getMauSac().getTenMauSac(),
-                                ctsp.getKichThuoc().getTenKichThuoc()), null);
-
-                hoaDonChiTietRepository.delete(ct);
-            }
-=======
                             String.format("Sản phẩm: %s - Số lượng: %d",
                                     ctsp.getSanPham().getTenSanPham(), spReq.getSoLuong()), null);
                 }
@@ -1085,15 +905,12 @@ public class HoaDonService {
         } catch (Exception e) {
             System.err.println("❌ Lỗi khi xử lý lịch sử thanh toán: " + e.getMessage());
             e.printStackTrace();
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
         }
 
         hoaDonRepository.save(hoaDon);
         return new UpdateHoaDonResponse(true, "Cập nhật hóa đơn thành công");
     }
 
-<<<<<<< HEAD
-=======
     private BigDecimal calculateTongTienSauGiamGia(HoaDon hoaDon) {
         try {
             BigDecimal tongTienSanPham = BigDecimal.ZERO;
@@ -1215,7 +1032,6 @@ public class HoaDonService {
         return String.format("%,d ₫", amount.longValue());
     }
 
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
     public Optional<HoaDon> findById(Integer id) {
         return hoaDonRepository.findById(id);
     }
@@ -1750,8 +1566,6 @@ public class HoaDonService {
         System.out.println("✅ Đã xóa sản phẩm khỏi hóa đơn: " + ctsp.getSanPham().getTenSanPham());
     }
 
-<<<<<<< HEAD
-=======
     private void capNhatTongTienHoaDon(HoaDon hoaDon) {
         // Tính lại tổng tiền từ các chi tiết còn lại
         BigDecimal tongTienSanPham = hoaDonChiTietRepository.findByHoaDonId(hoaDon.getId())
@@ -1804,7 +1618,6 @@ public class HoaDonService {
 
 
 
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
 }
 
 

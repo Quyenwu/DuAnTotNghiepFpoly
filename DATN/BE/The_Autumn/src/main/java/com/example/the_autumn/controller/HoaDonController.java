@@ -474,8 +474,6 @@ public class HoaDonController {
         }
     }
 
-<<<<<<< HEAD
-=======
     @DeleteMapping("/{idHoaDon}/chi-tiet/{idChiTietSanPham}")
     public ResponseEntity<?> xoaChiTietSanPhamKhoiHoaDon(
             @PathVariable Integer idHoaDon,
@@ -499,7 +497,6 @@ public class HoaDonController {
         }
     }
 
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
 }
 
 

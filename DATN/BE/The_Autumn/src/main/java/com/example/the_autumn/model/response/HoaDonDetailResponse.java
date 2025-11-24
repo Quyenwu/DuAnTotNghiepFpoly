@@ -23,8 +23,6 @@ public class HoaDonDetailResponse {
     private String sdtNhanVien;
     private String maGiamGia;
     private String tenChuongTrinh;
-<<<<<<< HEAD
-=======
 
     public Boolean getLoaiGiamGia() {
         return loaiGiamGia;
@@ -76,7 +74,6 @@ public class HoaDonDetailResponse {
         this.trangThaiPhieuGiamGia = trangThaiPhieuGiamGia;
     }
 
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
     private String maGiaoDich;
     private BigDecimal soTien;
     private String ghiChu;
@@ -91,8 +88,6 @@ public class HoaDonDetailResponse {
 
     private KhachHangResponse khachHang;
 
-<<<<<<< HEAD
-=======
     public BigDecimal getGiaTriGiamGia() {
         return giaTriGiamGia;
     }
@@ -117,7 +112,6 @@ public class HoaDonDetailResponse {
         this.giaTriDonHangToiThieu = giaTriDonHangToiThieu;
     }
 
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
     public KhachHangResponse getKhachHang() {
         return khachHang;
     }

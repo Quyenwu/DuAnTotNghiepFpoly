@@ -10,10 +10,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-<<<<<<< HEAD
-=======
 import java.util.stream.Collectors;
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
 
 @Service
 public class GiamGiaKhachHangService {
@@ -40,8 +37,6 @@ public class GiamGiaKhachHangService {
             return false;
         }
     }
-<<<<<<< HEAD
-=======
     public List<MaGiamGiaResponse> getMaGiamGiaByKhachHang(Integer khachHangId) {
         LocalDate now = LocalDate.now();
         List<GiamGiaKhachHang> allDiscounts = giamGiaKhachHangRepository.findByKhachHangId(khachHangId);
@@ -70,5 +65,4 @@ public class GiamGiaKhachHangService {
 
 
 
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
 }
