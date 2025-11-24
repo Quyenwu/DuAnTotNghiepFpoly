@@ -31,4 +31,5 @@ public class KhachHangAuthRequest {
 
     @Pattern(regexp = "^[0-9]{10,11}$", message = "Số điện thoại không hợp lệ")
     private String sdt;
+
 }
