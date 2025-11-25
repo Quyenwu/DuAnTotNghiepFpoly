@@ -74,20 +74,37 @@ public class ChatBotController {
     @PostMapping("/ask")
     public ResponseEntity<?> askAI(@RequestBody ChatRequest req) {
         if (req.getSenderType() != null && req.getSenderType() == 0) { // chỉ KH mới gọi AI
-            PhongChat room = phongRepo.findById(req.getRoomId()).orElseThrow();
+            PhongChat room = phongRepo.findById(req.getRoomId())
+                    .orElseThrow(() -> new RuntimeException("Phòng chat không tồn tại"));
+
             String answer = aiService.ask(req.getMessage(), req.getRoomId());
-            TinNhan aiMsg = TinNhan.builder().phongChat(room).guiTu(2).noiDung(answer).build();
+
+            // Đảm bảo thoiGian luôn có giá trị
+            LocalDateTime now = LocalDateTime.now();
+            TinNhan aiMsg = TinNhan.builder()
+                    .phongChat(room)
+                    .guiTu(2) // AI
+                    .noiDung(answer)
+                    .thoiGian(now)
+                    .build();
+
             tinNhanRepo.save(aiMsg);
 
-            simp.convertAndSend("/topic/chat/" + req.getRoomId(), Map.of(
-                    "guiTu", 2, "noiDung", answer, "thoiGian", aiMsg.getThoiGian()
-            ));
+            // Dùng HashMap thay vì Map.of để tránh NPE nếu giá trị null
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("guiTu", 2);
+            payload.put("noiDung", answer);
+            payload.put("thoiGian", now);
+
+            simp.convertAndSend("/topic/chat/" + req.getRoomId(), payload);
 
             return ResponseEntity.ok(Map.of("reply", answer));
         } else {
             return ResponseEntity.ok(Map.of("reply", "Đã gửi tin nhắn nhân viên thành công"));
         }
     }
+
+
     @PostMapping("/send")
     public ResponseEntity<?> sendMessage(@RequestBody ChatRequest req) {
         PhongChat room = phongRepo.findById(req.getRoomId())
@@ -122,34 +139,34 @@ public class ChatBotController {
         return ResponseEntity.ok(Map.of("rooms", roomList));
     }
 
-    @PostMapping("/rooms/auto")
-    public ResponseEntity<?> createRoomForRegistered(@RequestParam Integer idKhachHang) {
-        // Bắt buộc phải có idKhachHang
+    @GetMapping("/rooms/by-customer/{idKhachHang}")
+    public ResponseEntity<?> getRoomByCustomer(@PathVariable Integer idKhachHang) {
+
         KhachHang kh = khachHangRepo.findById(idKhachHang)
                 .orElseThrow(() -> new RuntimeException("Khách hàng không tồn tại"));
 
-        // Kiểm tra xem khách hàng đã có phòng chưa
-        PhongChat room = phongRepo.findAll().stream()
-                .filter(p -> p.getKhachHang() != null && p.getKhachHang().getId().equals(kh.getId()))
-                .findFirst()
-                .orElse(null);
+        // Tìm phòng theo id khách hàng
+        PhongChat room = phongRepo.findByKhachHangId(idKhachHang);
 
         if (room == null) {
-            // Nếu chưa có → tạo phòng mới
+            // Nếu vì lý do gì mà chưa có phòng → tự tạo
             room = PhongChat.builder()
                     .khachHang(kh)
                     .loai(0) // khách-AI
                     .trangThai(1)
                     .ngayTao(LocalDateTime.now())
                     .build();
-            room = phongRepo.save(room);
+
+            phongRepo.save(room);
         }
 
         return ResponseEntity.ok(Map.of(
                 "roomId", room.getId(),
+                "loai", room.getLoai(),
                 "khachHang", kh.getHoTen()
         ));
     }
+
     @PostMapping("/rooms/join")
     public ResponseEntity<?> joinRoomAsStaff(@RequestParam Integer roomId, @RequestParam Integer idNhanVien) {
         PhongChat room = phongRepo.findById(roomId)
@@ -158,10 +175,17 @@ public class ChatBotController {
         NhanVien nv = nhanVienRepo.findById(idNhanVien)
                 .orElseThrow(() -> new RuntimeException("Nhân viên không tồn tại"));
 
-        // Cập nhật phòng: gán nhân viên, chuyển loại sang khách-nhân viên
+        // Gán nhân viên, chuyển loại phòng sang khách-nhân viên
         room.setNhanVien(nv);
         room.setLoai(1); // khách-nhân viên
         phongRepo.save(room);
+
+        // --- Thêm: gửi WS thông báo cho khách AI tạm dừng ---
+        simp.convertAndSend("/topic/chat/" + roomId, Map.of(
+                "guiTu", 2,
+                "noiDung", "Nhân viên đã tham gia chat, AI sẽ tạm dừng trả lời",
+                "thoiGian", java.time.LocalDateTime.now()
+        ));
 
         return ResponseEntity.ok(Map.of(
                 "roomId", room.getId(),
@@ -170,6 +194,7 @@ public class ChatBotController {
                 "loai", room.getLoai()
         ));
     }
+
     @PostMapping("/rooms/{roomId}/changeType")
     public ResponseEntity<?> changeRoomType(@PathVariable Integer roomId, @RequestParam Integer type) {
         // type = 0 (AI), 1 (Nhân viên)
@@ -192,6 +217,25 @@ public class ChatBotController {
                 "roomId", room.getId(),
                 "loai", room.getLoai()
         ));
+    }
+    @PostMapping("/rooms/leave")
+    public ResponseEntity<?> leaveRoom(@RequestParam Integer roomId, @RequestParam Integer idNhanVien) {
+        PhongChat room = phongRepo.findById(roomId)
+                .orElseThrow(() -> new RuntimeException("Phòng chat không tồn tại"));
+        NhanVien nv = room.getNhanVien();
+        if (nv != null && nv.getId().equals(idNhanVien)) {
+            room.setNhanVien(null);
+            room.setLoai(0); // quay về AI
+            phongRepo.save(room);
+
+            // Thông báo cho khách: AI sẽ tiếp tục chat
+            simp.convertAndSend("/topic/chat/" + roomId, Map.of(
+                    "guiTu", 2,
+                    "noiDung", "Nhân viên đã rời, AI sẽ tiếp tục hỗ trợ bạn.",
+                    "thoiGian", java.time.LocalDateTime.now()
+            ));
+        }
+        return ResponseEntity.ok(Map.of("message", "Đã rời phòng"));
     }
 
 

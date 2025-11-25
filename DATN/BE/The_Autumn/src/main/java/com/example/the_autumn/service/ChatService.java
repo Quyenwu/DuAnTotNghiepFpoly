@@ -5,6 +5,7 @@ import com.example.the_autumn.entity.KhachHang;
 import com.example.the_autumn.entity.NhanVien;
 import com.example.the_autumn.entity.PhongChat;
 import com.example.the_autumn.entity.TinNhan;
+import com.example.the_autumn.repository.NhanVienRepository;
 import com.example.the_autumn.repository.PhongChatRepository;
 import com.example.the_autumn.repository.TinNhanRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -21,112 +22,123 @@ public class ChatService {
     private final TinNhanRepository tinNhanRepo;
     private final SimpMessagingTemplate simp;
     private final AIService aiService;
+    private final NhanVienRepository nhanVienRepo;
 
     public ChatService(PhongChatRepository phongRepo,
                        TinNhanRepository tinNhanRepo,
                        SimpMessagingTemplate simp,
+                       NhanVienRepository nhanVienRepo,
                        AIService aiService) {
         this.phongRepo = phongRepo;
         this.tinNhanRepo = tinNhanRepo;
         this.simp = simp;
         this.aiService = aiService;
+        this.nhanVienRepo= nhanVienRepo;
     }
-
     @Transactional
     public void handleIncoming(ChatPayload payload) {
+        if (payload.getRoomId() == null) throw new RuntimeException("RoomId không được null");
 
-        if (payload.getRoomId() == null) {
-            throw new RuntimeException("RoomId không được null");
-        }
+        LocalDateTime now = LocalDateTime.now();
 
-        // Lấy phòng chat, nếu không tồn tại thì tạo mới
+        // Lấy phòng chat, nếu không có thì tạo mới
         PhongChat room = phongRepo.findById(payload.getRoomId())
                 .orElseGet(() -> {
                     PhongChat p = PhongChat.builder()
-                            .loai(0) // mặc định AI
+                            .loai(0) // AI
                             .trangThai(1)
-                            .ngayTao(LocalDateTime.now())
+                            .ngayTao(now)
                             .build();
                     return phongRepo.save(p);
                 });
 
-        // Nếu có tin nhắn từ khách hoặc nhân viên
-        if (payload.getNoiDung() != null) {
-            TinNhan t = TinNhan.builder()
-                    .phongChat(room)
-                    .guiTu(payload.getGuiTu()) // 0=KH, 1=NV, 2=AI
-                    .noiDung(payload.getNoiDung())
-                    .thoiGian(LocalDateTime.now())
-                    .build();
-            tinNhanRepo.save(t);
+        // Nhân viên join phòng trước
+        if (payload.getNhanVienId() != null) {
+            NhanVien nv = room.getNhanVien();
+            if (nv == null) {
+                nv = nhanVienRepo.findById(payload.getNhanVienId())
+                        .orElseThrow(() -> new RuntimeException("Nhân viên không tồn tại"));
+                room.setNhanVien(nv);
+                room.setLoai(1); // chuyển sang khách-nhân viên
+                phongRepo.save(room);
 
-            // Broadcast tin nhắn
-            simp.convertAndSend("/topic/chat/" + room.getId(), Map.of(
-                    "guiTu", payload.getGuiTu(),
-                    "noiDung", payload.getNoiDung(),
-                    "thoiGian", t.getThoiGian()
-            ));
-        }
-
-        // Nếu khách đổi loại phòng (AI hoặc NV)
-        if (payload.getChangeType() != null) {
-            room.setLoai(payload.getChangeType());
-            phongRepo.save(room);
-
-            if (payload.getChangeType() == 0) {
-                // Chọn AI
                 simp.convertAndSend("/topic/chat/" + room.getId(), Map.of(
                         "guiTu", 2,
-                        "noiDung", "AI đã sẵn sàng hỗ trợ bạn",
-                        "thoiGian", LocalDateTime.now()
-                ));
-            } else if (payload.getChangeType() == 1) {
-                // Chọn Nhân viên
-                simp.convertAndSend("/topic/chat/" + room.getId(), Map.of(
-                        "guiTu", 2,
-                        "noiDung", "AI tạm nghỉ, nhân viên sẽ hỗ trợ bạn",
-                        "thoiGian", LocalDateTime.now()
-                ));
-                simp.convertAndSend("/topic/staff/notifications", Map.of(
-                        "roomId", room.getId(),
-                        "khachHang", room.getKhachHang().getHoTen(),
-                        "message", "Khách cần hỗ trợ"
+                        "noiDung", "Nhân viên " + nv.getHoTen() + " đã vào hỗ trợ bạn",
+                        "thoiGian", now
                 ));
             }
         }
 
-        // Nếu phòng đang AI và khách gửi tin nhắn → AI trả lời
-        if (room.getLoai() == 0 && payload.getGuiTu() != null && payload.getGuiTu() == 0) {
+        // Lưu tin nhắn KH hoặc NV
+        if (payload.getNoiDung() != null && payload.getGuiTu() != null) {
+            TinNhan t = TinNhan.builder()
+                    .phongChat(room)
+                    .guiTu(payload.getGuiTu())
+                    .noiDung(payload.getNoiDung())
+                    .thoiGian(now)
+                    .build();
+            tinNhanRepo.save(t);
+
+            simp.convertAndSend("/topic/chat/" + room.getId(), Map.of(
+                    "guiTu", payload.getGuiTu(),
+                    "noiDung", payload.getNoiDung(),
+                    "thoiGian", now
+            ));
+        }
+
+        // Chỉ xử lý AI khi phòng vẫn là AI và KH gửi
+        if (payload.getGuiTu() != null && payload.getGuiTu() == 0 && room.getLoai() == 0) {
             String answer = aiService.ask(payload.getNoiDung(), room.getId());
+
             TinNhan aiMsg = TinNhan.builder()
                     .phongChat(room)
-                    .guiTu(2)
+                    .guiTu(2) // AI
                     .noiDung(answer)
-                    .thoiGian(LocalDateTime.now())
+                    .thoiGian(now)
                     .build();
             tinNhanRepo.save(aiMsg);
 
             simp.convertAndSend("/topic/chat/" + room.getId(), Map.of(
                     "guiTu", 2,
                     "noiDung", answer,
-                    "thoiGian", aiMsg.getThoiGian()
+                    "thoiGian", now
             ));
+
+            // Nếu AI không trả lời → thông báo NV cần hỗ trợ
+            if (answer.contains("Xin lỗi, tôi không hiểu") || answer.contains("không tìm thấy")) {
+                room.setLoai(1); // chuyển sang NV
+                phongRepo.save(room);
+
+                simp.convertAndSend("/topic/staff/notifications", Map.of(
+                        "roomId", room.getId(),
+                        "khachHang", room.getKhachHang() != null ? room.getKhachHang().getHoTen() : "Guest",
+                        "message", "Khách cần hỗ trợ"
+                ));
+
+                simp.convertAndSend("/topic/chat/" + room.getId(), Map.of(
+                        "guiTu", 2,
+                        "noiDung", "AI không thể trả lời, nhân viên sẽ hỗ trợ bạn ngay.",
+                        "thoiGian", LocalDateTime.now()
+                ));
+            }
         }
 
-        // Nếu nhân viên join phòng
-        if (payload.getNhanVienId() != null) {
-            NhanVien nv = room.getNhanVien(); // hoặc lấy từ repo nếu cần
-            if (nv == null) {
-                // Gán nhân viên
-                // nv = nhanVienRepo.findById(payload.getNhanVienId()).orElseThrow();
-                // room.setNhanVien(nv);
-                // phongRepo.save(room);
+        // Nhân viên rời phòng → trả lại AI
+        if (payload.getChangeType() != null && payload.getChangeType() == 2 && payload.getNhanVienId() != null) {
+            NhanVien nv = room.getNhanVien();
+            if (nv != null && nv.getId().equals(payload.getNhanVienId())) {
+                room.setLoai(0); // AI
+                room.setNhanVien(null);
+                phongRepo.save(room);
+
+                simp.convertAndSend("/topic/chat/" + room.getId(), Map.of(
+                        "guiTu", 2,
+                        "noiDung", "Nhân viên đã rời phòng, AI sẽ tiếp tục hỗ trợ bạn.",
+                        "thoiGian", LocalDateTime.now()
+                ));
             }
-            simp.convertAndSend("/topic/chat/" + room.getId(), Map.of(
-                    "guiTu", 2,
-                    "noiDung", "Nhân viên đã vào hỗ trợ bạn",
-                    "thoiGian", LocalDateTime.now()
-            ));
         }
     }
+
 }
