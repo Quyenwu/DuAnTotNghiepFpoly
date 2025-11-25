@@ -352,7 +352,104 @@ public class SanPhamService {
                 return ctsp.getAnhs().stream().findFirst().map(Anh::getDuongDanAnh).orElse(null);
             }
         }
-        // Nếu không có, trả về null
         return null;
+    }
+
+    public List<SanPhamResponse> filterByDanhMuc(String danhMuc) {
+        List<SanPham> list = spRepo.findAll();
+
+        return list.stream()
+                .filter(sp -> {
+                    if (danhMuc == null || danhMuc.isEmpty()) {
+                        return true;
+                    }
+
+                    String tenSanPham = sp.getTenSanPham().toLowerCase();
+                    String danhMucLower = danhMuc.toLowerCase();
+
+                    switch (danhMucLower) {
+                        case "ao thun":
+                        case "áo thun":
+                            return tenSanPham.contains("áo thun") ||
+                                    tenSanPham.contains("ao thun") ||
+                                    tenSanPham.contains("the aut") ||
+                                    tenSanPham.contains("the autumn");
+
+                        case "ao thun regular fit":
+                        case "áo thun regular fit":
+                            return tenSanPham.contains("regular") ||
+                                    (tenSanPham.contains("áo thun") && !tenSanPham.contains("oversize") && !tenSanPham.contains("slim")) ||
+                                    tenSanPham.contains("the aut 36") ||
+                                    tenSanPham.contains("the aut 140");
+
+                        case "ao thun oversize":
+                        case "áo thun oversize":
+                            return tenSanPham.contains("oversize") ||
+                                    tenSanPham.contains("oversized") ||
+                                    tenSanPham.contains("boxy") ||
+                                    tenSanPham.contains("dáng dài") ||
+                                    tenSanPham.contains("the aut 90") ||
+                                    tenSanPham.contains("the aut 136");
+
+                        case "ao thun slim fit":
+                        case "áo thun slim fit":
+                            return tenSanPham.contains("slim") ||
+                                    tenSanPham.contains("slim fit") ||
+                                    tenSanPham.contains("the aut 40");
+
+                        case "ao thun basic":
+                        case "áo thun basic":
+                            return tenSanPham.contains("basic") ||
+                                    tenSanPham.contains("cổ tròn") ||
+                                    tenSanPham.contains("unisex") ||
+                                    tenSanPham.contains("the autumn 1") ||
+                                    tenSanPham.contains("the autumn 2");
+
+                        case "ao thun croptop":
+                        case "áo thun croptop":
+                            return tenSanPham.contains("croptop") ||
+                                    tenSanPham.contains("the autumn 12");
+
+                        default:
+                            return tenSanPham.contains(danhMucLower);
+                    }
+                })
+                .sorted((a, b) -> b.getNgayTao().compareTo(a.getNgayTao()))
+                .map(SanPhamResponse::new)
+                .collect(Collectors.toList());
+    }
+
+    public List<String> getAllDanhMuc() {
+        return List.of(
+                "Áo thun",
+                "Áo thun Regular Fit",
+                "Áo thun Oversize",
+                "Áo thun Slim Fit",
+                "Áo thun Basic",
+                "Áo thun Croptop"
+        );
+    }
+
+    public PageableObject<SanPhamResponse> filterByDanhMucWithPaging(Integer pageNo, Integer pageSize, String danhMuc) {
+
+        List<SanPhamResponse> filteredList = filterByDanhMuc(danhMuc);
+
+        int totalItems = filteredList.size();
+        int fromIndex = pageNo * pageSize;
+        int toIndex = Math.min(fromIndex + pageSize, totalItems);
+
+        List<SanPhamResponse> pageData = fromIndex < totalItems
+                ? filteredList.subList(fromIndex, toIndex)
+                : List.of();
+
+        Pageable pageable = PageRequest.of(pageNo, pageSize);
+
+        Page<SanPhamResponse> page = new org.springframework.data.domain.PageImpl<>(
+                pageData,
+                pageable,
+                totalItems
+        );
+
+        return new PageableObject<>(page);
     }
 }

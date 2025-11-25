@@ -78,4 +78,52 @@ public class AnhController {
             return new ResponseObject<>("500", "Lỗi khi xóa ảnh: " + e.getMessage());
         }
     }
+
+    @PutMapping("/{idAnh}")
+    public ResponseObject<?> capNhatAnh(
+            @PathVariable Integer idAnh,
+            @RequestBody Map<String, String> requestBody) {
+
+        try {
+            String imageUrl = requestBody.get("imageUrl");
+
+            if (imageUrl == null || imageUrl.trim().isEmpty()) {
+                return new ResponseObject<>("400", "URL ảnh không được để trống");
+            }
+
+            Anh updatedImage = anhService.capNhatAnh(idAnh, imageUrl);
+
+            return new ResponseObject<>(updatedImage, "Đã cập nhật ảnh thành công");
+
+        } catch (Exception e) {
+            return new ResponseObject<>("500", "Lỗi khi cập nhật ảnh: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/{idChiTietSanPham}/multiple")
+    public ResponseObject<?> capNhatNhieuAnh(
+            @PathVariable Integer idChiTietSanPham,
+            @RequestBody List<String> imageUrls) {
+
+        try {
+            List<Anh> updatedImages = anhService.capNhatNhieuAnh(idChiTietSanPham, imageUrls);
+
+            return new ResponseObject<>(updatedImages, "Đã cập nhật " + updatedImages.size() + " ảnh thành công");
+
+        } catch (Exception e) {
+            return new ResponseObject<>("500", "Lỗi khi cập nhật ảnh: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/bien-the/{idChiTietSanPham}/all")
+    public ResponseObject<?> getAllAnhByBienThe(@PathVariable Integer idChiTietSanPham) {
+        try {
+            List<Anh> images = anhService.getAnhByBienThe(idChiTietSanPham);
+
+            return new ResponseObject<>(images, "Lấy danh sách ảnh thành công");
+
+        } catch (Exception e) {
+            return new ResponseObject<>("500", "Lỗi khi lấy danh sách ảnh: " + e.getMessage());
+        }
+    }
 }

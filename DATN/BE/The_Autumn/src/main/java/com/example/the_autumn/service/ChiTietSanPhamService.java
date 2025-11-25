@@ -303,16 +303,19 @@ public class ChiTietSanPhamService {
 
     @Transactional
     public ChiTietSanPhamResponse updateChiTietSanPham(Integer id, UpdateChiTietSanPhamRequest request) {
-        System.out.println("🔄 Service: Update chi tiết sản phẩm ID=" + id);
-
         ChiTietSanPham chiTiet = ctspRepo.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy biến thể với ID: " + id));
 
-        KichThuoc kichThuoc = ktRepo.findById(request.getIdKichThuoc())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy kích thước với ID: " + request.getIdKichThuoc()));
+        boolean isGiaThayDoi = chiTiet.getGiaBan().compareTo(request.getGiaBan()) != 0;
 
+        if (isGiaThayDoi) {
+            return taoBienTheVoiGiaMoi(id, request.getGiaBan());
+        }
+
+        KichThuoc kichThuoc = ktRepo.findById(request.getIdKichThuoc())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy kích thước"));
         MauSac mauSac = msRepo.findById(request.getIdMauSac())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy màu sắc với ID: " + request.getIdMauSac()));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy màu sắc"));
 
         boolean isChangedSizeOrColor = !chiTiet.getKichThuoc().getId().equals(request.getIdKichThuoc())
                 || !chiTiet.getMauSac().getId().equals(request.getIdMauSac());
@@ -323,31 +326,19 @@ public class ChiTietSanPhamService {
                     request.getIdMauSac(),
                     request.getIdKichThuoc()
             );
-
             if (exists) {
-                throw new RuntimeException("Biến thể với kích thước '" + kichThuoc.getTenKichThuoc()
-                        + "' và màu sắc '" + mauSac.getTenMauSac() + "' đã tồn tại");
+                throw new RuntimeException("Biến thể với kích thước và màu sắc này đã tồn tại");
             }
-        }
-
-        if (request.getGiaBan().compareTo(BigDecimal.ZERO) < 0) {
-            throw new RuntimeException("Giá bán không được âm");
-        }
-
-        if (request.getSoLuongTon() < 0) {
-            throw new RuntimeException("Số lượng tồn không được âm");
         }
 
         chiTiet.setKichThuoc(kichThuoc);
         chiTiet.setMauSac(mauSac);
-        chiTiet.setGiaBan(request.getGiaBan());
         chiTiet.setSoLuongTon(request.getSoLuongTon());
+        chiTiet.setMoTa(request.getMoTa());
 
         if (request.getMaVach() != null && !request.getMaVach().trim().isEmpty()) {
             chiTiet.setMaVach(request.getMaVach());
         }
-
-        chiTiet.setMoTa(request.getMoTa());
 
         if (request.getTrangThai() != null) {
             chiTiet.setTrangThai(request.getTrangThai());
@@ -355,11 +346,7 @@ public class ChiTietSanPhamService {
 
         chiTiet.setNgaySua(LocalDate.now());
 
-        ChiTietSanPham saved = ctspRepo.save(chiTiet);
-
-        System.out.println("✅ Service: Đã cập nhật biến thể ID=" + id);
-
-        return new ChiTietSanPhamResponse(saved);
+        return new ChiTietSanPhamResponse(ctspRepo.save(chiTiet));
     }
 
     public List<ChiTietSanPhamResponse> findBySanPhamId(Integer idSanPham) {
@@ -452,6 +439,80 @@ public class ChiTietSanPhamService {
         return ctspRepo.updateTrangThaiByIdSanPham(idSanPham, trangThai);
     }
 
+    @Transactional
+    public ChiTietSanPhamResponse taoBienTheVoiGiaMoi(Integer idChiTietSanPham, BigDecimal giaMoi) {
+        System.out.println("🔄 Service.taoBienTheVoiGiaMoi() - Tạo biến thể mới với giá: " + giaMoi);
 
+        if (giaMoi.compareTo(BigDecimal.ZERO) < 0) {
+            throw new RuntimeException("Giá mới không được âm");
+        }
+
+        ChiTietSanPham bienTheGoc = ctspRepo.findById(idChiTietSanPham)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy biến thể với ID: " + idChiTietSanPham));
+
+        if (bienTheGoc.getGiaBan().compareTo(giaMoi) == 0) {
+            throw new RuntimeException("Giá mới phải khác giá hiện tại");
+        }
+
+        boolean daTonTaiBienTheVoiGiaNay = ctspRepo.existsBySanPham_IdAndMauSac_IdAndKichThuoc_IdAndGiaBan(
+                bienTheGoc.getSanPham().getId(),
+                bienTheGoc.getMauSac().getId(),
+                bienTheGoc.getKichThuoc().getId(),
+                giaMoi
+        );
+
+        if (daTonTaiBienTheVoiGiaNay) {
+            throw new RuntimeException("Đã tồn tại biến thể với cùng màu sắc, kích thước và giá này");
+        }
+
+        ChiTietSanPham bienTheMoi = new ChiTietSanPham();
+
+        bienTheMoi.setSanPham(bienTheGoc.getSanPham());
+        bienTheMoi.setMauSac(bienTheGoc.getMauSac());
+        bienTheMoi.setKichThuoc(bienTheGoc.getKichThuoc());
+        bienTheMoi.setMoTa(bienTheGoc.getMoTa());
+        bienTheMoi.setSoLuongTon(bienTheGoc.getSoLuongTon());
+        bienTheMoi.setGiaBan(giaMoi);
+        bienTheMoi.setMaVach(generateMaVach());
+        bienTheMoi.setNgayTao(LocalDate.now());
+        bienTheMoi.setTrangThai(true);
+
+        ChiTietSanPham saved = ctspRepo.save(bienTheMoi);
+
+        List<Anh> anhGocList = anhRepo.findByChiTietSanPham_Id(idChiTietSanPham);
+        if (!anhGocList.isEmpty()) {
+            System.out.println("🖼️ Copy " + anhGocList.size() + " ảnh từ biến thể gốc");
+
+            List<Anh> danhSachAnhMoi = new ArrayList<>();
+            for (Anh anhGoc : anhGocList) {
+                Anh anhMoi = new Anh();
+                anhMoi.setChiTietSanPham(saved);
+                anhMoi.setDuongDanAnh(anhGoc.getDuongDanAnh());
+                anhMoi.setMaAnh("ANH_" + UUID.randomUUID().toString().substring(0, 8).toUpperCase());
+                anhMoi.setTrangThai(true);
+                danhSachAnhMoi.add(anhMoi);
+            }
+            anhRepo.saveAll(danhSachAnhMoi);
+        }
+
+        System.out.println("✅ Đã tạo biến thể mới ID: " + saved.getId() + " với giá: " + giaMoi);
+        System.out.println("📌 Biến thể gốc ID: " + idChiTietSanPham + " vẫn giữ nguyên giá: " + bienTheGoc.getGiaBan());
+
+        return new ChiTietSanPhamResponse(saved);
+    }
+
+    @Transactional
+    public ChiTietSanPhamResponse capNhatGiaVaTaoBienTheMoi(Integer idChiTietSanPham, BigDecimal giaMoi) {
+        System.out.println("🔄 Service.capNhatGiaVaTaoBienTheMoi()");
+
+        ChiTietSanPhamResponse bienTheMoi = taoBienTheVoiGiaMoi(idChiTietSanPham, giaMoi);
+
+        ChiTietSanPham bienTheGoc = ctspRepo.findById(idChiTietSanPham).orElse(null);
+        if (bienTheGoc != null) {
+            System.out.println("📌 Biến thể gốc ID: " + idChiTietSanPham + " được giữ nguyên");
+        }
+
+        return bienTheMoi;
+    }
 
 }
