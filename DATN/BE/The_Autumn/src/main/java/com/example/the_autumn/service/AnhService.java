@@ -58,4 +58,40 @@ public class AnhService {
 
         return anhRepository.saveAll(danhSachAnh);
     }
+
+    @Transactional
+    public Anh capNhatAnh(Integer idAnh, String imageUrl) {
+        Anh anh = anhRepository.findById(idAnh)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ảnh với ID: " + idAnh));
+
+        if (imageUrl == null || imageUrl.trim().isEmpty()) {
+            throw new RuntimeException("URL ảnh không được để trống");
+        }
+
+        anh.setDuongDanAnh(imageUrl);
+        return anhRepository.save(anh);
+    }
+
+    @Transactional
+    public void xoaAnh(Integer idAnh) {
+        Anh anh = anhRepository.findById(idAnh)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy ảnh với ID: " + idAnh));
+
+        anhRepository.delete(anh);
+    }
+
+    @Transactional
+    public List<Anh> capNhatNhieuAnh(Integer idChiTietSanPham, List<String> imageUrls) {
+        ChiTietSanPham chiTietSanPham = chiTietSanPhamRepository.findById(idChiTietSanPham)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy biến thể với ID: " + idChiTietSanPham));
+
+        List<Anh> oldImages = anhRepository.findByChiTietSanPham_Id(idChiTietSanPham);
+        anhRepository.deleteAll(oldImages);
+
+        return themAnhChoBienThe(idChiTietSanPham, imageUrls);
+    }
+
+    public List<Anh> getAnhByBienThe(Integer idChiTietSanPham) {
+        return anhRepository.findByChiTietSanPham_Id(idChiTietSanPham);
+    }
 }
