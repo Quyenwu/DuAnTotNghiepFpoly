@@ -15,11 +15,6 @@ public interface DiaChiRepository extends JpaRepository<DiaChi,Integer> {
     List<DiaChi> findByKhachHangId(Integer khachHangId);
     List<DiaChi> findByTrangThai(Boolean trangThai);
     @Modifying
-<<<<<<< HEAD
-    @Query("UPDATE DiaChi d SET d.trangThai = :trangThai WHERE d.khachHang.id = :khachHangId")
-    void updateTrangThaiByKhachHangId(@Param("khachHangId") Integer khachHangId,
-                                      @Param("trangThai") Boolean trangThai);
-=======
     @Query("UPDATE DiaChi d SET d.trangThai = false " +
             "WHERE d.khachHang.id = :khachHangId " +
             "AND d.id != :diaChiDuocChonId")
@@ -27,5 +22,4 @@ public interface DiaChiRepository extends JpaRepository<DiaChi,Integer> {
                           @Param("diaChiDuocChonId") Integer diaChiDuocChonId);
 
     Optional<DiaChi> findByKhachHangAndDiaChiCuThe(KhachHang khachHang, String diaChiKhachHang);
->>>>>>> 4c0bd468bdf0b9c1d09f45c24eb32911088ca753
 }
