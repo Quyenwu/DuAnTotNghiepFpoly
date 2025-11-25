@@ -158,17 +158,19 @@ public class OrderService {
         PhuongThucThanhToan pttt = ptttRepo.findByTenPhuongThucThanhToan(request.getPaymentMethod())
                 .orElseThrow(() -> new RuntimeException("Phương thức thanh toán không hợp lệ"));
 
-        // === 5. KIỂM TRA VÀ TRỪ TỒN KHO ===
-        List<ChiTietSanPham> updatedCtspList = new ArrayList<>();
+        // === 5. CHỈ KIỂM TRA TỒN KHO (KHÔNG TRỪ) ===
+        List<ChiTietSanPham> ctspList = new ArrayList<>();
         for (OrderRequest.CartItemDTO item : request.getItems()) {
             ChiTietSanPham ctsp = chiTietSanPhamRepo.findById(item.getId())
                     .orElseThrow(() -> new RuntimeException("Sản phẩm ID " + item.getId() + " không tồn tại"));
 
             if (ctsp.getSoLuongTon() < item.getQuantity()) {
-                throw new RuntimeException("Sản phẩm '" + ctsp.getSanPham().getTenSanPham() + "' không đủ hàng (Tồn: " + ctsp.getSoLuongTon() + ")");
+                throw new RuntimeException("Sản phẩm '" + ctsp.getSanPham().getTenSanPham()
+                        + "' không đủ hàng (Tồn: " + ctsp.getSoLuongTon() + ")");
             }
-            ctsp.setSoLuongTon(ctsp.getSoLuongTon() - item.getQuantity());
-            updatedCtspList.add(ctsp);
+
+            // KHÔNG trừ tồn kho nữa, chỉ kiểm tra đủ hàng
+            ctspList.add(ctsp);
         }
 
         // === 6. LẤY NHÂN VIÊN MẶC ĐỊNH ===
@@ -214,7 +216,7 @@ public class OrderService {
         // === 8. TẠO HÓA ĐƠN CHI TIẾT ===
         for (int i = 0; i < request.getItems().size(); i++) {
             OrderRequest.CartItemDTO item = request.getItems().get(i);
-            ChiTietSanPham ctsp = updatedCtspList.get(i);
+            ChiTietSanPham ctsp = ctspList.get(i);
 
             HoaDonChiTiet hdct = new HoaDonChiTiet();
             hdct.setHoaDon(savedHoaDon);
@@ -226,8 +228,8 @@ public class OrderService {
             hoaDonChiTietRepo.save(hdct);
         }
 
-        // === 9. LƯU LẠI TỒN KHO ===
-        chiTietSanPhamRepo.saveAll(updatedCtspList);
+        // === 9. (BỎ) LƯU LẠI TỒN KHO ===
+        // Không còn cập nhật tồn kho nữa
 
         // === 10. TẠO HÌNH THỨC THANH TOÁN ===
         HinhThucThanhToan httt = new HinhThucThanhToan();
@@ -302,7 +304,6 @@ public class OrderService {
         lshd.setTrangThai(true);
         lichSuHoaDonRepo.save(lshd);
 
-        // === 13. GỬI EMAIL XÁC NHẬN ===
         // === 13. GỬI EMAIL XÁC NHẬN ===
         if (customerEmail != null && !customerEmail.isEmpty() && !customerEmail.startsWith("guest_")) {
             try {
@@ -424,17 +425,8 @@ public class OrderService {
             throw new RuntimeException("Không thể hủy đơn hàng ở trạng thái: " + statusText);
         }
 
-        List<HoaDonChiTiet> chiTiets = hoaDonChiTietRepo.findByHoaDonId(hoaDon.getId());
-        for (HoaDonChiTiet hdct : chiTiets) {
-            ChiTietSanPham ctsp = hdct.getChiTietSanPham();
-            int soLuongHoan = hdct.getSoLuong();
-            ctsp.setSoLuongTon(ctsp.getSoLuongTon() + soLuongHoan);
-            chiTietSanPhamRepo.save(ctsp);
-            log.info("📦 Hoàn {} sản phẩm '{}' vào kho (Tồn mới: {})",
-                    soLuongHoan,
-                    ctsp.getSanPham().getTenSanPham(),
-                    ctsp.getSoLuongTon());
-        }
+        // ❌ KHÔNG hoàn lại tồn kho nữa
+        // Nếu sau này cần hoàn kho theo nghiệp vụ mới thì bổ sung lại tại đây
 
         if (hoaDon.getPhieuGiamGia() != null) {
             log.info("ℹ️ Voucher {} không cần hoàn lại (chưa bị trừ)",

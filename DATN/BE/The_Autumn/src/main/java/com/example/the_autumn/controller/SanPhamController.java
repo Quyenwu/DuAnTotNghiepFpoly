@@ -191,4 +191,52 @@ public class SanPhamController {
             ));
         }
     }
+
+    @GetMapping("/danh-muc")
+    public ResponseObject<?> getSanPhamByDanhMuc(
+            @RequestParam(value = "pageNo1", defaultValue = "0") Integer pageNo,
+            @RequestParam(value = "pageSize1", defaultValue = "12") Integer pageSize,
+            @RequestParam(required = false) String danhMuc) {
+
+        try {
+
+            PageableObject<SanPhamResponse> result;
+
+            if (danhMuc != null && !danhMuc.isEmpty()) {
+                result = spService.filterByDanhMucWithPaging(pageNo, pageSize, danhMuc);
+            } else {
+                result = spService.phanTrang(pageNo, pageSize);
+            }
+
+            return new ResponseObject<>(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseObject<>("500", "Lỗi khi lọc theo danh mục: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/danh-muc/all")
+    public ResponseObject<?> getAllDanhMuc() {
+        try {
+            List<String> danhMucList = spService.getAllDanhMuc();
+            return new ResponseObject<>(danhMucList);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseObject<>("500", "Lỗi khi lấy danh sách danh mục: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/danh-muc/{danhMuc}")
+    public ResponseObject<?> getSanPhamByDanhMucNoPaging(@PathVariable String danhMuc) {
+        try {
+
+            List<SanPhamResponse> result = spService.filterByDanhMuc(danhMuc);
+
+            System.out.println("✅ BE trả về " + result.size() + " sản phẩm cho danh mục: " + danhMuc);
+            return new ResponseObject<>(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseObject<>("500", "Lỗi khi lọc theo danh mục: " + e.getMessage());
+        }
+    }
 }

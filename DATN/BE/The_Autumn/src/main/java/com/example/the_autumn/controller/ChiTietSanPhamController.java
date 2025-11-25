@@ -97,12 +97,11 @@ public class ChiTietSanPhamController {
         }
     }
 
-    @PatchMapping("/{idChiTietSanPham}/gia")
+    @PostMapping("/{idChiTietSanPham}/tao-bien-the-gia-moi")
     public ResponseEntity<?> capNhatGia(
             @PathVariable Integer idChiTietSanPham,
             @RequestBody Map<String, Object> updates) {
         try {
-            // ✅ Validate key tồn tại
             if (!updates.containsKey("donGia")) {
                 return ResponseEntity.badRequest().body(Map.of(
                         "success", false,
@@ -111,12 +110,19 @@ public class ChiTietSanPhamController {
             }
 
             BigDecimal donGia = new BigDecimal(updates.get("donGia").toString());
-            chiTietSanPhamService.capNhatGiaBienThe(idChiTietSanPham, donGia);
 
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "message", "Cập nhật giá thành công"
-            ));
+        ChiTietSanPhamResponse bienTheMoi = chiTietSanPhamService.capNhatGiaVaTaoBienTheMoi(
+                idChiTietSanPham,
+                donGia
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                "success", true,
+                "message", "Đã tạo biến thể mới với giá mới",
+                "data", bienTheMoi,
+                "oldVariantId", idChiTietSanPham
+        ));
+
         } catch (NumberFormatException e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
@@ -414,5 +420,52 @@ public class ChiTietSanPhamController {
         ctsp.setSoLuongTon(ctsp.getSoLuongTon() + soLuong);
         chiTietSanPhamService.save(ctsp);
         return ResponseObject.success(ctsp, "Đã cộng " + soLuong + " sản phẩm vào kho");
+    }
+
+    @PostMapping("/{idChiTietSanPham}/gia-moi")
+    public ResponseEntity<?> taoBienTheVoiGiaMoi(
+            @PathVariable Integer idChiTietSanPham,
+            @RequestBody Map<String, Object> request) {
+        try {
+            System.out.println("🆕 TẠO BIẾN THỂ MỚI VỚI GIÁ MỚI - ID gốc: " + idChiTietSanPham);
+
+            if (!request.containsKey("giaMoi")) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Thiếu trường giaMoi"
+                ));
+            }
+
+            BigDecimal giaMoi = new BigDecimal(request.get("giaMoi").toString());
+
+            ChiTietSanPhamResponse bienTheMoi = chiTietSanPhamService.taoBienTheVoiGiaMoi(
+                    idChiTietSanPham,
+                    giaMoi
+            );
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
+                    "success", true,
+                    "message", "Tạo biến thể mới với giá mới thành công",
+                    "data", bienTheMoi,
+                    "note", "Biến thể gốc được giữ nguyên"
+            ));
+
+        } catch (NumberFormatException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", "Giá không hợp lệ"
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "message", "Lỗi khi tạo biến thể mới: " + e.getMessage()
+            ));
+        }
     }
 }
