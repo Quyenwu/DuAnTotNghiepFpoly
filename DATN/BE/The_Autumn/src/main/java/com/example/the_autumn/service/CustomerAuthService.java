@@ -1,9 +1,11 @@
 package com.example.the_autumn.service;
 
 import com.example.the_autumn.entity.KhachHang;
+import com.example.the_autumn.entity.PhongChat;
 import com.example.the_autumn.model.request.KhachHangAuthRequest;
 import com.example.the_autumn.model.response.KhachHangAuthResponse;
 import com.example.the_autumn.repository.KhachHangRepository;
+import com.example.the_autumn.repository.PhongChatRepository;
 import com.example.the_autumn.security.CustomerPrinciple;
 import com.example.the_autumn.security.jwt.CustomerJwtProvider;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.Date;
 
@@ -31,6 +34,9 @@ public class CustomerAuthService {
 
     @Autowired
     private KhachHangRepository khachHangRepository;
+
+    @Autowired
+    private PhongChatRepository phongRepo;
 
     @Transactional
     public void register(KhachHangAuthRequest req) {
@@ -62,6 +68,15 @@ public class CustomerAuthService {
         kh.setNgayTao(new Date());
 
         khachHangRepository.save(kh);
+
+        // ======= Tạo phòng chat tự động =======
+        PhongChat room = PhongChat.builder()
+                .khachHang(kh)
+                .loai(0) // 0 = khách-AI
+                .trangThai(1)
+                .ngayTao(LocalDateTime.now())
+                .build();
+        phongRepo.save(room);
 
         System.out.println("✅ Customer registered successfully with ID: " + kh.getId());
         System.out.println("=== CUSTOMER REGISTER DEBUG END ===");
