@@ -1,9 +1,13 @@
 package com.example.the_autumn.model.response;
 
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.math.BigDecimal;
 
-@Data
+@Getter
+@Setter
 public class ShippingFeeResponse {
     private BigDecimal phiVanChuyen;
     private BigDecimal phiVanChuyenGoc;
@@ -12,6 +16,6 @@ public class ShippingFeeResponse {
     private String donViVanChuyen;
     private String maDichVu;
     private String moTaDichVu;
-    private boolean success;
+    private Boolean success;
     private String message;
 }
