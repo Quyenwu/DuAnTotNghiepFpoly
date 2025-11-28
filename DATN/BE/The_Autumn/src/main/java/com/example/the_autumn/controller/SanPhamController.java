@@ -1,5 +1,6 @@
 package com.example.the_autumn.controller;
 
+import com.example.the_autumn.model.response.DanhMucResponse;
 import com.example.the_autumn.model.response.PageableObject;
 import com.example.the_autumn.model.response.ResponseObject;
 import com.example.the_autumn.model.response.SanPhamResponse;
@@ -200,12 +201,12 @@ public class SanPhamController {
 
         try {
 
-            PageableObject<SanPhamResponse> result;
+            PageableObject<DanhMucResponse> result;
 
             if (danhMuc != null && !danhMuc.isEmpty()) {
                 result = spService.filterByDanhMucWithPaging(pageNo, pageSize, danhMuc);
             } else {
-                result = spService.phanTrang(pageNo, pageSize);
+                result = spService.phanTrangDanhMuc(pageNo, pageSize);
             }
 
             return new ResponseObject<>(result);
@@ -230,7 +231,7 @@ public class SanPhamController {
     public ResponseObject<?> getSanPhamByDanhMucNoPaging(@PathVariable String danhMuc) {
         try {
 
-            List<SanPhamResponse> result = spService.filterByDanhMuc(danhMuc);
+            List<DanhMucResponse> result = spService.filterByDanhMuc(danhMuc);
 
             System.out.println("✅ BE trả về " + result.size() + " sản phẩm cho danh mục: " + danhMuc);
             return new ResponseObject<>(result);

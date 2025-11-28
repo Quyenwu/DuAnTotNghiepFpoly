@@ -4,6 +4,7 @@ import com.example.the_autumn.dto.*;
 import com.example.the_autumn.entity.*;
 import com.example.the_autumn.model.request.SanPhamRequest;
 import com.example.the_autumn.model.request.UpdateSanPhamRequest;
+import com.example.the_autumn.model.response.DanhMucResponse;
 import com.example.the_autumn.model.response.PageableObject;
 import com.example.the_autumn.model.response.SanPhamResponse;
 import com.example.the_autumn.repository.*;
@@ -355,7 +356,7 @@ public class SanPhamService {
         return null;
     }
 
-    public List<SanPhamResponse> filterByDanhMuc(String danhMuc) {
+    public List<DanhMucResponse> filterByDanhMuc(String danhMuc) {
         List<SanPham> list = spRepo.findAll();
 
         return list.stream()
@@ -415,7 +416,7 @@ public class SanPhamService {
                     }
                 })
                 .sorted((a, b) -> b.getNgayTao().compareTo(a.getNgayTao()))
-                .map(SanPhamResponse::new)
+                .map(DanhMucResponse::new)
                 .collect(Collectors.toList());
     }
 
@@ -430,26 +431,33 @@ public class SanPhamService {
         );
     }
 
-    public PageableObject<SanPhamResponse> filterByDanhMucWithPaging(Integer pageNo, Integer pageSize, String danhMuc) {
+    public PageableObject<DanhMucResponse> filterByDanhMucWithPaging(Integer pageNo, Integer pageSize, String danhMuc) {
 
-        List<SanPhamResponse> filteredList = filterByDanhMuc(danhMuc);
+        List<DanhMucResponse> filteredList = filterByDanhMuc(danhMuc);
 
         int totalItems = filteredList.size();
         int fromIndex = pageNo * pageSize;
         int toIndex = Math.min(fromIndex + pageSize, totalItems);
 
-        List<SanPhamResponse> pageData = fromIndex < totalItems
+        List<DanhMucResponse> pageData = fromIndex < totalItems
                 ? filteredList.subList(fromIndex, toIndex)
                 : List.of();
 
         Pageable pageable = PageRequest.of(pageNo, pageSize);
 
-        Page<SanPhamResponse> page = new org.springframework.data.domain.PageImpl<>(
+        Page<DanhMucResponse> page = new org.springframework.data.domain.PageImpl<>(
                 pageData,
                 pageable,
                 totalItems
         );
 
         return new PageableObject<>(page);
+    }
+
+    public PageableObject<DanhMucResponse> phanTrangDanhMuc(Integer pageNo, Integer pageSize) {
+        Pageable pageable = PageRequest.of(pageNo, pageSize, Sort.by(Sort.Direction.DESC, "ngayTao"));
+        Page<SanPham> pageSp = spRepo.findAll(pageable);
+        Page<DanhMucResponse> spRes = pageSp.map(DanhMucResponse::new);
+        return new PageableObject<>(spRes);
     }
 }
