@@ -1,5 +1,6 @@
 package com.example.the_autumn.model.response;
 
+import com.example.the_autumn.entity.Anh;
 import com.example.the_autumn.entity.ChiTietSanPham;
 import com.example.the_autumn.entity.SanPham;
 import lombok.Getter;
@@ -41,6 +42,8 @@ public class SanPhamResponse {
     private BigDecimal giaThapNhat;
     private BigDecimal giaCaoNhat;
 
+    private List<String> hinhAnhSanPham;
+
     public SanPhamResponse(SanPham sp) {
         this.id = sp.getId();
         this.maSanPham = sp.getMaSanPham();
@@ -65,6 +68,14 @@ public class SanPhamResponse {
         this.tenTayAo = sp.getTayAo().getTenTayAo();
 
         if (sp.getChiTietSanPham() != null && !sp.getChiTietSanPham().isEmpty()) {
+
+            this.hinhAnhSanPham = sp.getChiTietSanPham().stream()
+                    .flatMap(ctsp -> ctsp.getAnhs().stream())
+                    .map(Anh::getDuongDanAnh)
+                    .filter(url -> url != null && !url.isEmpty())
+                    .distinct()
+                    .toList();
+
             this.chiTietSanPhams = sp.getChiTietSanPham().stream()
                     .map(ChiTietSanPhamResponse::new)
                     .toList();
@@ -91,6 +102,7 @@ public class SanPhamResponse {
             this.tongSoLuong = 0;
             this.giaThapNhat = BigDecimal.ZERO;
             this.giaCaoNhat = BigDecimal.ZERO;
+            this.hinhAnhSanPham = List.of();
         }
     }
 }
