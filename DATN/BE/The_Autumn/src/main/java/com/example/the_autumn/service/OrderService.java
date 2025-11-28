@@ -88,8 +88,6 @@ public class OrderService {
                 log.info("👤 New guest created: {} with email: {}", khachHang.getHoTen(), customerEmail);
             }
         }
-
-        // === 2. LƯU ĐỊA CHỈ ===
         if (request.getDiaChiKhachHang() != null && !request.getDiaChiKhachHang().isEmpty()) {
             Optional<DiaChi> existingDiaChi = diaChiRepo.findByKhachHangAndDiaChiCuThe(
                     khachHang,

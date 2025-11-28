@@ -13,7 +13,6 @@ public class OrderRequest {
     private String diaChiKhachHang;
     private Integer tinhId;
     private Integer quanId;
-    // Thông tin đơn hàng
     private BigDecimal tongTien;
     private BigDecimal tienGiam;
     private BigDecimal phiVanChuyen;
@@ -85,13 +84,9 @@ public class OrderRequest {
         this.items = items;
     }
 
-    // Lớp nội (inner class) cho các sản phẩm trong giỏ hàng
     public static class CartItemDTO {
         private Integer id; // Đây là ID của chi_tiet_san_pham
         private int quantity;
-
-        // Getters and Setters
-        // ... (Tự động tạo getters và setters)
 
         public Integer getId() {
             return id;

@@ -47,7 +47,22 @@ public class SanPhamController {
 
         return new ResponseObject<>(result);
     }
+    @GetMapping("/ban-chay")
+    public ResponseObject<?> getSanPhamBanChay() {
+        try {
+            System.out.println("🔥 GET SAN PHAM BAN CHAY");
 
+            // Gọi service
+            List<SanPhamResponse> sanPhamBanChay = spService.getTopSanPhamBanChay();
+
+            System.out.println("✅ Trả về " + sanPhamBanChay.size() + " sản phẩm bán chạy");
+            return new ResponseObject<>(sanPhamBanChay);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new ResponseObject<>("500", "Lỗi khi lấy sản phẩm bán chạy: " + e.getMessage());
+        }
+    }
     @GetMapping("/filter")
     public ResponseObject<?> filterSanPham(
             @RequestParam(value = "pageNo1", defaultValue = "0") Integer pageNo,

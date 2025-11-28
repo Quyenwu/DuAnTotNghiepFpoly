@@ -41,6 +41,8 @@ public class ChiTietSanPhamResponse {
 
     private String tenMauSac;
 
+    private String maHex;
+
     private String maKichThuoc;
 
     private String tenKichThuoc;
@@ -63,6 +65,7 @@ public class ChiTietSanPhamResponse {
         this.tenTrongLuong = ctsp.getSanPham().getTrongLuong();
         this.tenSanPham = ctsp.getSanPham().getTenSanPham();
         this.maMauSac = ctsp.getMauSac().getMaMauSac();
+        this.maHex = ctsp.getMauSac().getMaHex();
         this.tenMauSac = ctsp.getMauSac().getTenMauSac();
         this.maKichThuoc = ctsp.getKichThuoc().getMaKichThuoc();
         this.tenKichThuoc = ctsp.getKichThuoc().getTenKichThuoc();
