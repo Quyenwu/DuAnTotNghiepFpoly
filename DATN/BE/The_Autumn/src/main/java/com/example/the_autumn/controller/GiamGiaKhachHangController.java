@@ -23,8 +23,8 @@ public class GiamGiaKhachHangController {
 
     @DeleteMapping("/{discountId}/customer/{customerId}")
     public ResponseObject<?> removeCustomerFromDiscount(
-            @PathVariable Long discountId,
-            @PathVariable Long customerId) {
+            @PathVariable Integer discountId,
+            @PathVariable Integer customerId) {
         try {
             boolean isDeleted = giamGiaKhachHangService.removeCustomerFromDiscount(discountId, customerId);
             if (isDeleted) {
