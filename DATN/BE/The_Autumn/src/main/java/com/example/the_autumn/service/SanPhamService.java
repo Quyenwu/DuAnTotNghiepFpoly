@@ -62,7 +62,17 @@ public class SanPhamService {
         Page<SanPhamResponse> spRes = pageSp.map(SanPhamResponse::new);
         return new PageableObject<>(spRes);
     }
+    public List<SanPhamResponse> getTopSanPhamBanChay() {
+        List<SanPham> sanPhams = spRepo.findAllSanPhamBanChay();
 
+        // Tính tongSoLuongDaMua cho mỗi sp
+        List<SanPhamResponse> responses = sanPhams.stream().map(sp -> new SanPhamResponse(sp))
+                .sorted((a, b) -> b.getTongSoLuongDaMua().compareTo(a.getTongSoLuongDaMua())) // sắp xếp giảm dần
+                .limit(20) // top 20
+                .toList();
+
+        return responses;
+    }
     public PageableObject<SanPhamResponse> filterSanPhamWithPaging(
             Integer pageNo,
             Integer pageSize,

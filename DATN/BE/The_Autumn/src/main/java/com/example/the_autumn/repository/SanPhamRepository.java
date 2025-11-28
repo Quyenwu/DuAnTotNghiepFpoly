@@ -3,6 +3,7 @@ package com.example.the_autumn.repository;
 import com.example.the_autumn.dto.SanPhamTrangChuProjection;
 import com.example.the_autumn.entity.SanPham;
 
+import com.example.the_autumn.model.response.SanPhamResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
@@ -141,5 +142,12 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
         ORDER BY phanTramGiam DESC, idSanPham
     """, nativeQuery = true)
     List<Object[]> findSanPhamGiamGiaTheoPercentNative(double minPercent);
+
+    @Query("""
+    SELECT sp FROM SanPham sp
+    WHERE sp.trangThai = true
+""")
+    List<SanPham> findAllSanPhamBanChay();
+
 }
 

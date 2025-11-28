@@ -41,8 +41,10 @@ public class SanPhamResponse {
 
     private BigDecimal giaThapNhat;
     private BigDecimal giaCaoNhat;
+    private Integer  tongSoLuongDaMua;
 
     private List<String> hinhAnhSanPham;
+
 
     public SanPhamResponse(SanPham sp) {
         this.id = sp.getId();
@@ -95,6 +97,13 @@ public class SanPhamResponse {
             } else {
                 this.giaThapNhat = BigDecimal.ZERO;
                 this.giaCaoNhat = BigDecimal.ZERO;
+            } if (sp.getChiTietSanPham() != null && !sp.getChiTietSanPham().isEmpty()) {
+                this.tongSoLuongDaMua = sp.getChiTietSanPham().stream()
+                        .flatMap(ct -> ct.getHoaDonChiTiets().stream())
+                        .mapToInt(hdct -> hdct.getSoLuong() != null ? hdct.getSoLuong() : 0)
+                        .sum();
+            } else {
+                this.tongSoLuongDaMua = 0;
             }
 
         } else {

@@ -1,6 +1,7 @@
 package com.example.the_autumn.controller;
 
 import com.example.the_autumn.entity.KhachHang;
+import com.example.the_autumn.entity.PhieuGiamGia;
 import com.example.the_autumn.model.request.PhieuGiamGiaRequesst;
 import com.example.the_autumn.model.response.PhieuGiamGiaRespone;
 import com.example.the_autumn.model.response.ResponseObject;
