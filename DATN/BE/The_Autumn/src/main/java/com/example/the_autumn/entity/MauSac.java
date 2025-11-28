@@ -37,6 +37,9 @@ public class MauSac {
     @Column(name = "ten_mau_sac")
     private String tenMauSac;
 
+    @Column(name = "ma_hex")
+    private String maHex;
+
     @Column(name = "trang_thai")
     private Boolean trangThai;
 

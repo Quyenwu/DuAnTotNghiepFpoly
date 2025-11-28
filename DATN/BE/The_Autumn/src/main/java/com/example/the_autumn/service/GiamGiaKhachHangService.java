@@ -22,7 +22,7 @@ public class GiamGiaKhachHangService {
         return giamGiaKhachHangRepository.findAll().stream().map(GiamGiaKhachHangResponse::new).toList();
     }
 
-    public boolean removeCustomerFromDiscount(Long discountId, Long customerId) {
+    public boolean removeCustomerFromDiscount(Integer discountId, Integer customerId) {
         try {
             Optional<GiamGiaKhachHang> giamGiaKhachHang = giamGiaKhachHangRepository
                     .findByPhieuGiamGiaIdAndKhachHangId(discountId, customerId);

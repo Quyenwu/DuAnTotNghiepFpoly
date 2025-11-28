@@ -12,5 +12,6 @@ public class MauSacRequest {
     private String maMauSac;
     @NotBlank(message = "Tên màu sắc không được để trống")
     private String tenMauSac;
+    private String maHex;
     private Boolean trangThai;
 }
