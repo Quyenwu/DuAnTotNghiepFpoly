@@ -672,12 +672,44 @@ public class HoaDonService {
         // ==================== CẬP NHẬT TRẠNG THÁI ====================
         boolean hasStatusChange = false;
         if (request.getTrangThai() != null && !request.getTrangThai().equals(hoaDon.getTrangThai())) {
-            Integer old = hoaDon.getTrangThai();
-            hoaDon.setTrangThai(request.getTrangThai());
+            Integer oldStatus = hoaDon.getTrangThai();
+            Integer newStatus = request.getTrangThai();
+
+            hoaDon.setTrangThai(newStatus);
+
+            // CHỈ TRỪ KHO KHI CHUYỂN TỪ "Chờ xác nhận (0) SANG Chờ giao hàng (1) HOẶC CAO HƠN
+            boolean isConfirmingOrder = (oldStatus == 0) && (newStatus == 1 || newStatus == 2 || newStatus == 3);
+
+            if (isConfirmingOrder) {
+                System.out.println("Xác nhận đơn hàng - Bắt đầu trừ tồn kho cho hóa đơn #" + hoaDon.getMaHoaDon());
+
+                List<HoaDonChiTiet> chiTietList = hoaDonChiTietRepository.findByHoaDonId(hoaDon.getId());
+
+                for (HoaDonChiTiet ct : chiTietList) {
+                    ChiTietSanPham ctsp = ct.getChiTietSanPham();
+                    int soLuongCanTru = ct.getSoLuong();
+
+                    if (ctsp.getSoLuongTon() < soLuongCanTru) {
+                        throw new RuntimeException("Không đủ tồn kho để xác nhận đơn hàng cho sản phẩm: " +
+                                ctsp.getSanPham().getTenSanPham() + " (Còn: " + ctsp.getSoLuongTon() + ")");
+                    }
+
+                    ctsp.setSoLuongTon(ctsp.getSoLuongTon() - soLuongCanTru);
+                    chiTietSanPhamRepository.save(ctsp);
+
+                    System.out.println("Đã trừ tồn kho: " + ctsp.getSanPham().getTenSanPham() +
+                            " - SL: " + soLuongCanTru + " - Tồn mới: " + ctsp.getSoLuongTon());
+                }
+
+                luuLichSu(hoaDon, "Xác nhận đơn hàng - Trừ tồn kho",
+                        "Đã trừ tồn kho cho tất cả sản phẩm trong đơn hàng khi xác nhận giao hàng", null);
+            }
+
             luuLichSu(hoaDon, "Cập nhật trạng thái đơn hàng",
                     String.format("Trạng thái: '%s' → '%s'",
-                            getTrangThaiText(old),
-                            getTrangThaiText(request.getTrangThai())), null);
+                            getTrangThaiText(oldStatus),
+                            getTrangThaiText(newStatus)), null);
+
             hasStatusChange = true;
         }
 
@@ -748,7 +780,6 @@ public class HoaDonService {
                 HoaDonChiTiet existingCT = chiTietMap.get(spReq.getIdChiTietSanPham());
 
                 if (existingCT != null) {
-                    // CẬP NHẬT SỐ LƯỢNG
                     int soLuongCu = existingCT.getSoLuong();
                     int soLuongMoi = spReq.getSoLuong();
                     int chechLech = soLuongMoi - soLuongCu;
@@ -776,7 +807,6 @@ public class HoaDonService {
                         hasProductChanges = true;
                     }
                 } else {
-                    // THÊM MỚI SẢN PHẨM
                     if (ctsp.getSoLuongTon() < spReq.getSoLuong()) {
                         throw new RuntimeException("Không đủ tồn kho cho sản phẩm: " + ctsp.getSanPham().getTenSanPham());
                     }
@@ -801,7 +831,6 @@ public class HoaDonService {
                 }
             }
 
-            // XÓA SẢN PHẨM BỊ LOẠI BỎ
             Set<Integer> requestedProductIds = request.getChiTietSanPhams().stream()
                     .map(UpdateHoaDonRequest.ChiTietSanPhamRequest::getIdChiTietSanPham)
                     .collect(Collectors.toSet());
@@ -871,8 +900,6 @@ public class HoaDonService {
                 } else {
                     List<LichSuThanhToan> existingPayments = lichSuThanhToanRepository.findByHoaDonIdOrderByNgayThanhToanDesc(hoaDon.getId());
                     lichSuThanhToan = existingPayments.get(0);
-
-                    // CHỈ CẬP NHẬT NẾU SỐ TIỀN THAY ĐỔI
                     if (!lichSuThanhToan.getSoTien().equals(tongTienSauGiam)) {
                         lichSuThanhToan.setSoTien(tongTienSauGiam);
                         lichSuThanhToan.setNgayThanhToan(new Date());
