@@ -1,8 +1,6 @@
 package com.example.the_autumn.service;
 
-import com.example.the_autumn.entity.ChiTietSanPham;
-import com.example.the_autumn.entity.DotGiamGia;
-import com.example.the_autumn.entity.DotGiamGiaChiTiet;
+import com.example.the_autumn.entity.*;
 import com.example.the_autumn.expection.ApiException;
 import com.example.the_autumn.model.request.DotGiamGiaRequest;
 import com.example.the_autumn.model.response.DotGiamGiaResponse;
@@ -307,20 +305,54 @@ public class DotGiamGiaService {
 
         List<DotGiamGiaChiTiet> chiTietList = dotGiamGiaChiTietRepository.findByDotGiamGia(dot);
 
-        Map<Integer, List<ChiTietSanPham>> grouped = chiTietList.stream()
-                .map(DotGiamGiaChiTiet::getChiTietSanPham)
-                .collect(Collectors.groupingBy(ct -> ct.getSanPham().getId()));
+        List<Map<String, Object>> result = chiTietList.stream()
+                .map(dotChiTiet -> {
+                    ChiTietSanPham ctsp = dotChiTiet.getChiTietSanPham();
+                    Map<String, Object> chiTietData = new HashMap<>();
 
-        List<Map<String, Object>> result = new ArrayList<>();
-        for (Map.Entry<Integer, List<ChiTietSanPham>> entry : grouped.entrySet()) {
-            Map<String, Object> sanPhamData = new HashMap<>();
-            sanPhamData.put("sanPhamId", entry.getKey());
-            sanPhamData.put("tenSanPham", entry.getValue().get(0).getSanPham().getTenSanPham());
-            sanPhamData.put("chiTietIds", entry.getValue().stream()
-                    .map(ChiTietSanPham::getId)
-                    .collect(Collectors.toList()));
-            result.add(sanPhamData);
-        }
+                    chiTietData.put("chiTietId", ctsp.getId());
+                    chiTietData.put("maVach", ctsp.getMaVach());
+                    chiTietData.put("soLuongTon", ctsp.getSoLuongTon());
+                    chiTietData.put("moTa", ctsp.getMoTa());
+                    chiTietData.put("giaBan", ctsp.getGiaBan());
+                    chiTietData.put("ngayTao", ctsp.getNgayTao());
+                    chiTietData.put("ngaySua", ctsp.getNgaySua());
+                    chiTietData.put("trangThai", ctsp.getTrangThai());
+
+                    SanPham sanPham = ctsp.getSanPham();
+                    chiTietData.put("sanPhamId", sanPham.getId());
+                    chiTietData.put("tenSanPham", sanPham.getTenSanPham());
+
+                    MauSac mauSac = ctsp.getMauSac();
+                    chiTietData.put("mauSacId", mauSac.getId());
+                    chiTietData.put("tenMauSac", mauSac.getTenMauSac());
+                    chiTietData.put("maMauSac", mauSac.getMaMauSac());
+
+                    KichThuoc kichThuoc = ctsp.getKichThuoc();
+                    chiTietData.put("kichThuocId", kichThuoc.getId());
+                    chiTietData.put("tenKichThuoc", kichThuoc.getTenKichThuoc());
+                    chiTietData.put("maKichThuoc", kichThuoc.getMaKichThuoc());
+
+                    if (ctsp.getAnhs() != null && !ctsp.getAnhs().isEmpty()) {
+                        List<Map<String, Object>> anhList = ctsp.getAnhs().stream()
+                                .map(anh -> {
+                                    Map<String, Object> anhData = new HashMap<>();
+                                    anhData.put("anhId", anh.getId());
+                                    anhData.put("maAnh", anh.getMaAnh());
+                                    anhData.put("duongDan", anh.getDuongDanAnh());
+                                    anhData.put("trangThai", anh.getTrangThai());
+                                    return anhData;
+                                })
+                                .collect(Collectors.toList());
+                        chiTietData.put("anhSanPham", anhList);
+                    }
+
+                    chiTietData.put("phanTramGiam", dotChiTiet.getGiaSauGiam());
+                    chiTietData.put("trangThaiGiamGia", dotChiTiet.getDoUuTien());
+
+                    return chiTietData;
+                })
+                .collect(Collectors.toList());
 
         return result;
     }
