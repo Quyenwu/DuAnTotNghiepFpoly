@@ -14,6 +14,7 @@ import com.example.the_autumn.repository.QuanHuyenRepository;
 import com.example.the_autumn.repository.TinhThanhRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -40,6 +41,9 @@ public class KhachHangService {
 
     @Autowired
     private EmailService mailService;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     public List<KhachHangResponse> getAllKhachHang() {
         List<KhachHang> khachHangs = khachHangRepository.findAll();
@@ -85,8 +89,9 @@ public class KhachHangService {
         khachHang.setHoTen(request.getHoTen());
         khachHang.setEmail(request.getEmail());
         khachHang.setSdt(request.getSdt());
-        String randomPassword = UUID.randomUUID().toString().substring(0, 8);
-        khachHang.setMatKhau(randomPassword);
+        String plainPassword  = UUID.randomUUID().toString().substring(0, 8);
+        String hashed = passwordEncoder.encode(plainPassword );
+        khachHang.setMatKhau(hashed);
         khachHang.setGioiTinh(request.getGioiTinh());
         khachHang.setTrangThai(true);
         khachHang.setNgaySinh(request.getNgaySinh());
@@ -181,7 +186,7 @@ public class KhachHangService {
                 .replace("{{NAME}}", savedKhachHang.getHoTen() != null ? savedKhachHang.getHoTen() : "")
                 .replace("{{EMAIL}}", savedKhachHang.getEmail() != null ? savedKhachHang.getEmail() : "")
                 .replace("{{PHONE}}", savedKhachHang.getSdt() != null ? savedKhachHang.getSdt() : "")
-                .replace("{{PASSWORD}}", randomPassword);
+                .replace("{{PASSWORD}}", plainPassword );
 
         // Gửi email bất đồng bộ
         mailService.sendMailKhachHang(savedKhachHang.getEmail(), subject, body);
@@ -200,8 +205,8 @@ public class KhachHangService {
         kh.setEmail(request.getEmail());
         kh.setSdt(request.getSdt());
         kh.setGioiTinh(request.getGioiTinh());
-        if (request.getMatKhau() != null && !request.getMatKhau().isEmpty()) {
-            kh.setMatKhau(request.getMatKhau());
+        if (request.getMatKhau() != null && !request.getMatKhau().isBlank()) {
+            kh.setMatKhau(passwordEncoder.encode(request.getMatKhau()));
         }
         kh.setTrangThai(request.getTrangThai());
         kh.setNgaySinh(request.getNgaySinh());

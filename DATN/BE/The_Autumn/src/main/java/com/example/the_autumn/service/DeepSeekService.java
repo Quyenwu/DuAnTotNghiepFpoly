@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 import java.util.List;
 import java.util.Map;
 
@@ -22,7 +21,6 @@ public class DeepSeekService {
     @Value("${deepseek.api.model}")
     private String deepseekModel;
 
-    // ✅ ObjectMapper đã đăng ký JavaTimeModule
     private final ObjectMapper objectMapper;
 
     public DeepSeekService() {
@@ -33,23 +31,19 @@ public class DeepSeekService {
     public String getAnswer(String question, Map<String, Object> knowledgeBase) {
         try {
             RestTemplate restTemplate = new RestTemplate();
-
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.set("Authorization", "Bearer " + deepseekApiKey);
 
-            // Chuyển knowledge base sang JSON
             String knowledgeJson = objectMapper.writeValueAsString(knowledgeBase);
 
             String systemPrompt = """
                     Bạn là trợ lý AI của cửa hàng thời trang The Autumn.
-                    Hãy sử dụng dữ liệu thật từ hệ thống để trả lời khách hàng.
-                    Dữ liệu sau đây là thông tin sản phẩm, khuyến mãi, khách hàng:
+                    Dữ liệu hiện có:
                     %s
-
                     Nguyên tắc:
-                    - Nếu tìm thấy thông tin phù hợp → trả lời chi tiết, tự nhiên, thân thiện.
-                    - Nếu không có dữ liệu phù hợp → nói: "Xin lỗi, tôi không tìm thấy dữ liệu phù hợp trong hệ thống."
+                    - Nếu có dữ liệu → trả lời chi tiết, thân thiện.
+                    - Nếu không → nói "Xin lỗi, tôi không tìm thấy theo yêu cầu, tôi sẽ kết nối nhân viên."
                     """.formatted(knowledgeJson);
 
             Map<String, Object> body = Map.of(
@@ -68,11 +62,10 @@ public class DeepSeekService {
                 Map<String, Object> message = (Map<String, Object>) choices.get(0).get("message");
                 return (String) message.get("content");
             }
-
             return "Xin lỗi, tôi không có câu trả lời phù hợp.";
         } catch (Exception e) {
             e.printStackTrace();
-            return "Xin lỗi, hiện tại hệ thống đang bận. Vui lòng thử lại sau ít phút nhé! " + e.getMessage();
+            return "Xin lỗi, hệ thống bận. " + e.getMessage();
         }
     }
 }
