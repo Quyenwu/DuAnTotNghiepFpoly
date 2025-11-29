@@ -1,5 +1,6 @@
 package com.example.the_autumn.controller;
 
+import com.example.the_autumn.dto.NhanVienSelectDTO;
 import com.example.the_autumn.entity.KhachHang;
 import com.example.the_autumn.model.request.NhanVienRequest;
 import com.example.the_autumn.model.response.NhanVienResponse;
@@ -8,6 +9,7 @@ import com.example.the_autumn.model.response.ResponseObject;
 import com.example.the_autumn.service.NhanVienService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -88,6 +90,10 @@ public class NhanVienController {
     public ResponseObject<?> checkSdt(@RequestParam("sdt") String sdt) {
         boolean exists = nhanVienService.checkSdtExists(sdt);
         return new ResponseObject<>(Map.of("exists", exists));
+    }
+    @GetMapping("/phan-ca-nhan-vien")
+    public ResponseEntity<List<NhanVienSelectDTO>> getAllForSelect() {
+        return ResponseEntity.ok(nhanVienService.getAllForSelect());
     }
 
 }

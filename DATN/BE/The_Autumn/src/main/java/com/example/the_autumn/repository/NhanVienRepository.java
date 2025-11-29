@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -17,5 +18,7 @@ public interface NhanVienRepository extends JpaRepository<NhanVien, Integer> , J
 
     @Query("SELECT n FROM NhanVien n LEFT JOIN FETCH n.chucVu WHERE n.email = :email")
     NhanVien getNhanVienByEmail(@Param("email") String email);
+
+    List<NhanVien> findByTrangThai(Boolean trangThai);
 
 }
