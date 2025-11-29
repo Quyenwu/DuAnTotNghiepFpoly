@@ -71,5 +71,21 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer>, JpaSpe
             "AND h.ngayTao >= :thoiGianBatDau " +
             "AND h.trangThai = 1")
     BigDecimal tinhTongTienTheoCa(Integer idNhanVien, LocalDateTime thoiGianBatDau);
+
+
+    @Query(value = """
+            SELECT COALESCE(SUM(hd.tong_tien_sau_giam), 0)
+            FROM hoa_don hd
+            WHERE hd.nguoi_tao = :idNhanVien
+              AND hd.loai_hoa_don = 1
+              AND hd.trang_thai = 1
+              AND hd.ngay_thanh_toan BETWEEN :fromDate AND :toDate
+            """,
+            nativeQuery = true)
+    BigDecimal sumDoanhThuTrongCa(
+            @Param("idNhanVien") Integer idNhanVien,
+            @Param("fromDate") LocalDate fromDate,
+            @Param("toDate") LocalDate toDate
+    );
 }
 
