@@ -1,5 +1,6 @@
 package com.example.the_autumn.service;
 
+import com.example.the_autumn.dto.NhanVienSelectDTO;
 import com.example.the_autumn.entity.ChucVu;
 import com.example.the_autumn.entity.GiamGiaKhachHang;
 import com.example.the_autumn.entity.KhachHang;
@@ -182,6 +183,18 @@ public class NhanVienService {
         return nhanVienRepository.existsBySdt(sdt);
     }
 
+
+    public List<NhanVienSelectDTO> getAllForSelect() {
+        // chỉ lấy NV đang hoạt động, nếu muốn lấy hết thì đổi thành findAll()
+        List<NhanVien> list = nhanVienRepository.findByTrangThai(true);
+
+        return list.stream()
+                .map(nv -> new NhanVienSelectDTO(
+                        nv.getId(),
+                        nv.getHoTen()
+                ))
+                .collect(Collectors.toList());
+    }
 
 }
 
