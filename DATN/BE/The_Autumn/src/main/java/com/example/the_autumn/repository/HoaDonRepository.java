@@ -78,7 +78,7 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer>, JpaSpe
             FROM hoa_don hd
             WHERE hd.nguoi_tao = :idNhanVien
               AND hd.loai_hoa_don = 1
-              AND hd.trang_thai = 1
+              AND hd.trang_thai = 3
               AND hd.ngay_thanh_toan BETWEEN :fromDate AND :toDate
             """,
             nativeQuery = true)
@@ -87,5 +87,7 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer>, JpaSpe
             @Param("fromDate") LocalDate fromDate,
             @Param("toDate") LocalDate toDate
     );
+
 }
+
 

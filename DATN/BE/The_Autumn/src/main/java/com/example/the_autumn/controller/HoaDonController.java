@@ -1,6 +1,8 @@
 package com.example.the_autumn.controller;
 
 
+
+
 import com.example.the_autumn.entity.*;
 import com.example.the_autumn.model.request.HoaDonRequest;
 import com.example.the_autumn.model.request.PageHoaDonRequest;
@@ -32,8 +34,10 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate; // [THÊM] Import WebSocket
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
 
 import java.io.IOException;
 import java.net.URLEncoder;
@@ -46,8 +50,10 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
 
 @RestController
 @RequestMapping("/api/hoa-don")
@@ -56,26 +62,77 @@ public class HoaDonController {
     @Autowired
     private HoaDonService hoaDonService;
 
+
     @Autowired
     private HoaDonRepository hoaDonRepository;
+
 
     @Autowired
     private NhanVienRepository nhanVienRepository;
 
+
     @Autowired
     private PhuongThucThanhToanRepository phuongThucRepository;
+
 
     @Autowired
     private LichSuThanhToanRepository lichSuThanhToanRepository;
 
+
     @Autowired
     private  AnhService anhService;
+
+
+    // [THÊM] Inject WebSocket Template để gửi thông báo
+    @Autowired
+    private SimpMessagingTemplate messagingTemplate;
+
+
+
+
+    /**
+     * API này nhận dữ liệu JSON từ Frontend (LocalStorage) và bắn thẳng xuống WebSocket.
+     * Không lưu vào DB, giúp hiển thị realtime ngay cả khi chưa tạo hóa đơn trong DB.
+     */
+    @PostMapping("/sync-display")
+    public ResponseEntity<?> syncDisplayFromPOS(@RequestBody Map<String, Object> displayData) {
+        try {
+            // Log để debug xem có nhận được dữ liệu không
+            // System.out.println("📡 POS Relay: Đồng bộ dữ liệu tạm tính từ Frontend");
+
+
+            // Bắn tín hiệu xuống topic chung
+            messagingTemplate.convertAndSend("/topic/display", displayData);
+
+
+            return ResponseEntity.ok(Map.of("success", true));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.ok(Map.of("success", false));
+        }
+    }
+
+
+    // Hàm Sync cho các thao tác CÓ lưu DB (Sau khi thanh toán/lưu)
+    private void syncToCustomerDisplay(Integer idHoaDon) {
+        try {
+            if (idHoaDon == null) return;
+            HoaDonDetailResponse detail = hoaDonService.getHoaDonDetail(idHoaDon);
+            if (detail != null) {
+                messagingTemplate.convertAndSend("/topic/display", detail);
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi socket DB: " + e.getMessage());
+        }
+    }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<HoaDon> getById(@PathVariable Integer id) {
         Optional<HoaDon> hoaDon = hoaDonService.getById(id);
         return hoaDon.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
+
 
     @GetMapping
     public ResponseEntity<PageHoaDonRequest<HoaDonRespone>> getAllOrSearch(
@@ -100,6 +157,7 @@ public class HoaDonController {
         return ResponseEntity.ok(response);
     }
 
+
     // Các method khác giữ nguyên...
     @GetMapping("/export")
     public void exportExcel(HttpServletResponse response) {
@@ -107,11 +165,14 @@ public class HoaDonController {
             response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
             response.setCharacterEncoding("UTF-8");
 
+
             String fileName = "HoaDon_" + System.currentTimeMillis() + ".xlsx";
             response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
 
+
             List<HoaDon> list = hoaDonRepository.findAllWithDetails();
             System.out.println("Tìm thấy: " + list.size() + " hóa đơn");
+
 
             if (list == null || list.isEmpty()) {
                 throw new RuntimeException("Không có dữ liệu để xuất");
@@ -146,11 +207,14 @@ public class HoaDonController {
                     row.createCell(2).setCellValue(hd.getKhachHang() != null ? hd.getKhachHang().getHoTen() : "Khách vãng lai");
                     row.createCell(3).setCellValue(hd.getNhanVien() != null ? hd.getNhanVien().getHoTen() : "");
 
+
                     String trangThaiText = TrangThaiHoaDonRespone.getText(hd.getTrangThai());
                     row.createCell(4).setCellValue(trangThaiText);
 
+
                     String dichVu = hd.getLoaiHoaDon() != null && hd.getLoaiHoaDon() ? "Tại quầy" : "Online";
                     row.createCell(5).setCellValue(dichVu);
+
 
                     // ⭐ THÊM: Hình thức thanh toán
                     String hinhThuc = "";
@@ -160,6 +224,7 @@ public class HoaDonController {
                                 .getTenPhuongThucThanhToan();
                     }
                     row.createCell(6).setCellValue(hinhThuc);
+
 
                     String ngayTaoStr = "";
                     if (hd.getNgayTao() != null) {
@@ -178,6 +243,7 @@ public class HoaDonController {
                     }
                     row.createCell(7).setCellValue(ngayTaoStr);
 
+
                     Cell cellTien = row.createCell(8);
                     if (hd.getTongTien() != null) {
                         cellTien.setCellValue(hd.getTongTien().doubleValue());
@@ -187,13 +253,16 @@ public class HoaDonController {
                     }
                 }
 
+
                 for (int i = 0; i < columns.length; i++) {
                     sheet.autoSizeColumn(i);
                 }
 
+
                 workbook.write(response.getOutputStream());
                 response.getOutputStream().flush();
             }
+
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -206,10 +275,12 @@ public class HoaDonController {
         }
     }
 
+
     @PostMapping("/print")
     public ResponseEntity<byte[]> printInvoices(@RequestBody List<Integer> invoiceIds) {
         try {
             byte[] pdfBytes = hoaDonService.printInvoices(invoiceIds);
+
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);
@@ -219,15 +290,19 @@ public class HoaDonController {
                             .build()
             );
 
+
             return ResponseEntity.ok()
                     .headers(headers)
                     .body(pdfBytes);
+
 
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpServletResponse.SC_INTERNAL_SERVER_ERROR).build();
         }
     }
+
+
 
 
     @GetMapping("/detail/{id}")
@@ -243,6 +318,8 @@ public class HoaDonController {
             return ResponseEntity.status(500).body("Lỗi: " + e.getMessage());
         }
     }
+
+
 
 
     @GetMapping("/{id}/can-edit")
@@ -261,6 +338,9 @@ public class HoaDonController {
 
 
 
+
+
+
     @PutMapping("/{id}")
     public ResponseEntity<?> updateHoaDon(
             @PathVariable Integer id,
@@ -268,7 +348,10 @@ public class HoaDonController {
         try {
             UpdateHoaDonResponse response = hoaDonService.updateHoaDon(id, request);
 
+
             if (response.isSuccess()) {
+                // [THÊM] Gửi socket khi update thành công (Thêm khách, ghi chú...)
+                syncToCustomerDisplay(id);
                 return ResponseEntity.ok(response);
             } else {
                 return ResponseEntity.badRequest().body(response);
@@ -281,10 +364,14 @@ public class HoaDonController {
 
 
 
+
+
+
     @GetMapping("/{id}/lich-su")
     public ResponseEntity<?> getLichSuHoaDon(@PathVariable Integer id) {
         try {
             List<LichSuHoaDon> lichSu = hoaDonService.getLichSuHoaDon(id);
+
 
             // Convert sang DTO để tránh vòng lặp JSON
             List<Map<String, Object>> response = lichSu.stream()
@@ -299,12 +386,15 @@ public class HoaDonController {
                     })
                     .collect(Collectors.toList());
 
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Không thể tải lịch sử: " + e.getMessage()));
         }
     }
+
+
 
 
     @PutMapping("/{id}/trang-thai")
@@ -315,17 +405,25 @@ public class HoaDonController {
             HoaDon hoaDon = hoaDonService.findById(id)
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
 
+
             Integer oldStatus = hoaDon.getTrangThai();
             hoaDon.setTrangThai(trangThai);
             hoaDonService.save(hoaDon);
+
 
             // ⭐ LƯU LỊCH SỬ THAY ĐỔI TRẠNG THÁI
             String oldStatusText = TrangThaiHoaDonRespone.getText(oldStatus);
             String newStatusText = TrangThaiHoaDonRespone.getText(trangThai);
             String moTa = String.format("Trạng thái: '%s' → '%s'", oldStatusText, newStatusText);
 
+
             // ✅ SỬA: Gọi method luuLichSu với đầy đủ 4 tham số
             hoaDonService.luuLichSu(hoaDon, "Cập nhật trạng thái đơn hàng", moTa, null);
+
+
+            // [THÊM] Gửi socket khi trạng thái thay đổi
+            syncToCustomerDisplay(id);
+
 
             return ResponseEntity.ok(Map.of(
                     "success", true,
@@ -339,6 +437,8 @@ public class HoaDonController {
     }
 
 
+
+
     @PutMapping("/{id}/service")
     public ResponseEntity<?> updateService(
             @PathVariable Integer id,
@@ -346,6 +446,12 @@ public class HoaDonController {
         try {
             Boolean loaiHoaDon = request.get("loaiHoaDon");
             String result = hoaDonService.updateService(id, loaiHoaDon);
+
+
+            // [THÊM] Gửi socket khi đổi loại dịch vụ (Ship/Tại quầy -> Tiền có thể đổi)
+            syncToCustomerDisplay(id);
+
+
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "message", result
@@ -359,7 +465,10 @@ public class HoaDonController {
         }
 
 
+
+
     }
+
 
     @GetMapping("/nhan-vien")
     public ResponseEntity<?> getAllNhanVien() {
@@ -382,6 +491,7 @@ public class HoaDonController {
         }
     }
 
+
     @GetMapping("/phuong-thuc-thanh-toan")
     public ResponseEntity<?> getAllPhuongThucThanhToan() {
         try {
@@ -403,28 +513,19 @@ public class HoaDonController {
 
 
 
-        @PostMapping("/add")
-        public ResponseObject<?> addHoaDon(@RequestBody HoaDonRequest hoaDonRequest){
-            HoaDon savedHoaDon = hoaDonService.add(hoaDonRequest);
-            return new ResponseObject<>(savedHoaDon,"Thêm thành công");
-        }
 
-//    @PostMapping("/create-and-pay-vnpay")
-//    public ResponseEntity<?> createHoaDonAndPayWithVNPAY(@RequestBody HoaDonRequest hoaDonRequest) {
-//        try {
-//            System.out.println("=== VNPay Request ===");
-//            System.out.println("Amount: " + hoaDonRequest.getTongTienSauGiam());
-//            System.out.println("Customer: " + hoaDonRequest.getIdKhachHang());
-//
-//            VNPayResponse response = hoaDonService.createHoaDonAndPayWithVNPAY(hoaDonRequest);
-//
-//            return ResponseEntity.ok(new BaseResponse(true, "Tạo hóa đơn và thanh toán VNPAY thành công", response));
-//        } catch (Exception e) {
-//            System.err.println("Error in createAndPayWithVNPAY: " + e.getMessage());
-//            e.printStackTrace();
-//            return ResponseEntity.badRequest().body(new BaseResponse(false, "Lỗi: " + e.getMessage(), null));
-//        }
-//    }
+
+
+    @PostMapping("/add")
+    public ResponseObject<?> addHoaDon(@RequestBody HoaDonRequest hoaDonRequest){
+        HoaDon savedHoaDon = hoaDonService.add(hoaDonRequest);
+        // [THÊM] Gửi socket khi tạo mới
+        syncToCustomerDisplay(savedHoaDon.getId());
+
+
+        return new ResponseObject<>(savedHoaDon,"Thêm thành công");
+    }
+
 
     @GetMapping("/vnpay-return")
     public ResponseEntity<?> vnpayReturn(
@@ -433,13 +534,16 @@ public class HoaDonController {
         try {
             String result = hoaDonService.handleVNPayReturn(params);
 
+
             String redirectUrl = "http://localhost:3000/payment-result?status=" +
                     ("00".equals(params.get("vnp_ResponseCode")) ? "success" : "fail") +
                     "&message=" + URLEncoder.encode(result, StandardCharsets.UTF_8) +
                     "&orderId=" + params.get("vnp_TxnRef");
 
+
             response.sendRedirect(redirectUrl);
             return ResponseEntity.ok().build();
+
 
         } catch (Exception e) {
             try {
@@ -453,15 +557,6 @@ public class HoaDonController {
         }
     }
 
-//    @PostMapping("/vnpay-ipn")
-//    public ResponseEntity<?> vnpayIPN(@RequestParam Map<String, String> params) {
-//        try {
-//            String result = hoaDonService.handleVNPayIPN(params);
-//            return ResponseEntity.ok(result);
-//        } catch (Exception e) {
-//            return ResponseEntity.badRequest().body("error");
-//        }
-//    }
 
     @GetMapping("/{id}/lich-su-thanh-toan")
     public ResponseEntity<?> getLichSuThanhToan(@PathVariable Integer id) {
@@ -474,12 +569,19 @@ public class HoaDonController {
         }
     }
 
+
     @DeleteMapping("/{idHoaDon}/chi-tiet/{idChiTietSanPham}")
     public ResponseEntity<?> xoaChiTietSanPhamKhoiHoaDon(
             @PathVariable Integer idHoaDon,
             @PathVariable Integer idChiTietSanPham) {
         try {
             hoaDonService.xoaChiTietSanPhamKhoiHoaDon(idHoaDon, idChiTietSanPham);
+
+
+            // [THÊM] Gửi socket khi xóa món
+            syncToCustomerDisplay(idHoaDon);
+
+
             return ResponseEntity.ok().body(Map.of(
                     "success", true,
                     "message", "Đã xóa sản phẩm khỏi hóa đơn thành công"
@@ -497,17 +599,6 @@ public class HoaDonController {
         }
     }
 
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
 
