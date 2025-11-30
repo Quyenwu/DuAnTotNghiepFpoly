@@ -36,7 +36,7 @@ public class API {
 
     public static void main(String[] args) {
         String apiUrl = "https://provinces.open-api.vn/api/v2/?depth=2";
-        String connectionUrl = "jdbc:sqlserver://localhost:1433;databaseName=TheAutumn;encrypt=false;user=sa;password=123";
+        String connectionUrl = "jdbc:sqlserver://localhost:1433;databaseName=TheAutumn;encrypt=false;user=sa;password=An123456789*";
 
         try {
             // Tắt kiểm tra SSL trước khi gọi API

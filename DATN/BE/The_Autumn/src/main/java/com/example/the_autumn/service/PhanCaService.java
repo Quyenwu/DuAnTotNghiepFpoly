@@ -4,6 +4,7 @@ import com.example.the_autumn.dto.PhanCaDTO;
 import com.example.the_autumn.entity.CaLamViec;
 import com.example.the_autumn.entity.NhanVien;
 import com.example.the_autumn.entity.PhanCa;
+import com.example.the_autumn.expection.ApiException;
 import com.example.the_autumn.repository.CaLamViecRepository;
 import com.example.the_autumn.repository.NhanVienRepository;
 import com.example.the_autumn.repository.PhanCaRepository;
@@ -65,7 +66,7 @@ public class PhanCaService {
                 .isPresent();
         if (slotTaken) {
             // Có thể sau này anh đổi thành throw exception custom để trả message rõ ràng
-            return null;
+            throw new ApiException("Ca làm việc này đã được phân cho nhân viên khác trong ngày này!", "SHIFT_CONFLICT");
         }
 
         PhanCa pc = new PhanCa();
@@ -93,13 +94,13 @@ public class PhanCaService {
 
             if (conflictOpt.isPresent() && !conflictOpt.get().getId().equals(pc.getId())) {
                 // Có phân ca khác (id khác) đang chiếm slot này rồi
-                return null;
+                throw new ApiException("Ca làm việc này đã được phân cho nhân viên khác trong ngày này!", "SHIFT_CONFLICT");
             }
 
             pc.setCaLamViec(ca);
             pc.setNgayPhanCa(ngayPhanCa);
             pc.setGhiChu(dto.getGhiChu());
-            pc.setTrangThai(dto.getTrangThai());
+            pc.setTrangThai(dto.getTrangThai() != null ? dto.getTrangThai() : pc.getTrangThai());
             pc.setNgaySua(LocalDateTime.now());
             return convertToDTO(repository.save(pc));
         }).orElse(null);
