@@ -1,4 +1,4 @@
-package com.example.the_autumn.config;
+package com.example.the_autumn.service;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
