@@ -205,15 +205,14 @@ public class GiaoCaService {
     }
 
     private BigDecimal tinhDoanhThuTrongCa(GiaoCa giaoCa) {
-        LocalDate fromDate = giaoCa.getThoiGianBatDau().toLocalDate();
-        LocalDate toDate = giaoCa.getThoiGianKetThuc() != null
-                ? giaoCa.getThoiGianKetThuc().toLocalDate()
-                : fromDate;
-
+        LocalDateTime startTime = giaoCa.getThoiGianBatDau();
+        LocalDateTime endTime = giaoCa.getThoiGianKetThuc() != null
+                ? giaoCa.getThoiGianKetThuc()
+                : LocalDateTime.now(); // Sử dụng thời điểm hiện tại
         return hoaDonRepository.sumDoanhThuTrongCa(
                 giaoCa.getNhanVien().getId(),
-                fromDate,
-                toDate
+                startTime, // Truyền LocalDateTime
+                endTime    // Truyền LocalDateTime
         );
     }
 

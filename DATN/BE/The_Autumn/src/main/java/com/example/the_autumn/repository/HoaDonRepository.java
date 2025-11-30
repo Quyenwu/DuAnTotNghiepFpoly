@@ -74,18 +74,19 @@ public interface HoaDonRepository extends JpaRepository<HoaDon, Integer>, JpaSpe
 
 
     @Query(value = """
-            SELECT COALESCE(SUM(hd.tong_tien_sau_giam), 0)
-            FROM hoa_don hd
-            WHERE hd.nguoi_tao = :idNhanVien
-              AND hd.loai_hoa_don = 1
-              AND hd.trang_thai = 3
-              AND hd.ngay_thanh_toan BETWEEN :fromDate AND :toDate
-            """,
+        SELECT COALESCE(SUM(hd.tong_tien_sau_giam), 0)
+        FROM hoa_don hd
+        WHERE hd.nguoi_tao = :idNhanVien
+          AND hd.loai_hoa_don = 1
+          AND hd.trang_thai = 3
+          -- Lọc theo cột DATETIME (ngay_tao) và khoảng thời gian (giờ/phút) chính xác
+          AND hd.ngay_tao BETWEEN :startTime AND :endTime 
+        """,
             nativeQuery = true)
     BigDecimal sumDoanhThuTrongCa(
             @Param("idNhanVien") Integer idNhanVien,
-            @Param("fromDate") LocalDate fromDate,
-            @Param("toDate") LocalDate toDate
+            @Param("startTime") LocalDateTime startTime, // Thay thế từ LocalDate
+            @Param("endTime") LocalDateTime endTime      // Thay thế từ LocalDate
     );
 
 }
