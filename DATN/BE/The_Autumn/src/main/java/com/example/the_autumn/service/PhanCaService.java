@@ -84,24 +84,31 @@ public class PhanCaService {
     public PhanCaDTO updatePhanCa(Integer id, PhanCaDTO dto) {
         return repository.findById(id).map(pc -> {
             CaLamViec ca = caLamViecRepository.findById(dto.getIdCaLamViec()).orElse(null);
-            if (ca == null) return null;
+            NhanVien nv = nhanVienRepository.findById(dto.getIdNhanVien()).orElse(null); // 🟢 Lấy đối tượng NhanVien MỚI
+
+            // 🔴 CHECK: Kiểm tra sự tồn tại của Ca và NhanVien
+            if (ca == null || nv == null) return null;
 
             LocalDate ngayPhanCa = LocalDate.parse(dto.getNgayPhanCa());
 
-            // 🔴 CHECK: ca + ngày này đã được phân cho người khác chưa?
+            // 🔴 CHECK: ca + ngày này đã được phân cho người khác/cùng người chưa?
             var conflictOpt = repository
                     .findFirstByCaLamViec_IdAndNgayPhanCaAndTrangThaiTrue(ca.getId(), ngayPhanCa);
 
             if (conflictOpt.isPresent() && !conflictOpt.get().getId().equals(pc.getId())) {
                 // Có phân ca khác (id khác) đang chiếm slot này rồi
+                // 💡 Cân nhắc thêm check nếu ca & ngày không đổi nhưng NhanVien đổi -> cũng check conflict
                 throw new ApiException("Ca làm việc này đã được phân cho nhân viên khác trong ngày này!", "SHIFT_CONFLICT");
             }
 
+            // 🟢 Cập nhật cả NhanVien và Ca làm việc
+            pc.setNhanVien(nv); // 🟢 THÊM: Cập nhật nhân viên mới
             pc.setCaLamViec(ca);
             pc.setNgayPhanCa(ngayPhanCa);
             pc.setGhiChu(dto.getGhiChu());
             pc.setTrangThai(dto.getTrangThai() != null ? dto.getTrangThai() : pc.getTrangThai());
             pc.setNgaySua(LocalDateTime.now());
+
             return convertToDTO(repository.save(pc));
         }).orElse(null);
     }
