@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional // Quan trọng: Giúp quản lý transaction cho toàn bộ service
+@Transactional
 public class GiaoCaService {
 
     @Autowired
@@ -57,12 +57,20 @@ public class GiaoCaService {
     }
 
     /**
-     * Lấy danh sách giao ca CỦA RIÊNG NHÂN VIÊN ĐANG ĐĂNG NHẬP
+     * Lấy danh sách giao ca CỦA TẤT CẢ NHÂN VIÊN TRONG NGÀY HÔM NAY (Bắt đầu trong ngày).
      */
     public List<GiaoCaResponse> getAll() {
-        NhanVien nv = getCurrentNhanVien();
-        // Chỉ tìm giao ca của nhân viên này
-        return giaoCaRepository.findAllByNhanVien_IdOrderByThoiGianBatDauDesc(nv.getId())
+        LocalDate today = LocalDate.now();
+        // Bắt đầu 00:00:00 hôm nay
+        LocalDateTime startOfDay = today.atStartOfDay();
+        // Kết thúc 23:59:59.999... hôm nay
+        LocalDateTime endOfDay = today.plusDays(1).atStartOfDay().minusNanos(1);
+
+        return giaoCaRepository
+                .findByThoiGianBatDauBetweenOrderByThoiGianBatDauDesc(
+                        startOfDay,
+                        endOfDay
+                )
                 .stream()
                 .map(this::toResponse)
                 .collect(Collectors.toList());
@@ -87,27 +95,37 @@ public class GiaoCaService {
         LocalDate today = now.toLocalDate();
         LocalTime currentTime = now.toLocalTime();
 
-        // Check tiền đầu ca khớp ca trước (nếu có)
+        // ----------------------------------------------------
+        // LOGIC CHUYỂN GIAO TIỀN: CHỈ LẤY CA KẾT THÚC TRONG NGÀY HÔM NAY (STRICT)
+        // ----------------------------------------------------
         giaoCaRepository
-                .findFirstByNhanVien_IdAndThoiGianKetThucIsNotNullOrderByThoiGianKetThucDesc(nv.getId())
+                .findFirstByThoiGianKetThucIsNotNullOrderByThoiGianKetThucDesc()
                 .ifPresent(prev -> {
-                    LocalDate prevDate = prev.getThoiGianBatDau() != null
-                            ? prev.getThoiGianBatDau().toLocalDate()
-                            : null;
+                    LocalDateTime prevEnd = prev.getThoiGianKetThuc();
+                    // 00:00:00 ngày hôm nay
+                    LocalDateTime todayStart = LocalDateTime.now().toLocalDate().atStartOfDay();
 
-                    if (prevDate != null && prevDate.isEqual(today)) {
+                    // Chỉ kiểm tra khớp tiền nếu ca trước KẾT THÚC trong ngày hôm nay
+                    if (prevEnd != null && prevEnd.isAfter(todayStart)) {
                         BigDecimal expected = prev.getSoTienKetThuc() == null
                                 ? BigDecimal.ZERO
                                 : prev.getSoTienKetThuc();
 
+                        // So sánh tiền bàn giao
                         if (expected.compareTo(request.getSoTienBatDau()) != 0) {
+                            String prevNhanVien = prev.getNhanVien() != null ? prev.getNhanVien().getHoTen() : "Không rõ";
+
                             throw new IllegalArgumentException(
-                                    "Số tiền bắt đầu (" + request.getSoTienBatDau() +
-                                            ") không khớp với số tiền kết thúc ca trước (" + expected + ")"
+                                    "Số tiền bàn giao bắt đầu (" + request.getSoTienBatDau() +
+                                            ") không khớp với số tiền kết thúc ca trước của NV **" + prevNhanVien +
+                                            "** (" + expected + ") lúc " + prev.getThoiGianKetThuc() +
+                                            ". Vui lòng kiểm tra lại."
                             );
                         }
                     }
+                    // Nếu ca kết thúc hôm qua, nó sẽ không được kiểm tra (chấp nhận rủi ro).
                 });
+        // ----------------------------------------------------
 
         // Check lịch phân ca
         List<PhanCa> phanCaList = phanCaRepository
@@ -171,12 +189,13 @@ public class GiaoCaService {
                 .filter(pc -> isWithinShift(pc.getCaLamViec(), gioBatDauGiaoCa))
                 .findFirst().orElse(null);
 
+        // Kiểm tra điều kiện kết thúc ca (CHỈ XỬ LÝ CA TRONG NGÀY)
         if (phanCaCaNay != null) {
             CaLamViec caLamViec = phanCaCaNay.getCaLamViec();
             LocalTime end = caLamViec.getGioKetThuc();
-            LocalDateTime shiftEndDateTime = (!caLamViec.getGioBatDau().isAfter(end))
-                    ? ngayCa.atTime(end)
-                    : ngayCa.plusDays(1).atTime(end);
+
+            // Ca phải kết thúc trong ngày bắt đầu
+            LocalDateTime shiftEndDateTime = ngayCa.atTime(end);
 
             if (now.isBefore(shiftEndDateTime)) {
                 throw new IllegalStateException("Chưa hết ca làm việc chưa thể kết thúc.");
@@ -188,7 +207,7 @@ public class GiaoCaService {
 
         if (ghiChu != null && !ghiChu.isBlank()) {
             String currentNote = giaoCa.getGhiChu() == null ? "" : giaoCa.getGhiChu();
-            giaoCa.setGhiChu(currentNote + (currentNote.isBlank() ? "" : " | ") + ghiChu);
+            giaoCa.setGhiChu(currentNote + (currentNote.isBlank() ? "" : " | ") + "[Kết thúc] " + ghiChu);
         }
 
         BigDecimal tongDoanhThu = tinhDoanhThuTrongCa(giaoCa);
@@ -196,6 +215,7 @@ public class GiaoCaService {
         giaoCa.setTongDoanhThu(tongDoanhThu);
 
         BigDecimal soTienBatDau = giaoCa.getSoTienBatDau() != null ? giaoCa.getSoTienBatDau() : BigDecimal.ZERO;
+        // Số tiền kết thúc (tiền mặt bàn giao) = Tiền mặt đầu ca + Tổng Doanh thu
         giaoCa.setSoTienKetThuc(soTienBatDau.add(tongDoanhThu));
         giaoCa.setSoTienChenhLech(BigDecimal.ZERO);
         giaoCa.setTrangThai(false);
@@ -208,22 +228,27 @@ public class GiaoCaService {
         LocalDateTime startTime = giaoCa.getThoiGianBatDau();
         LocalDateTime endTime = giaoCa.getThoiGianKetThuc() != null
                 ? giaoCa.getThoiGianKetThuc()
-                : LocalDateTime.now(); // Sử dụng thời điểm hiện tại
+                : LocalDateTime.now();
+
         return hoaDonRepository.sumDoanhThuTrongCa(
                 giaoCa.getNhanVien().getId(),
-                startTime, // Truyền LocalDateTime
-                endTime    // Truyền LocalDateTime
+                startTime,
+                endTime
         );
     }
 
     private boolean isWithinShift(CaLamViec caLamViec, LocalTime currentTime) {
         LocalTime start = caLamViec.getGioBatDau();
         LocalTime end = caLamViec.getGioKetThuc();
-        // Xử lý ca qua đêm (ví dụ 22:00 -> 06:00)
-        if (!start.isAfter(end)) {
-            return !currentTime.isBefore(start) && !currentTime.isAfter(end);
+
+        // CHỈ XỬ LÝ CA TRONG NGÀY (start <= end)
+        if (start.isAfter(end)) {
+            // Nếu giờ bắt đầu > giờ kết thúc, ca không hợp lệ (vì đã xóa logic ca đêm)
+            return false;
         }
-        return !currentTime.isBefore(start) || !currentTime.isAfter(end);
+
+        // Kiểm tra xem thời gian hiện tại có nằm trong khoảng [start, end] không
+        return !currentTime.isBefore(start) && !currentTime.isAfter(end);
     }
 
     private GiaoCaResponse toResponse(GiaoCa gc) {
