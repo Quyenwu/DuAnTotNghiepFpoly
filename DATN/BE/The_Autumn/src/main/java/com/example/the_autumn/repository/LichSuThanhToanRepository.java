@@ -27,4 +27,11 @@ public interface LichSuThanhToanRepository extends JpaRepository<LichSuThanhToan
     List<LichSuThanhToan> findByHoaDon(HoaDon hoaDon);
     @Query("SELECT lst FROM LichSuThanhToan lst WHERE lst.hoaDon.maHoaDon = :maHoaDon ORDER BY lst.ngayThanhToan DESC")
     List<LichSuThanhToan> findByHoaDonMaHoaDonOrderByNgayThanhToanDesc(@Param("maHoaDon") String maHoaDon);
+
+    boolean existsByHoaDonIdAndGhiChuContaining(Integer hoaDonId, String ghiChu);
+
+    List<LichSuThanhToan> findByHoaDonIdAndGhiChuContainingOrderByNgayThanhToanDesc(
+            Integer hoaDonId,
+            String ghiChu
+    );
 }

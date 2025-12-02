@@ -170,7 +170,8 @@ public class EmailService {
         }
     }
 
-    private void sendEmail(String to, String subject, String body) {
+    @Async
+    public void sendEmail(String to, String subject, String body) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
