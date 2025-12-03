@@ -15,9 +15,10 @@ import java.util.Optional;
 public interface GiaoCaRepository extends JpaRepository<GiaoCa, Integer> {
     boolean existsByNhanVien_IdAndThoiGianKetThucIsNull(Integer idNhanVien);
     // Lấy ca đã kết thúc gần nhất của nhân viên (để check tiền bắt đầu ca mới)
-    Optional<GiaoCa> findFirstByNhanVien_IdAndThoiGianKetThucIsNotNullOrderByThoiGianKetThucDesc(
-            Integer idNhanVien
-    );
-    List<GiaoCa> findAllByNhanVien_IdOrderByThoiGianBatDauDesc(Integer nhanVienId);
+    Optional<GiaoCa> findFirstByThoiGianKetThucIsNotNullOrderByThoiGianKetThucDesc();
+
+    // 2. Dùng cho getAll(): Lấy tất cả giao ca trong khoảng thời gian, không lọc theo NV (Lấy ca trong ngày)
+    List<GiaoCa> findByThoiGianBatDauBetweenOrderByThoiGianBatDauDesc(
+            LocalDateTime start, LocalDateTime end);
 
 }
