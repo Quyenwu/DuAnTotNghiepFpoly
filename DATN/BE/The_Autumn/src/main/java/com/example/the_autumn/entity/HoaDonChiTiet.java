@@ -36,6 +36,7 @@ public class HoaDonChiTiet {
     @Column(name = "gia_ban", precision = 18, scale = 2)
     private BigDecimal giaBan;
 
+
     @Column(name = "thanh_tien", precision = 18, scale = 2)
     private BigDecimal thanhTien;
 
@@ -44,4 +45,11 @@ public class HoaDonChiTiet {
 
     @Column(name = "trang_thai")
     private Boolean trangThai;
+
+    public BigDecimal calculateThanhTien() {
+        if (soLuong == null || giaBan == null) {
+            return BigDecimal.ZERO;
+        }
+        return giaBan.multiply(BigDecimal.valueOf(soLuong));
+    }
 }

@@ -1,7 +1,6 @@
 package com.example.the_autumn.model.response;
 
 import jakarta.persistence.Column;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Date;
@@ -10,7 +9,6 @@ import java.util.List;
 public class HoaDonDetailResponse {
     private Integer id;
     private String maHoaDon;
-
     private Date ngayTao;
     private Date ngayThanhToan;
     private String tenKhachHang;
@@ -24,13 +22,10 @@ public class HoaDonDetailResponse {
     private String maGiamGia;
     private String tenChuongTrinh;
 
-    public Boolean getLoaiGiamGia() {
-        return loaiGiamGia;
-    }
-
-    public void setLoaiGiamGia(Boolean loaiGiamGia) {
-        this.loaiGiamGia = loaiGiamGia;
-    }
+    // ========== THÊM CÁC TRƯỜNG PHỤ PHÍ ==========
+    private BigDecimal phiPhu;           // Phụ phí đã thanh toán
+    private BigDecimal phiPhuMoi;        // Phụ phí mới (chờ thanh toán)
+    private List<PhiPhuDetailDTO> phiPhuDetails; // Chi tiết phụ phí
 
     private BigDecimal giaTriGiamGia;
     private Boolean loaiGiamGia;
@@ -40,40 +35,6 @@ public class HoaDonDetailResponse {
     private LocalDate ngayBatDau;
     private LocalDate ngayKetThuc;
     private Integer trangThaiPhieuGiamGia;
-
-    public Integer getSoLuongDung() {
-        return soLuongDung;
-    }
-
-
-    public void setSoLuongDung(Integer soLuongDung) {
-        this.soLuongDung = soLuongDung;
-    }
-
-    public LocalDate getNgayBatDau() {
-        return ngayBatDau;
-    }
-
-    public void setNgayBatDau(LocalDate ngayBatDau) {
-        this.ngayBatDau = ngayBatDau;
-    }
-
-    public LocalDate getNgayKetThuc() {
-        return ngayKetThuc;
-    }
-
-    public void setNgayKetThuc(LocalDate ngayKetThuc) {
-        this.ngayKetThuc = ngayKetThuc;
-    }
-
-    public Integer getTrangThaiPhieuGiamGia() {
-        return trangThaiPhieuGiamGia;
-    }
-
-    public void setTrangThaiPhieuGiamGia(Integer trangThaiPhieuGiamGia) {
-        this.trangThaiPhieuGiamGia = trangThaiPhieuGiamGia;
-    }
-
     private String maGiaoDich;
     private BigDecimal soTien;
     private String ghiChu;
@@ -87,90 +48,11 @@ public class HoaDonDetailResponse {
     private String ghiChuThanhToan;
 
     private KhachHangResponse khachHang;
-
-    public BigDecimal getGiaTriGiamGia() {
-        return giaTriGiamGia;
-    }
-
-    public void setGiaTriGiamGia(BigDecimal giaTriGiamGia) {
-        this.giaTriGiamGia = giaTriGiamGia;
-    }
-
-    public BigDecimal getMucGiaGiamToiDa() {
-        return mucGiaGiamToiDa;
-    }
-
-    public void setMucGiaGiamToiDa(BigDecimal mucGiaGiamToiDa) {
-        this.mucGiaGiamToiDa = mucGiaGiamToiDa;
-    }
-
-    public BigDecimal getGiaTriDonHangToiThieu() {
-        return giaTriDonHangToiThieu;
-    }
-
-    public void setGiaTriDonHangToiThieu(BigDecimal giaTriDonHangToiThieu) {
-        this.giaTriDonHangToiThieu = giaTriDonHangToiThieu;
-    }
-
-    public KhachHangResponse getKhachHang() {
-        return khachHang;
-    }
-
-    public void setKhachHang(KhachHangResponse khachHang) {
-        this.khachHang = khachHang;
-    }
-
-
-    public String getTenChuongTrinh() {
-        return tenChuongTrinh;
-    }
-
-    public void setTenChuongTrinh(String tenChuongTrinh) {
-        this.tenChuongTrinh = tenChuongTrinh;
-    }
-
-    public String getMaGiamGia() {
-        return maGiamGia;
-    }
-
-    public void setMaGiamGia(String maGiamGia) {
-        this.maGiamGia = maGiamGia;
-    }
-
-    public String getMaGiaoDich() {
-        return maGiaoDich;
-    }
-
-    public void setMaGiaoDich(String maGiaoDich) {
-        this.maGiaoDich = maGiaoDich;
-    }
-
-    public BigDecimal getSoTien() {
-        return soTien;
-    }
-
-    public void setSoTien(BigDecimal soTien) {
-        this.soTien = soTien;
-    }
-
-    public String getGhiChuThanhToan() {
-        return ghiChuThanhToan;
-    }
-
-    public void setGhiChuThanhToan(String ghiChuThanhToan) {
-        this.ghiChuThanhToan = ghiChuThanhToan;
-    }
-
-    public String getMaNhanVien() {
-        return maNhanVien;
-    }
-
-    public void setMaNhanVien(String maNhanVien) {
-        this.maNhanVien = maNhanVien;
-    }
-
     private List<ChiTietSanPhamResponse> chiTietSanPhams;
 
+    // ========== GETTERS & SETTERS ==========
+
+    // Các getter/setter cũ
     public Integer getId() { return id; }
     public void setId(Integer id) { this.id = id; }
 
@@ -198,11 +80,79 @@ public class HoaDonDetailResponse {
     public Integer getIdNhanVien() { return idNhanVien; }
     public void setIdNhanVien(Integer idNhanVien) { this.idNhanVien = idNhanVien; }
 
+    public String getMaNhanVien() { return maNhanVien; }
+    public void setMaNhanVien(String maNhanVien) { this.maNhanVien = maNhanVien; }
+
     public String getTenNhanVien() { return tenNhanVien; }
     public void setTenNhanVien(String tenNhanVien) { this.tenNhanVien = tenNhanVien; }
 
     public String getSdtNhanVien() { return sdtNhanVien; }
     public void setSdtNhanVien(String sdtNhanVien) { this.sdtNhanVien = sdtNhanVien; }
+
+    public String getMaGiamGia() { return maGiamGia; }
+    public void setMaGiamGia(String maGiamGia) { this.maGiamGia = maGiamGia; }
+
+    public String getTenChuongTrinh() { return tenChuongTrinh; }
+    public void setTenChuongTrinh(String tenChuongTrinh) { this.tenChuongTrinh = tenChuongTrinh; }
+
+    // ========== GETTERS & SETTERS CHO PHỤ PHÍ ==========
+    public BigDecimal getPhiPhu() {
+        return phiPhu != null ? phiPhu : BigDecimal.ZERO;
+    }
+
+    public void setPhiPhu(BigDecimal phiPhu) {
+        this.phiPhu = phiPhu;
+    }
+
+    public BigDecimal getPhiPhuMoi() {
+        return phiPhuMoi != null ? phiPhuMoi : BigDecimal.ZERO;
+    }
+
+    public void setPhiPhuMoi(BigDecimal phiPhuMoi) {
+        this.phiPhuMoi = phiPhuMoi;
+    }
+
+    public List<PhiPhuDetailDTO> getPhiPhuDetails() {
+        return phiPhuDetails;
+    }
+
+    public void setPhiPhuDetails(List<PhiPhuDetailDTO> phiPhuDetails) {
+        this.phiPhuDetails = phiPhuDetails;
+    }
+
+    // Các getter/setter khác
+    public BigDecimal getGiaTriGiamGia() { return giaTriGiamGia; }
+    public void setGiaTriGiamGia(BigDecimal giaTriGiamGia) { this.giaTriGiamGia = giaTriGiamGia; }
+
+    public Boolean getLoaiGiamGia() { return loaiGiamGia; }
+    public void setLoaiGiamGia(Boolean loaiGiamGia) { this.loaiGiamGia = loaiGiamGia; }
+
+    public BigDecimal getMucGiaGiamToiDa() { return mucGiaGiamToiDa; }
+    public void setMucGiaGiamToiDa(BigDecimal mucGiaGiamToiDa) { this.mucGiaGiamToiDa = mucGiaGiamToiDa; }
+
+    public BigDecimal getGiaTriDonHangToiThieu() { return giaTriDonHangToiThieu; }
+    public void setGiaTriDonHangToiThieu(BigDecimal giaTriDonHangToiThieu) { this.giaTriDonHangToiThieu = giaTriDonHangToiThieu; }
+
+    public Integer getSoLuongDung() { return soLuongDung; }
+    public void setSoLuongDung(Integer soLuongDung) { this.soLuongDung = soLuongDung; }
+
+    public LocalDate getNgayBatDau() { return ngayBatDau; }
+    public void setNgayBatDau(LocalDate ngayBatDau) { this.ngayBatDau = ngayBatDau; }
+
+    public LocalDate getNgayKetThuc() { return ngayKetThuc; }
+    public void setNgayKetThuc(LocalDate ngayKetThuc) { this.ngayKetThuc = ngayKetThuc; }
+
+    public Integer getTrangThaiPhieuGiamGia() { return trangThaiPhieuGiamGia; }
+    public void setTrangThaiPhieuGiamGia(Integer trangThaiPhieuGiamGia) { this.trangThaiPhieuGiamGia = trangThaiPhieuGiamGia; }
+
+    public String getMaGiaoDich() { return maGiaoDich; }
+    public void setMaGiaoDich(String maGiaoDich) { this.maGiaoDich = maGiaoDich; }
+
+    public BigDecimal getSoTien() { return soTien; }
+    public void setSoTien(BigDecimal soTien) { this.soTien = soTien; }
+
+    public String getGhiChuThanhToan() { return ghiChuThanhToan; }
+    public void setGhiChuThanhToan(String ghiChuThanhToan) { this.ghiChuThanhToan = ghiChuThanhToan; }
 
     public Boolean getLoaiHoaDon() { return loaiHoaDon; }
     public void setLoaiHoaDon(Boolean loaiHoaDon) { this.loaiHoaDon = loaiHoaDon; }
@@ -228,10 +178,13 @@ public class HoaDonDetailResponse {
     public String getGhiChu() { return ghiChu; }
     public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
 
+    public KhachHangResponse getKhachHang() { return khachHang; }
+    public void setKhachHang(KhachHangResponse khachHang) { this.khachHang = khachHang; }
+
     public List<ChiTietSanPhamResponse> getChiTietSanPhams() { return chiTietSanPhams; }
     public void setChiTietSanPhams(List<ChiTietSanPhamResponse> chiTietSanPhams) { this.chiTietSanPhams = chiTietSanPhams; }
 
-
+    // ========== INNER CLASSES ==========
     public static class ChiTietSanPhamResponse {
         private Integer id;
         private Integer idChiTietSanPham;
@@ -244,32 +197,11 @@ public class HoaDonDetailResponse {
         private String ghiChu;
         private String maVach;
         private BigDecimal giaSauGiam;
-
-        public BigDecimal getGiaSauGiam() {
-            return giaSauGiam;
-        }
-
-        public void setGiaSauGiam(BigDecimal giaSauGiam) {
-            this.giaSauGiam = giaSauGiam;
-        }
-
-        public String getMaVach() {
-            return maVach;
-        }
-
-        public void setMaVach(String maVach) {
-            this.maVach = maVach;
-        }
-
         private List<String> anhUrls;
 
-        public Integer getId() {
-            return id;
-        }
-
-        public void setId(Integer id) {
-            this.id = id;
-        }
+        // Getters & Setters
+        public Integer getId() { return id; }
+        public void setId(Integer id) { this.id = id; }
 
         public Integer getIdChiTietSanPham() { return idChiTietSanPham; }
         public void setIdChiTietSanPham(Integer idChiTietSanPham) { this.idChiTietSanPham = idChiTietSanPham; }
@@ -295,16 +227,43 @@ public class HoaDonDetailResponse {
         public String getGhiChu() { return ghiChu; }
         public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
 
+        public String getMaVach() { return maVach; }
+        public void setMaVach(String maVach) { this.maVach = maVach; }
+
+        public BigDecimal getGiaSauGiam() { return giaSauGiam; }
+        public void setGiaSauGiam(BigDecimal giaSauGiam) { this.giaSauGiam = giaSauGiam; }
+
         public List<String> getAnhUrls() { return anhUrls; }
         public void setAnhUrls(List<String> anhUrls) { this.anhUrls = anhUrls; }
-
-
-
     }
 
+    public static class PhiPhuDetailDTO {
+        private String loai;
+        private String ten;
+        private BigDecimal soTien;
+        private String ghiChu;
 
+        // Constructor
+        public PhiPhuDetailDTO() {}
 
+        public PhiPhuDetailDTO(String loai, String ten, BigDecimal soTien, String ghiChu) {
+            this.loai = loai;
+            this.ten = ten;
+            this.soTien = soTien;
+            this.ghiChu = ghiChu;
+        }
 
+        // Getters & Setters
+        public String getLoai() { return loai; }
+        public void setLoai(String loai) { this.loai = loai; }
 
+        public String getTen() { return ten; }
+        public void setTen(String ten) { this.ten = ten; }
 
+        public BigDecimal getSoTien() { return soTien; }
+        public void setSoTien(BigDecimal soTien) { this.soTien = soTien; }
+
+        public String getGhiChu() { return ghiChu; }
+        public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
+    }
 }

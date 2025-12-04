@@ -258,6 +258,7 @@ public class HoaDonController {
                 }
 
 
+
                 for (int i = 0; i < columns.length; i++) {
                     sheet.autoSizeColumn(i);
                 }
