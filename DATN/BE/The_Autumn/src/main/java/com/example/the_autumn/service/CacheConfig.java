@@ -12,6 +12,10 @@ public class CacheConfig {
 
     @Bean
     public CacheManager cacheManager() {
-        return new ConcurrentMapCacheManager("knowledge_base");
+        return new ConcurrentMapCacheManager(
+                "knowledge_base",
+                "knowledge_base_summary",
+                "ai_answer_cache"
+        );
     }
 }

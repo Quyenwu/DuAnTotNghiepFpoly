@@ -1,71 +1,36 @@
-package com.example.the_autumn.model.response;
+package com.example.the_autumn.dto;
 
 import com.example.the_autumn.entity.Anh;
 import com.example.the_autumn.entity.ChiTietSanPham;
 import com.example.the_autumn.entity.SanPham;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.util.Date;
 import java.util.List;
-
-@Getter
-@Setter
-public class SanPhamResponse {
-
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class ListSanPhamResponse {
     private Integer id;
-    private String maSanPham;
     private String tenSanPham;
-    private Date ngayTao;
-    private Date ngaySua;
-    private Integer nguoiTao;
-    private Integer nguoiSua;
     private Boolean trangThai;
-    private String maNhaSanXuat;
-    private String tenNhaSanXuat;
-    private String maXuatXu;
-    private String tenXuatXu;
-    private String maChatLieu;
-    private String tenChatLieu;
-    private String maKieuDang;
-    private String tenKieuDang;
-    private String trongLuong;
-    private String maCoAo;
-    private String tenCoAo;
-    private String maTayAo;
-    private String tenTayAo;
-    private List<ChiTietSanPhamResponse> chiTietSanPhams;
-    private Integer tongSoLuong;
+    private List<ChiTietSanPhamDTO> chiTietSanPhams;
     private BigDecimal giaThapNhat;
     private BigDecimal giaCaoNhat;
-    private Integer  tongSoLuongDaMua;
-
+    private Integer tongSoLuongDaMua;
     private List<String> hinhAnhSanPham;
 
-
-    public SanPhamResponse(SanPham sp) {
+    public  ListSanPhamResponse(SanPham sp) {
         this.id = sp.getId();
-        this.maSanPham = sp.getMaSanPham();
+
         this.tenSanPham = sp.getTenSanPham();
-        this.trongLuong = sp.getTrongLuong();
-        this.ngayTao = sp.getNgayTao();
-        this.ngaySua = sp.getNgaySua();
-        this.nguoiTao = sp.getNguoiTao();
-        this.nguoiSua = sp.getNguoiSua();
+
         this.trangThai = sp.getTrangThai();
-        this.maNhaSanXuat = sp.getNhaSanXuat().getMaNhaSanXuat();
-        this.tenNhaSanXuat = sp.getNhaSanXuat().getTenNhaSanXuat();
-        this.maXuatXu = sp.getXuatXu().getMaXuatXu();
-        this.tenXuatXu = sp.getXuatXu().getTenXuatXu();
-        this.maChatLieu = sp.getChatLieu().getMaChatLieu();
-        this.tenChatLieu = sp.getChatLieu().getTenChatLieu();
-        this.maKieuDang = sp.getKieuDang().getMaKieuDang();
-        this.tenKieuDang = sp.getKieuDang().getTenKieuDang();
-        this.maCoAo = sp.getCoAo().getMaCoAo();
-        this.tenCoAo = sp.getCoAo().getTenCoAo();
-        this.maTayAo = sp.getTayAo().getMaTayAo();
-        this.tenTayAo = sp.getTayAo().getTenTayAo();
+
 
         if (sp.getChiTietSanPham() != null && !sp.getChiTietSanPham().isEmpty()) {
 
@@ -77,12 +42,9 @@ public class SanPhamResponse {
                     .toList();
 
             this.chiTietSanPhams = sp.getChiTietSanPham().stream()
-                    .map(ChiTietSanPhamResponse::new)
+                    .map(ChiTietSanPhamDTO::new)
                     .toList();
 
-            this.tongSoLuong = sp.getChiTietSanPham().stream()
-                    .mapToInt(chiTiet -> chiTiet.getSoLuongTon() != null ? chiTiet.getSoLuongTon() : 0)
-                    .sum();
 
             List<BigDecimal> giaList = sp.getChiTietSanPham().stream()
                     .filter(ct -> ct.getGiaBan() != null)
@@ -95,7 +57,8 @@ public class SanPhamResponse {
             } else {
                 this.giaThapNhat = BigDecimal.ZERO;
                 this.giaCaoNhat = BigDecimal.ZERO;
-            } if (sp.getChiTietSanPham() != null && !sp.getChiTietSanPham().isEmpty()) {
+            }
+            if (sp.getChiTietSanPham() != null && !sp.getChiTietSanPham().isEmpty()) {
                 this.tongSoLuongDaMua = sp.getChiTietSanPham().stream()
                         .flatMap(ct -> ct.getHoaDonChiTiets().stream())
                         .mapToInt(hdct -> hdct.getSoLuong() != null ? hdct.getSoLuong() : 0)
@@ -106,10 +69,10 @@ public class SanPhamResponse {
 
         } else {
             this.chiTietSanPhams = List.of();
-            this.tongSoLuong = 0;
             this.giaThapNhat = BigDecimal.ZERO;
             this.giaCaoNhat = BigDecimal.ZERO;
             this.hinhAnhSanPham = List.of();
         }
     }
+
 }

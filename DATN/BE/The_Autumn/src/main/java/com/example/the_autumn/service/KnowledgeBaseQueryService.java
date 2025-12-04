@@ -1,5 +1,6 @@
 package com.example.the_autumn.service;
 
+import com.example.the_autumn.dto.ListSanPhamResponse;
 import com.example.the_autumn.model.response.*;
 import com.example.the_autumn.repository.*;
 import org.springframework.stereotype.Service;
@@ -30,9 +31,9 @@ public class KnowledgeBaseQueryService {
         this.diaChiRepo = diaChiRepo;
     }
 
-    public List<SanPhamResponse> getSanPhamData() {
+    public List<ListSanPhamResponse> getSanPhamData() {
         return sanPhamRepo.findByTrangThai(true).stream()
-                .map(SanPhamResponse::new)
+                .map(ListSanPhamResponse::new)
                 .toList();
     }
 
