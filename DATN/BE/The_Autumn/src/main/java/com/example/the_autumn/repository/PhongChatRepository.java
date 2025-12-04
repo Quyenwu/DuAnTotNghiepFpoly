@@ -4,5 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PhongChatRepository extends JpaRepository<PhongChat, Integer> {
     PhongChat findByKhachHangId(Integer idKhachHang);
+    PhongChat findFirstByKhachHangIsNullAndLoai(Integer loai);
 
 }

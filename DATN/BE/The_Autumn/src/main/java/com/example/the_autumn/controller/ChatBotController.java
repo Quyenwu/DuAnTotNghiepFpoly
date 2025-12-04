@@ -132,7 +132,7 @@ public class ChatBotController {
         List<Map<String, Object>> roomList = rooms.stream().map(r -> {
             Map<String, Object> map = new HashMap<>();
             map.put("roomId", r.getId());
-            map.put("khachHang", r.getKhachHang() != null ? r.getKhachHang().getHoTen() : "Guest");
+            map.put("khachHang", r.getKhachHang() != null ? r.getKhachHang().getHoTen() : "Khách lẻ");
             map.put("loai", r.getLoai());
             return map;
         }).toList();
@@ -166,6 +166,29 @@ public class ChatBotController {
                 "khachHang", kh.getHoTen()
         ));
     }
+    @GetMapping("/rooms/guest")
+    public ResponseEntity<?> getRoomForGuest() {
+        // Tìm phòng cho khách lẻ đã tồn tại
+        PhongChat room = phongRepo.findFirstByKhachHangIsNullAndLoai(0);
+
+        if (room == null) {
+            // Nếu chưa có phòng, tạo mới
+            room = PhongChat.builder()
+                    .khachHang(null)
+                    .loai(0) // AI
+                    .trangThai(1)
+                    .ngayTao(LocalDateTime.now())
+                    .build();
+            phongRepo.save(room);
+        }
+
+        return ResponseEntity.ok(Map.of(
+                "roomId", room.getId(),
+                "loai", room.getLoai(),
+                "khachHang", "Khách lẻ"
+        ));
+    }
+
 
     @PostMapping("/rooms/join")
     public ResponseEntity<?> joinRoomAsStaff(@RequestParam Integer roomId, @RequestParam Integer idNhanVien) {
