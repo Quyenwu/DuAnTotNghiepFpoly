@@ -1,6 +1,5 @@
 package com.example.the_autumn.model.response;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,7 +10,6 @@ import java.math.BigDecimal;
 @Getter
 @Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class UpdateHoaDonResponse {
     private boolean success;
     private String message;
@@ -19,102 +17,193 @@ public class UpdateHoaDonResponse {
     private String diaChiCuThe;
     private Integer thanhPho;    // id tỉnh
     private Integer quan;        // id quận
-
-    // Getters & Setters
-
+    private BigDecimal phiPhu; // phụ phí đã thanh toán
+    private BigDecimal phiPhuMoi; // phụ phí chờ thanh toán (nếu đã thanh toán trước đó)
+    private BigDecimal tongTienCanThanhToan;
     private BigDecimal tongTienSanPham;
     private BigDecimal phiVanChuyen;
     private BigDecimal tienGiamGia;
     private BigDecimal tongTienSauGiam;
 
-    public String getDiaChiCuThe() {
-        return diaChiCuThe;
-    }
-
-    public void setDiaChiCuThe(String diaChiCuThe) {
-        this.diaChiCuThe = diaChiCuThe;
-    }
-
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public void setSuccess(boolean success) {
-        this.success = success;
-    }
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public HoaDonDetailResponse getData() {
-        return data;
-    }
-
-    public void setData(HoaDonDetailResponse data) {
-        this.data = data;
-    }
-
-    public Integer getThanhPho() {
-        return thanhPho;
-    }
-
-    public void setThanhPho(Integer thanhPho) {
-        this.thanhPho = thanhPho;
-    }
-
-    public Integer getQuan() {
-        return quan;
-    }
-
-    public void setQuan(Integer quan) {
-        this.quan = quan;
-    }
-
-    public BigDecimal getTongTienSanPham() {
-        return tongTienSanPham;
-    }
-
-    public void setTongTienSanPham(BigDecimal tongTienSanPham) {
-        this.tongTienSanPham = tongTienSanPham;
-    }
-
-    public BigDecimal getPhiVanChuyen() {
-        return phiVanChuyen;
-    }
-
-    public void setPhiVanChuyen(BigDecimal phiVanChuyen) {
-        this.phiVanChuyen = phiVanChuyen;
-    }
-
-    public BigDecimal getTienGiamGia() {
-        return tienGiamGia;
-    }
-
-    public void setTienGiamGia(BigDecimal tienGiamGia) {
-        this.tienGiamGia = tienGiamGia;
-    }
-
-    public BigDecimal getTongTienSauGiam() {
-        return tongTienSauGiam;
-    }
-
-    public void setTongTienSauGiam(BigDecimal tongTienSauGiam) {
-        this.tongTienSauGiam = tongTienSauGiam;
-    }
-
+    // Constructor cơ bản
     public UpdateHoaDonResponse(boolean success, String message) {
         this.success = success;
         this.message = message;
         this.data = null;
-        this.tongTienSanPham = null;
-        this.phiVanChuyen = null;
-        this.tienGiamGia = null;
-        this.tongTienSauGiam = null;
+        this.diaChiCuThe = null;
+        this.thanhPho = null;
+        this.quan = null;
+        this.phiPhu = BigDecimal.ZERO;
+        this.phiPhuMoi = BigDecimal.ZERO;
+        this.tongTienCanThanhToan = BigDecimal.ZERO;
+        this.tongTienSanPham = BigDecimal.ZERO;
+        this.phiVanChuyen = BigDecimal.ZERO;
+        this.tienGiamGia = BigDecimal.ZERO;
+        this.tongTienSauGiam = BigDecimal.ZERO;
+    }
 
+    // Constructor với tất cả tham số
+    public UpdateHoaDonResponse(boolean success, String message, HoaDonDetailResponse data,
+                                String diaChiCuThe, Integer thanhPho, Integer quan,
+                                BigDecimal phiPhu, BigDecimal phiPhuMoi, BigDecimal tongTienCanThanhToan,
+                                BigDecimal tongTienSanPham, BigDecimal phiVanChuyen,
+                                BigDecimal tienGiamGia, BigDecimal tongTienSauGiam) {
+        this.success = success;
+        this.message = message;
+        this.data = data;
+        this.diaChiCuThe = diaChiCuThe;
+        this.thanhPho = thanhPho;
+        this.quan = quan;
+        this.phiPhu = phiPhu != null ? phiPhu : BigDecimal.ZERO;
+        this.phiPhuMoi = phiPhuMoi != null ? phiPhuMoi : BigDecimal.ZERO;
+        this.tongTienCanThanhToan = tongTienCanThanhToan != null ? tongTienCanThanhToan : BigDecimal.ZERO;
+        this.tongTienSanPham = tongTienSanPham != null ? tongTienSanPham : BigDecimal.ZERO;
+        this.phiVanChuyen = phiVanChuyen != null ? phiVanChuyen : BigDecimal.ZERO;
+        this.tienGiamGia = tienGiamGia != null ? tienGiamGia : BigDecimal.ZERO;
+        this.tongTienSauGiam = tongTienSauGiam != null ? tongTienSauGiam : BigDecimal.ZERO;
+    }
+
+    // Constructor với thông tin tài chính
+    public UpdateHoaDonResponse(boolean success, String message,
+                                BigDecimal tongTienSanPham, BigDecimal phiVanChuyen,
+                                BigDecimal tienGiamGia, BigDecimal tongTienSauGiam) {
+        this.success = success;
+        this.message = message;
+        this.data = null;
+        this.diaChiCuThe = null;
+        this.thanhPho = null;
+        this.quan = null;
+        this.phiPhu = BigDecimal.ZERO;
+        this.phiPhuMoi = BigDecimal.ZERO;
+        this.tongTienCanThanhToan = BigDecimal.ZERO;
+        this.tongTienSanPham = tongTienSanPham != null ? tongTienSanPham : BigDecimal.ZERO;
+        this.phiVanChuyen = phiVanChuyen != null ? phiVanChuyen : BigDecimal.ZERO;
+        this.tienGiamGia = tienGiamGia != null ? tienGiamGia : BigDecimal.ZERO;
+        this.tongTienSauGiam = tongTienSauGiam != null ? tongTienSauGiam : BigDecimal.ZERO;
+    }
+
+    // Constructor với phụ phí
+    public UpdateHoaDonResponse(boolean success, String message,
+                                BigDecimal phiPhu, BigDecimal phiPhuMoi,
+                                BigDecimal tongTienCanThanhToan) {
+        this.success = success;
+        this.message = message;
+        this.data = null;
+        this.diaChiCuThe = null;
+        this.thanhPho = null;
+        this.quan = null;
+        this.phiPhu = phiPhu != null ? phiPhu : BigDecimal.ZERO;
+        this.phiPhuMoi = phiPhuMoi != null ? phiPhuMoi : BigDecimal.ZERO;
+        this.tongTienCanThanhToan = tongTienCanThanhToan != null ? tongTienCanThanhToan : BigDecimal.ZERO;
+        this.tongTienSanPham = BigDecimal.ZERO;
+        this.phiVanChuyen = BigDecimal.ZERO;
+        this.tienGiamGia = BigDecimal.ZERO;
+        this.tongTienSauGiam = BigDecimal.ZERO;
+    }
+
+    // Builder pattern để dễ tạo đối tượng
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    public static class Builder {
+        private boolean success;
+        private String message;
+        private HoaDonDetailResponse data;
+        private String diaChiCuThe;
+        private Integer thanhPho;
+        private Integer quan;
+        private BigDecimal phiPhu = BigDecimal.ZERO;
+        private BigDecimal phiPhuMoi = BigDecimal.ZERO;
+        private BigDecimal tongTienCanThanhToan = BigDecimal.ZERO;
+        private BigDecimal tongTienSanPham = BigDecimal.ZERO;
+        private BigDecimal phiVanChuyen = BigDecimal.ZERO;
+        private BigDecimal tienGiamGia = BigDecimal.ZERO;
+        private BigDecimal tongTienSauGiam = BigDecimal.ZERO;
+
+        public Builder success(boolean success) {
+            this.success = success;
+            return this;
+        }
+
+        public Builder message(String message) {
+            this.message = message;
+            return this;
+        }
+
+        public Builder data(HoaDonDetailResponse data) {
+            this.data = data;
+            return this;
+        }
+
+        public Builder diaChiCuThe(String diaChiCuThe) {
+            this.diaChiCuThe = diaChiCuThe;
+            return this;
+        }
+
+        public Builder thanhPho(Integer thanhPho) {
+            this.thanhPho = thanhPho;
+            return this;
+        }
+
+        public Builder quan(Integer quan) {
+            this.quan = quan;
+            return this;
+        }
+
+        public Builder phiPhu(BigDecimal phiPhu) {
+            this.phiPhu = phiPhu != null ? phiPhu : BigDecimal.ZERO;
+            return this;
+        }
+
+        public Builder phiPhuMoi(BigDecimal phiPhuMoi) {
+            this.phiPhuMoi = phiPhuMoi != null ? phiPhuMoi : BigDecimal.ZERO;
+            return this;
+        }
+
+        public Builder tongTienCanThanhToan(BigDecimal tongTienCanThanhToan) {
+            this.tongTienCanThanhToan = tongTienCanThanhToan != null ? tongTienCanThanhToan : BigDecimal.ZERO;
+            return this;
+        }
+
+        public Builder tongTienSanPham(BigDecimal tongTienSanPham) {
+            this.tongTienSanPham = tongTienSanPham != null ? tongTienSanPham : BigDecimal.ZERO;
+            return this;
+        }
+
+        public Builder phiVanChuyen(BigDecimal phiVanChuyen) {
+            this.phiVanChuyen = phiVanChuyen != null ? phiVanChuyen : BigDecimal.ZERO;
+            return this;
+        }
+
+        public Builder tienGiamGia(BigDecimal tienGiamGia) {
+            this.tienGiamGia = tienGiamGia != null ? tienGiamGia : BigDecimal.ZERO;
+            return this;
+        }
+
+        public Builder tongTienSauGiam(BigDecimal tongTienSauGiam) {
+            this.tongTienSauGiam = tongTienSauGiam != null ? tongTienSauGiam : BigDecimal.ZERO;
+            return this;
+        }
+
+        public UpdateHoaDonResponse build() {
+            return new UpdateHoaDonResponse(
+                    success, message, data, diaChiCuThe, thanhPho, quan,
+                    phiPhu, phiPhuMoi, tongTienCanThanhToan,
+                    tongTienSanPham, phiVanChuyen, tienGiamGia, tongTienSauGiam
+            );
+        }
+    }
+
+    // Phương thức tiện ích
+    public boolean hasPhiPhuMoi() {
+        return phiPhuMoi != null && phiPhuMoi.compareTo(BigDecimal.ZERO) > 0;
+    }
+
+    public BigDecimal getTongPhiPhu() {
+        BigDecimal tong = BigDecimal.ZERO;
+        if (phiPhu != null) tong = tong.add(phiPhu);
+        if (phiPhuMoi != null) tong = tong.add(phiPhuMoi);
+        return tong;
     }
 }
