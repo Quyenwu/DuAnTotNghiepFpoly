@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/api/v1/payment")
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174","http://192.203.4.118:5173"})
 public class PaymentController {
     private static final Logger log = LoggerFactory.getLogger(PaymentController.class);
 
