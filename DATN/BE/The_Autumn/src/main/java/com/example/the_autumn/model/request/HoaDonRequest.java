@@ -32,6 +32,7 @@ public class HoaDonRequest {
     private String diaChiKhachHang;
     private Date ngayThanhToan;
     private Integer nguoiTao;
+    private String email;
     private Integer trangThai;
     private BigDecimal soTienThanhToan;
     private String ghiChuThanhToan;
