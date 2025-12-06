@@ -28,7 +28,7 @@ public class HoaDonRespone {
     private Integer trangThai;
 
     private String hinhThucThanhToan;
-
+    private BigDecimal soTienThanhToan;
     private KhachHangDTO khachHang;
     private NhanVienDTO nhanVien;
 
@@ -49,8 +49,9 @@ public class HoaDonRespone {
         this.ngayTao = hoaDon.getNgayTao();
         this.ngaySua = hoaDon.getNgaySua();
         this.trangThai = hoaDon.getTrangThai();
-        this.loaiHoaDon = hoaDon.getLoaiHoaDon();
+        this.soTienThanhToan = hoaDon.getSoTienThanhToan();
 
+        this.loaiHoaDon = hoaDon.getLoaiHoaDon();
         if (hoaDon.getKhachHang() != null) {
             this.khachHang = new KhachHangDTO(hoaDon.getKhachHang());
         }

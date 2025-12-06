@@ -24,7 +24,8 @@ public class UpdateHoaDonResponse {
     private BigDecimal phiVanChuyen;
     private BigDecimal tienGiamGia;
     private BigDecimal tongTienSauGiam;
-
+    private BigDecimal soTienThanhToan;  // Số tiền đã thanh toán
+    private BigDecimal soTienCanThanhToan;
     // Constructor cơ bản
     public UpdateHoaDonResponse(boolean success, String message) {
         this.success = success;
@@ -39,6 +40,8 @@ public class UpdateHoaDonResponse {
         this.tongTienSanPham = BigDecimal.ZERO;
         this.phiVanChuyen = BigDecimal.ZERO;
         this.tienGiamGia = BigDecimal.ZERO;
+        this.soTienThanhToan = BigDecimal.ZERO;
+        this.soTienCanThanhToan = BigDecimal.ZERO;
         this.tongTienSauGiam = BigDecimal.ZERO;
     }
 
@@ -47,7 +50,7 @@ public class UpdateHoaDonResponse {
                                 String diaChiCuThe, Integer thanhPho, Integer quan,
                                 BigDecimal phiPhu, BigDecimal phiPhuMoi, BigDecimal tongTienCanThanhToan,
                                 BigDecimal tongTienSanPham, BigDecimal phiVanChuyen,
-                                BigDecimal tienGiamGia, BigDecimal tongTienSauGiam) {
+                                BigDecimal tienGiamGia, BigDecimal tongTienSauGiam,BigDecimal soTienThanhToan,BigDecimal soTienCanThanhToan) {
         this.success = success;
         this.message = message;
         this.data = data;
@@ -61,6 +64,10 @@ public class UpdateHoaDonResponse {
         this.phiVanChuyen = phiVanChuyen != null ? phiVanChuyen : BigDecimal.ZERO;
         this.tienGiamGia = tienGiamGia != null ? tienGiamGia : BigDecimal.ZERO;
         this.tongTienSauGiam = tongTienSauGiam != null ? tongTienSauGiam : BigDecimal.ZERO;
+        this.soTienThanhToan = soTienThanhToan != null ? soTienThanhToan : BigDecimal.ZERO;
+
+        this.soTienCanThanhToan = soTienCanThanhToan != null ? soTienCanThanhToan : BigDecimal.ZERO;
+
     }
 
     // Constructor với thông tin tài chính
@@ -120,6 +127,8 @@ public class UpdateHoaDonResponse {
         private BigDecimal phiVanChuyen = BigDecimal.ZERO;
         private BigDecimal tienGiamGia = BigDecimal.ZERO;
         private BigDecimal tongTienSauGiam = BigDecimal.ZERO;
+        private BigDecimal soTienThanhToan = BigDecimal.ZERO;
+        private BigDecimal soTienCanThanhToan = BigDecimal.ZERO;
 
         public Builder success(boolean success) {
             this.success = success;
@@ -185,12 +194,18 @@ public class UpdateHoaDonResponse {
             this.tongTienSauGiam = tongTienSauGiam != null ? tongTienSauGiam : BigDecimal.ZERO;
             return this;
         }
-
+        public Builder soTienThanhToan(BigDecimal soTienThanhToan) {
+            this.soTienThanhToan = soTienThanhToan != null ? soTienThanhToan : BigDecimal.ZERO;
+            return this;
+        } public Builder soTienCanThanhToan(BigDecimal soTienCanThanhToan) {
+            this.soTienCanThanhToan = soTienCanThanhToan != null ? soTienCanThanhToan : BigDecimal.ZERO;
+            return this;
+        }
         public UpdateHoaDonResponse build() {
             return new UpdateHoaDonResponse(
                     success, message, data, diaChiCuThe, thanhPho, quan,
                     phiPhu, phiPhuMoi, tongTienCanThanhToan,
-                    tongTienSanPham, phiVanChuyen, tienGiamGia, tongTienSauGiam
+                    tongTienSanPham, phiVanChuyen, tienGiamGia, tongTienSauGiam,soTienThanhToan,soTienCanThanhToan
             );
         }
     }
