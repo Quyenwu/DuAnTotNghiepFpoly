@@ -168,6 +168,68 @@ public class ChiTietSanPhamController {
         }
     }
 
+    @PatchMapping("/{idChiTietSanPham}/gia")
+    public ResponseEntity<?> capNhatGiaTrucTiep(
+            @PathVariable Integer idChiTietSanPham,
+            @RequestBody Map<String, Object> updates) {
+        try {
+            System.out.println("💰 PATCH CẬP NHẬT GIÁ TRỰC TIẾP - ID: " + idChiTietSanPham);
+
+            if (!updates.containsKey("donGia")) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Thiếu trường donGia"
+                ));
+            }
+
+            BigDecimal donGia;
+            try {
+                donGia = new BigDecimal(updates.get("donGia").toString());
+            } catch (NumberFormatException e) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Giá không hợp lệ. Vui lòng nhập số."
+                ));
+            }
+
+            // Kiểm tra giá hợp lệ
+            if (donGia.compareTo(BigDecimal.ZERO) < 0) {
+                return ResponseEntity.badRequest().body(Map.of(
+                        "success", false,
+                        "message", "Giá phải lớn hơn hoặc bằng 0"
+                ));
+            }
+
+            // Gọi service để cập nhật giá
+            chiTietSanPhamService.capNhatGiaBienThe(idChiTietSanPham, donGia);
+
+            System.out.println("✅ Cập nhật giá thành công: " + donGia);
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "message", "Cập nhật giá thành công",
+                    "data", Map.of(
+                            "idChiTietSanPham", idChiTietSanPham,
+                            "giaMoi", donGia
+                    )
+            ));
+
+        } catch (RuntimeException e) {
+            System.err.println("❌ Lỗi cập nhật giá: " + e.getMessage());
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "message", e.getMessage()
+            ));
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi hệ thống: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
+                    "success", false,
+                    "message", "Lỗi hệ thống: " + e.getMessage()
+            ));
+        }
+    }
+
     @PostMapping("/preview-bien-the")
     public ResponseEntity<?> previewBienThe(
             @Valid @RequestBody TaoBienTheRequest request,
