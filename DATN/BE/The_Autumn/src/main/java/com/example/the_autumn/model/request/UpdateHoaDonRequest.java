@@ -34,7 +34,8 @@ public class UpdateHoaDonRequest {
     private BigDecimal phiPhu;
     private BigDecimal phiPhuMoi;
     private List<PhiPhuDetail> phiPhuDetails;
-
+    private BigDecimal soTienThanhToan;  // Số tiền đã thanh toán
+    private BigDecimal soTienCanThanhToan;
     @Getter
     @Setter
     @NoArgsConstructor

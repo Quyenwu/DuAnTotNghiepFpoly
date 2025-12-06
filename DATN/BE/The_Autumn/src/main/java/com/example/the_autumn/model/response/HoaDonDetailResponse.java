@@ -21,7 +21,7 @@ public class HoaDonDetailResponse {
     private String sdtNhanVien;
     private String maGiamGia;
     private String tenChuongTrinh;
-
+    private BigDecimal soTienThanhToan;
     // ========== THÊM CÁC TRƯỜNG PHỤ PHÍ ==========
     private BigDecimal phiPhu;           // Phụ phí đã thanh toán
     private BigDecimal phiPhuMoi;        // Phụ phí mới (chờ thanh toán)
@@ -49,7 +49,7 @@ public class HoaDonDetailResponse {
 
     private KhachHangResponse khachHang;
     private List<ChiTietSanPhamResponse> chiTietSanPhams;
-
+    private BigDecimal soTienCanThanhToan;
     // ========== GETTERS & SETTERS ==========
 
     // Các getter/setter cũ
@@ -183,6 +183,19 @@ public class HoaDonDetailResponse {
 
     public List<ChiTietSanPhamResponse> getChiTietSanPhams() { return chiTietSanPhams; }
     public void setChiTietSanPhams(List<ChiTietSanPhamResponse> chiTietSanPhams) { this.chiTietSanPhams = chiTietSanPhams; }
+    public BigDecimal getSoTienThanhToan() {
+        return soTienThanhToan;
+    }
+
+    public void setSoTienThanhToan(BigDecimal soTienThanhToan) {
+        this.soTienThanhToan = soTienThanhToan;
+    } public BigDecimal getSoTienCanThanhToan() {
+        return soTienCanThanhToan;
+    }
+
+    public void setSoTienCanThanhToan(BigDecimal soTienCanThanhToan) {
+        this.soTienCanThanhToan = soTienCanThanhToan;
+    }
 
     // ========== INNER CLASSES ==========
     public static class ChiTietSanPhamResponse {
