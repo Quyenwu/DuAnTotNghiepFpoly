@@ -32,6 +32,8 @@ import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -64,6 +66,9 @@ public class HoaDonService {
 
     @Autowired
     private HoaDonRepository hoaDonRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Autowired
     private HoaDonChiTietRepository hoaDonChiTietRepository;
@@ -1300,16 +1305,32 @@ public class HoaDonService {
     public HoaDon add(HoaDonRequest req) {
         HoaDon hoaDon = new HoaDon();
 
-        // ... (các phần code trước đó giữ nguyên)
+        // ==================== XỬ LÝ NGÀY TẠO ====================
+        if (req.getNgayTao() != null) {
+            hoaDon.setNgayTao(req.getNgayTao());
+        } else {
+            hoaDon.setNgayTao(new Date());
+        }
 
-        // ==================== XỬ LÝ SO TIEN THANH TOAN ====================
+        // ==================== XỬ LÝ NGÀY THANH TOÁN ====================
+        if (req.getNgayThanhToan() != null) {
+            hoaDon.setNgayThanhToan(req.getNgayThanhToan());
+        } else {
+            if (req.getTrangThai() == null || req.getTrangThai() != 0) {
+                hoaDon.setNgayThanhToan(new Date());
+            }
+        }
+
+        hoaDon.setNguoiTao(req.getNguoiTao() != null ? req.getNguoiTao() : 1);
+
+        // ==================== XỬ LÝ SỐ TIỀN THANH TOÁN ====================
         BigDecimal soTienThanhToanValue;
 
         // Kiểm tra loại hóa đơn và phương thức thanh toán
         boolean isOnlineOrder = req.getLoaiHoaDon() != null && !req.getLoaiHoaDon(); // false = online
         boolean isTienMat = false;
 
-        // Kiểm tra xem có idPhuongThucThanhToan không
+        // Kiểm tra phương thức thanh toán
         if (req.getIdPhuongThucThanhToan() != null) {
             try {
                 PhuongThucThanhToan pt = phuongThucThanhToanRepository.findById(req.getIdPhuongThucThanhToan())
@@ -1371,6 +1392,8 @@ public class HoaDonService {
         System.out.println("💰 FINAL - soTienThanhToan được đặt: " + formatMoney(soTienThanhToanValue) +
                 " | Loại đơn: " + (isOnlineOrder ? "Online" : "Tại quầy") +
                 " | Phương thức: " + (isTienMat ? "Tiền mặt" : "Chuyển khoản"));
+
+        // ==================== XỬ LÝ KHÁCH HÀNG ====================
         KhachHang khachHang = null;
         if (req.getIdKhachHang() != null) {
             khachHang = khachHangRepository.findById(req.getIdKhachHang())
@@ -1386,6 +1409,7 @@ public class HoaDonService {
                 System.out.println("✅ Đã cập nhật email cho khách hàng hiện có: " + req.getEmail());
             }
 
+            // Xử lý địa chỉ cho khách hàng hiện có
             if (req.getDiaChiKhachHang() != null && !req.getDiaChiKhachHang().isEmpty() &&
                     !req.getDiaChiKhachHang().equals("Chưa có địa chỉ")) {
 
@@ -1442,6 +1466,7 @@ public class HoaDonService {
             }
             System.out.println("=== DEBUG THÊM ĐỊA CHỈ KẾT THÚC ===");
         } else {
+            // Tạo khách hàng mới nếu không có idKhachHang
             if (req.getHoTen() != null && !req.getHoTen().isEmpty() &&
                     req.getSdt() != null && !req.getSdt().isEmpty()) {
 
@@ -1472,6 +1497,7 @@ public class HoaDonService {
                         khachHang = khachHangRepository.save(newKhachHang);
                         System.out.println("🎉 ĐÃ TẠO KHÁCH HÀNG MỚI: " + khachHang.getHoTen() + " (ID: " + khachHang.getId() + ")");
 
+                        // Thêm địa chỉ cho khách hàng mới
                         if (req.getIdTinh() != null && req.getIdQuan() != null && req.getDiaChiCuThe() != null) {
                             try {
                                 TinhThanh tinhThanh = tinhThanhRepository.findById(req.getIdTinh())
@@ -1508,11 +1534,13 @@ public class HoaDonService {
             }
         }
 
+        // ==================== XỬ LÝ NHÂN VIÊN ====================
         NhanVien nhanVien = nhanVienRepository.findById(
                 req.getIdNhanVien() != null ? req.getIdNhanVien() : 1
         ).orElse(null);
         hoaDon.setNhanVien(nhanVien);
 
+        // ==================== XỬ LÝ PHIẾU GIẢM GIÁ ====================
         PhieuGiamGia giamGia = null;
         if (req.getIdPhieuGiamGia() != null) {
             giamGia = phieuGiamGiaRepository.findById(req.getIdPhieuGiamGia())
@@ -1528,22 +1556,22 @@ public class HoaDonService {
             hoaDon.setPhieuGiamGia(giamGia);
         }
 
+        // ==================== THIẾT LẬP CÁC THUỘC TÍNH KHÁC ====================
         hoaDon.setLoaiHoaDon(req.getLoaiHoaDon() != null ? req.getLoaiHoaDon() : false);
-
-
         hoaDon.setPhiVanChuyen(req.getPhiVanChuyen() != null ? req.getPhiVanChuyen() : BigDecimal.ZERO);
         hoaDon.setTongTien(req.getTongTien() != null ? req.getTongTien() : BigDecimal.ZERO);
         hoaDon.setTongTienSauGiam(req.getTongTienSauGiam() != null ? req.getTongTienSauGiam() : BigDecimal.ZERO);
         hoaDon.setDiaChiKhachHang(req.getDiaChiKhachHang());
         hoaDon.setGhiChu(req.getGhiChu());
-        hoaDon.setNgayThanhToan(new Date());
 
+        // ==================== XỬ LÝ TRẠNG THÁI ====================
         Integer trangThai = req.getTrangThai();
         if (trangThai == null) {
             throw new RuntimeException("Trạng thái hóa đơn không được để trống");
         }
         hoaDon.setTrangThai(trangThai);
 
+        // ==================== XỬ LÝ CHI TIẾT HÓA ĐƠN ====================
         if (req.getChiTietList() == null || req.getChiTietList().isEmpty()) {
             throw new RuntimeException("Không có chi tiết sản phẩm trong hóa đơn");
         }
@@ -1553,10 +1581,6 @@ public class HoaDonService {
         for (HoaDonChiTietRequest ctReq : req.getChiTietList()) {
             ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(ctReq.getIdChiTietSanPham())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết sản phẩm"));
-
-            // if (ctsp.getSoLuongTon() < ctReq.getSoLuong()) {
-            //     throw new RuntimeException("Không đủ tồn kho");
-            // }
 
             BigDecimal giaGoc = ctsp.getGiaBan();
             BigDecimal giaSauGiam = getGiaSauGiamFromDotGiamGia(ctsp.getId(), giaGoc);
@@ -1571,14 +1595,38 @@ public class HoaDonService {
             hdct.setTrangThai(true);
 
             listCT.add(hdct);
-
-            // ctsp.setSoLuongTon(ctsp.getSoLuongTon() - ctReq.getSoLuong());
-            // chiTietSanPhamRepository.save(ctsp);
         }
 
         hoaDon.setHoaDonChiTiets(listCT);
+
+        // ==================== LƯU HÓA ĐƠN ====================
         HoaDon saved = hoaDonRepository.save(hoaDon);
 
+        // ==================== QUAN TRỌNG: REFRESH ENTITY ĐỂ LẤY MÃ HÓA ĐƠN ====================
+        // Flush để đảm bảo lưu xuống database
+        hoaDonRepository.flush();
+
+        // Refresh entity từ database để lấy computed column (maHoaDon)
+        if (entityManager != null) {
+            try {
+                entityManager.refresh(saved);
+                System.out.println("✅ Đã refresh entity từ database");
+            } catch (Exception e) {
+                System.err.println("❌ Lỗi khi refresh entity: " + e.getMessage());
+                // Fallback: query lại entity
+                saved = hoaDonRepository.findById(saved.getId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn sau khi lưu"));
+            }
+        } else {
+            // Fallback nếu không có EntityManager
+            saved = hoaDonRepository.findById(saved.getId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn sau khi lưu"));
+        }
+
+        System.out.println("✅ Mã hóa đơn sau khi refresh: " + saved.getMaHoaDon());
+        System.out.println("✅ Thông tin hóa đơn: ID=" + saved.getId() + ", Mã HD=" + saved.getMaHoaDon());
+
+        // ==================== GỬI EMAIL XÁC NHẬN (VỚI ENTITY ĐÃ ĐƯỢC REFRESH) ====================
         if (!saved.getLoaiHoaDon()) {
             try {
                 String toEmail = null;
@@ -1606,10 +1654,11 @@ public class HoaDonService {
             }
         }
 
+        // ==================== TẠO LỊCH SỬ HÓA ĐƠN ====================
         LichSuHoaDon log = new LichSuHoaDon();
         log.setHoaDon(saved);
         log.setKhachHang(khachHang);
-        log.setNhanVien(nhanVien);
+        log.setNhanVien(saved.getNhanVien());
         log.setTrangThai(true);
         log.setNgayCapNhat(new Date());
 
@@ -1637,6 +1686,7 @@ public class HoaDonService {
 
         lichSuHoaDonRepository.save(log);
 
+        // ==================== XỬ LÝ PHƯƠNG THỨC THANH TOÁN ====================
         if (req.getIdPhuongThucThanhToan() != null) {
             PhuongThucThanhToan pt = phuongThucThanhToanRepository.findById(req.getIdPhuongThucThanhToan())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy phương thức thanh toán"));
@@ -1650,7 +1700,7 @@ public class HoaDonService {
                             saved.getTongTienSauGiam()
             );
 
-            // ==================== QUAN TRỌNG: XỬ LÝ LOGIC THANH TOÁN ====================
+            // ==================== XỬ LÝ LOGIC THANH TOÁN ====================
 
             if (isOnlineOrder && isTienMat) {
                 // Hóa đơn online + tiền mặt: chưa thanh toán
@@ -1703,9 +1753,11 @@ public class HoaDonService {
         }
 
         System.out.println("🎉 HOÀN TẤT TẠO HÓA ĐƠN - ID: " + saved.getId() +
+                ", Mã HD: " + saved.getMaHoaDon() +
                 ", Trạng thái: " + saved.getTrangThai() +
                 ", Loại: " + saved.getLoaiHoaDon() +
                 ", Khách hàng: " + (khachHang != null ? khachHang.getHoTen() : "Khách lẻ"));
+
         return saved;
     }
 
