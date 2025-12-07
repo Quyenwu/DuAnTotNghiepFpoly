@@ -48,12 +48,12 @@ public class SanPhamController {
         return new ResponseObject<>(result);
     }
     @GetMapping("/ban-chay")
-    public ResponseObject<?> getSanPhamBanChay() {
+    public ResponseObject<?> getSanPhamBanChay(@RequestParam(required = false, defaultValue = "week") String timeRange) {
         try {
-            System.out.println("🔥 GET SAN PHAM BAN CHAY");
+            System.out.println("🔥 GET SAN PHAM BAN CHAY - TimeRange: " + timeRange);
 
-            // Gọi service
-            List<SanPhamResponse> sanPhamBanChay = spService.getTopSanPhamBanChay();
+            // Gọi service với tham số timeRange
+            List<SanPhamResponse> sanPhamBanChay = spService.getTopSanPhamBanChay(timeRange);
 
             System.out.println("✅ Trả về " + sanPhamBanChay.size() + " sản phẩm bán chạy");
             return new ResponseObject<>(sanPhamBanChay);
