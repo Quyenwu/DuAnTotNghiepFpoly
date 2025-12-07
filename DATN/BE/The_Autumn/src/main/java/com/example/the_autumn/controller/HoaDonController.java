@@ -61,7 +61,7 @@ import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/hoa-don")
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174"})
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174","http://192.203.4.118:5173"})
 public class HoaDonController {
     @Autowired
     private HoaDonService hoaDonService;
@@ -258,6 +258,7 @@ public class HoaDonController {
                 }
 
 
+
                 for (int i = 0; i < columns.length; i++) {
                     sheet.autoSizeColumn(i);
                 }
@@ -278,7 +279,6 @@ public class HoaDonController {
             }
         }
     }
-
 
     @PostMapping("/print")
     public ResponseEntity<byte[]> printInvoices(@RequestBody List<Integer> invoiceIds) {
@@ -306,9 +306,6 @@ public class HoaDonController {
         }
     }
 
-
-
-
     @GetMapping("/detail/{id}")
     public ResponseEntity<?> getHoaDonDetail(@PathVariable Integer id) {
         try {
@@ -323,9 +320,6 @@ public class HoaDonController {
         }
     }
 
-
-
-
     @GetMapping("/{id}/can-edit")
     public ResponseEntity<?> canEdit(@PathVariable Integer id) {
         try {
@@ -339,10 +333,6 @@ public class HoaDonController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
-
-
-
-
 
 
     @PutMapping("/{id}")
@@ -566,7 +556,30 @@ public class HoaDonController {
     public ResponseEntity<?> getLichSuThanhToan(@PathVariable Integer id) {
         try {
             List<LichSuThanhToan> lichSuThanhToan = lichSuThanhToanRepository.findByHoaDonIdOrderByNgayThanhToanDesc(id);
-            return ResponseEntity.ok(lichSuThanhToan);
+
+            List<Map<String, Object>> response = lichSuThanhToan.stream()
+                    .map(ls -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("id", ls.getId());
+                        map.put("soTien", ls.getSoTien());
+                        map.put("ghiChu", ls.getGhiChu());
+                        map.put("ngayThanhToan", ls.getNgayThanhToan());
+                        map.put("trangThai", ls.getTrangThai());
+                        map.put("maGiaoDich", ls.getMaGiaoDich());
+
+                        if (ls.getPhuongThucThanhToan() != null) {
+                            Map<String, Object> ptMap = new HashMap<>();
+                            ptMap.put("id", ls.getPhuongThucThanhToan().getId());
+                            ptMap.put("ten", ls.getPhuongThucThanhToan().getTenPhuongThucThanhToan());
+                            ptMap.put("ma", ls.getPhuongThucThanhToan().getMaPhuongThucThanhToan());
+                            map.put("phuongThucThanhToan", ptMap);
+                        }
+
+                        return map;
+                    })
+                    .collect(Collectors.toList());
+
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Lỗi khi lấy lịch sử thanh toán: " + e.getMessage());

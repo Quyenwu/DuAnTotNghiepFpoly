@@ -19,6 +19,8 @@ import com.example.the_autumn.repository.LichSuHoaDonRepository;
 import com.example.the_autumn.repository.NhanVienRepository;
 import com.example.the_autumn.repository.PhuongThucThanhToanRepository;
 import com.example.the_autumn.repository.*;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Document;
 import com.itextpdf.text.Element;
@@ -30,6 +32,8 @@ import com.itextpdf.text.pdf.BaseFont;
 import com.itextpdf.text.pdf.PdfPCell;
 import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -62,6 +66,9 @@ public class HoaDonService {
 
     @Autowired
     private HoaDonRepository hoaDonRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Autowired
     private HoaDonChiTietRepository hoaDonChiTietRepository;
@@ -394,11 +401,117 @@ public class HoaDonService {
 
         HoaDonDetailResponse dto = new HoaDonDetailResponse();
 
+        // ==================== THÔNG TIN CƠ BẢN ====================
         dto.setId(hoaDon.getId());
         dto.setMaHoaDon(hoaDon.getMaHoaDon());
         dto.setNgayTao(hoaDon.getNgayTao());
         dto.setNgayThanhToan(hoaDon.getNgayThanhToan());
+        dto.setTenKhachHang(hoaDon.getKhachHang() != null ? hoaDon.getKhachHang().getHoTen() : null);
+        dto.setSdtKhachHang(hoaDon.getKhachHang() != null ? hoaDon.getKhachHang().getSdt() : null);
+        dto.setEmailKhachHang(hoaDon.getKhachHang() != null ? hoaDon.getKhachHang().getEmail() : null);
+        dto.setDiaChiKhachHang(hoaDon.getDiaChiKhachHang());
 
+        // ==================== THÔNG TIN PHỤ PHÍ ====================
+        dto.setPhiPhu(hoaDon.getPhiPhu() != null ? hoaDon.getPhiPhu() : BigDecimal.ZERO);
+        dto.setPhiPhuMoi(hoaDon.getPhiPhuMoi() != null ? hoaDon.getPhiPhuMoi() : BigDecimal.ZERO);
+
+        // ==================== THÔNG TIN SỐ TIỀN THANH TOÁN ====================
+        // Ưu tiên 1: Lấy từ trường soTienThanhToan của entity HoaDon
+        BigDecimal soTienThanhToan = BigDecimal.ZERO;
+        if (hoaDon.getSoTienThanhToan() != null) {
+            soTienThanhToan = hoaDon.getSoTienThanhToan();
+        }
+        // Ưu tiên 2: Lấy từ lịch sử thanh toán
+        else if (hoaDon.getLichSuThanhToans() != null && !hoaDon.getLichSuThanhToans().isEmpty()) {
+            soTienThanhToan = hoaDon.getLichSuThanhToans().stream()
+                    .filter(ls -> ls.getTrangThai() != null && ls.getTrangThai())
+                    .map(ls -> ls.getSoTien() != null ? ls.getSoTien() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+        }
+        // Mặc định: Nếu không có thông tin, coi như chưa thanh toán
+        dto.setSoTienThanhToan(soTienThanhToan);
+
+        // ==================== TÍNH TOÁN SỐ TIỀN CẦN THANH TOÁN ====================
+        BigDecimal tongTienSauGiam = hoaDon.getTongTienSauGiam() != null ?
+                hoaDon.getTongTienSauGiam() : BigDecimal.ZERO;
+
+        // Tính số tiền còn phải thanh toán
+        BigDecimal soTienCanThanhToan = tongTienSauGiam.subtract(soTienThanhToan);
+        if (soTienCanThanhToan.compareTo(BigDecimal.ZERO) < 0) {
+            soTienCanThanhToan = BigDecimal.ZERO;
+        }
+
+        dto.setSoTienCanThanhToan(soTienCanThanhToan);
+
+        // Xử lý phiPhuDetails từ ghiChuPhiPhu (nếu lưu dạng JSON)
+        if (hoaDon.getPhiPhuDetails() != null && !hoaDon.getPhiPhuDetails().trim().isEmpty()) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                List<HoaDonDetailResponse.PhiPhuDetailDTO> phiPhuDetails =
+                        mapper.readValue(hoaDon.getPhiPhuDetails(),
+                                new TypeReference<List<HoaDonDetailResponse.PhiPhuDetailDTO>>() {});
+                dto.setPhiPhuDetails(phiPhuDetails);
+            } catch (Exception e) {
+                System.err.println("Lỗi parse phiPhuDetails: " + e.getMessage());
+                dto.setPhiPhuDetails(new ArrayList<>());
+            }
+        } else {
+            dto.setPhiPhuDetails(new ArrayList<>());
+        }
+
+        // ==================== THÔNG TIN NHÂN VIÊN ====================
+        if (hoaDon.getNhanVien() != null) {
+            dto.setIdNhanVien(hoaDon.getNhanVien().getId());
+            dto.setMaNhanVien(hoaDon.getNhanVien().getMaNhanVien());
+            dto.setTenNhanVien(hoaDon.getNhanVien().getHoTen());
+            dto.setSdtNhanVien(hoaDon.getNhanVien().getSdt());
+        }
+
+        // ==================== THÔNG TIN PHIẾU GIẢM GIÁ ====================
+        if (hoaDon.getPhieuGiamGia() != null) {
+            PhieuGiamGia phieuGiamGia = hoaDon.getPhieuGiamGia();
+            dto.setMaGiamGia(phieuGiamGia.getMaGiamGia());
+            dto.setTenChuongTrinh(phieuGiamGia.getTenChuongTrinh());
+            dto.setGiaTriGiamGia(phieuGiamGia.getGiaTriGiamGia());
+            dto.setLoaiGiamGia(phieuGiamGia.getLoaiGiamGia());
+            dto.setMucGiaGiamToiDa(phieuGiamGia.getMucGiaGiamToiDa());
+            dto.setGiaTriDonHangToiThieu(phieuGiamGia.getGiaTriDonHangToiThieu());
+            dto.setSoLuongDung(phieuGiamGia.getSoLuongDung());
+            dto.setNgayBatDau(phieuGiamGia.getNgayBatDau());
+            dto.setNgayKetThuc(phieuGiamGia.getNgayKetThuc());
+            dto.setTrangThaiPhieuGiamGia(phieuGiamGia.getTrangThai());
+        }
+
+        // ==================== THÔNG TIN LỊCH SỬ THANH TOÁN ====================
+        if (hoaDon.getLichSuThanhToans() != null && !hoaDon.getLichSuThanhToans().isEmpty()) {
+            LichSuThanhToan lichSu = hoaDon.getLichSuThanhToans().get(0);
+            dto.setMaGiaoDich(lichSu.getMaGiaoDich());
+            dto.setSoTien(lichSu.getSoTien());
+            dto.setGhiChuThanhToan(lichSu.getGhiChu());
+        }
+
+        // ==================== THÔNG TIN HÌNH THỨC THANH TOÁN ====================
+        if (hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()) {
+            HinhThucThanhToan hinhThuc = hoaDon.getHinhThucThanhToans().get(0);
+            if (hinhThuc.getPhuongThucThanhToan() != null) {
+                dto.setIdPhuongThucThanhToan(hinhThuc.getPhuongThucThanhToan().getId());
+                dto.setHinhThucThanhToan(hinhThuc.getPhuongThucThanhToan().getTenPhuongThucThanhToan());
+            } else {
+                dto.setHinhThucThanhToan("Không xác định");
+            }
+        } else {
+            dto.setHinhThucThanhToan("Chưa thanh toán");
+        }
+
+        // ==================== THÔNG TIN HÓA ĐƠN ====================
+        dto.setLoaiHoaDon(hoaDon.getLoaiHoaDon());
+        dto.setPhiVanChuyen(hoaDon.getPhiVanChuyen());
+        dto.setTongTien(hoaDon.getTongTien());
+        dto.setTongTienSauGiam(tongTienSauGiam);
+        dto.setTrangThai(hoaDon.getTrangThai());
+        dto.setGhiChu(hoaDon.getGhiChu());
+
+        // ==================== THÔNG TIN KHÁCH HÀNG CHI TIẾT ====================
         if (hoaDon.getKhachHang() != null) {
             KhachHangResponse kh = new KhachHangResponse(hoaDon.getKhachHang());
             dto.setKhachHang(kh);
@@ -410,71 +523,12 @@ public class HoaDonService {
             dto.setKhachHang(kh);
         }
 
-        if (hoaDon.getNhanVien() != null) {
-            dto.setMaNhanVien(hoaDon.getNhanVien().getMaNhanVien());
-            dto.setTenNhanVien(hoaDon.getNhanVien().getHoTen());
-            dto.setSdtNhanVien(hoaDon.getNhanVien().getSdt());
-        }
-
-        if (hoaDon.getPhieuGiamGia() != null) {
-            PhieuGiamGia phieuGiamGia = hoaDon.getPhieuGiamGia();
-            dto.setMaGiamGia(phieuGiamGia.getMaGiamGia());
-            dto.setTenChuongTrinh(phieuGiamGia.getTenChuongTrinh());
-
-            dto.setGiaTriGiamGia(phieuGiamGia.getGiaTriGiamGia());
-            dto.setMucGiaGiamToiDa(phieuGiamGia.getMucGiaGiamToiDa());
-            dto.setGiaTriDonHangToiThieu(phieuGiamGia.getGiaTriDonHangToiThieu());
-
-            dto.setLoaiGiamGia(phieuGiamGia.getLoaiGiamGia());
-            dto.setSoLuongDung(phieuGiamGia.getSoLuongDung());
-            dto.setNgayBatDau(phieuGiamGia.getNgayBatDau());
-            dto.setNgayKetThuc(phieuGiamGia.getNgayKetThuc());
-            dto.setTrangThaiPhieuGiamGia(phieuGiamGia.getTrangThai());
-        }
-
-        if (hoaDon.getLichSuThanhToans() != null && !hoaDon.getLichSuThanhToans().isEmpty()) {
-            LichSuThanhToan lichSu = hoaDon.getLichSuThanhToans().get(0);
-            dto.setMaGiaoDich(lichSu.getMaGiaoDich());
-            dto.setSoTien(lichSu.getSoTien());
-            dto.setGhiChuThanhToan(lichSu.getGhiChu());
-        }
-
-        if (hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()) {
-            HinhThucThanhToan hinhThuc = hoaDon.getHinhThucThanhToans().get(0);
-            if (hinhThuc.getPhuongThucThanhToan() != null) {
-                dto.setHinhThucThanhToan(hinhThuc.getPhuongThucThanhToan().getTenPhuongThucThanhToan());
-            } else {
-                dto.setHinhThucThanhToan("Không xác định");
-            }
-        } else {
-            dto.setHinhThucThanhToan("Chưa thanh toán");
-        }
-
-        if (hoaDon.getNhanVien() != null) {
-            dto.setIdNhanVien(hoaDon.getNhanVien().getId());
-            dto.setTenNhanVien(hoaDon.getNhanVien().getHoTen());
-            dto.setSdtNhanVien(hoaDon.getNhanVien().getSdt());
-        }
-
-        if (hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()) {
-            HinhThucThanhToan hinhThuc = hoaDon.getHinhThucThanhToans().get(0);
-            if (hinhThuc.getPhuongThucThanhToan() != null) {
-                dto.setIdPhuongThucThanhToan(hinhThuc.getPhuongThucThanhToan().getId());
-                dto.setHinhThucThanhToan(hinhThuc.getPhuongThucThanhToan().getTenPhuongThucThanhToan());
-            }
-        }
-
-        dto.setLoaiHoaDon(hoaDon.getLoaiHoaDon());
-        dto.setPhiVanChuyen(hoaDon.getPhiVanChuyen());
-        dto.setTongTien(hoaDon.getTongTien());
-        dto.setTongTienSauGiam(hoaDon.getTongTienSauGiam());
-        dto.setTrangThai(hoaDon.getTrangThai());
-        dto.setGhiChu(hoaDon.getGhiChu());
-
+        // ==================== CHI TIẾT SẢN PHẨM ====================
         List<HoaDonChiTiet> chiTietList = hoaDonChiTietRepository.findByHoaDon_Id(id);
         List<HoaDonDetailResponse.ChiTietSanPhamResponse> chiTietDTOs = chiTietList.stream()
                 .map(ct -> {
                     HoaDonDetailResponse.ChiTietSanPhamResponse ctDTO = new HoaDonDetailResponse.ChiTietSanPhamResponse();
+                    ctDTO.setId(ct.getId());
                     ctDTO.setIdChiTietSanPham(ct.getChiTietSanPham().getId());
                     ctDTO.setSoLuong(ct.getSoLuong());
                     ctDTO.setThanhTien(ct.getThanhTien());
@@ -483,9 +537,7 @@ public class HoaDonService {
                     if (ct.getChiTietSanPham() != null) {
                         ChiTietSanPham ctsp = ct.getChiTietSanPham();
                         ctDTO.setMaVach(ctsp.getMaVach());
-
                         ctDTO.setGiaBan(ctsp.getGiaBan());
-
                         ctDTO.setGiaSauGiam(ct.getGiaBan());
 
                         if (ctsp.getSanPham() != null) {
@@ -525,369 +577,347 @@ public class HoaDonService {
     }
 
 
+    // Trong HoaDonService.java - sửa phần cập nhật sản phẩm
     @Transactional
     public UpdateHoaDonResponse updateHoaDon(Integer id, UpdateHoaDonRequest request) {
         HoaDon hoaDon = hoaDonRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn ID " + id));
 
-        // ==================== XỬ LÝ KHI HỦY ĐƠN HÀNG ====================
-        boolean isCancellingOrder = request.getTrangThai() != null && request.getTrangThai().equals(4)
-                && !hoaDon.getTrangThai().equals(4);
-
-        if (isCancellingOrder) {
-            handleOrderCancellation(hoaDon, false); // false = KHÔNG hoàn tiền tự động
-        }
-
-        // ==================== CẬP NHẬT LOẠI HÓA ĐƠN ====================
-        if (request.getLoaiHoaDon() != null && !request.getLoaiHoaDon().equals(hoaDon.getLoaiHoaDon())) {
-            Boolean oldLoai = hoaDon.getLoaiHoaDon();
-            hoaDon.setLoaiHoaDon(request.getLoaiHoaDon());
-            luuLichSu(hoaDon, "Cập nhật loại hóa đơn",
-                    String.format("Loại hóa đơn: '%s' → '%s'",
-                            oldLoai != null && oldLoai ? "Tại quầy" : "Online",
-                            request.getLoaiHoaDon() ? "Tại quầy" : "Online"), null);
-        }
-
-        // ==================== CẬP NHẬT THÔNG TIN KHÁCH HÀNG ====================
-        if (hoaDon.getKhachHang() != null) {
-            KhachHang kh = hoaDon.getKhachHang();
-            StringBuilder logKH = new StringBuilder();
-            boolean coThayDoi = false;
-
-            if (request.getHoTenKhachHang() != null && !request.getHoTenKhachHang().equals(kh.getHoTen())) {
-                logKH.append(String.format("Tên: '%s' → '%s'. ", kh.getHoTen(), request.getHoTenKhachHang()));
-                kh.setHoTen(request.getHoTenKhachHang());
-                coThayDoi = true;
-            }
-            if (request.getSdtKhachHang() != null && !request.getSdtKhachHang().equals(kh.getSdt())) {
-                logKH.append(String.format("SĐT: '%s' → '%s'. ", kh.getSdt(), request.getSdtKhachHang()));
-                kh.setSdt(request.getSdtKhachHang());
-                coThayDoi = true;
-            }
-            if (request.getEmailKhachHang() != null && !request.getEmailKhachHang().equals(kh.getEmail())) {
-                logKH.append(String.format("Email: '%s' → '%s'. ", kh.getEmail() != null ? kh.getEmail() : "N/A", request.getEmailKhachHang()));
-                kh.setEmail(request.getEmailKhachHang());
-                coThayDoi = true;
-            }
-            if (coThayDoi) {
-                khachHangRepository.save(kh);
-                luuLichSu(hoaDon, "Cập nhật thông tin khách hàng", logKH.toString().trim(), null);
-            }
-        }
-
-        // ==================== CẬP NHẬT ĐỊA CHỈ GIAO HÀNG ====================
-        if (hoaDon.getKhachHang() != null) {
-            KhachHang kh = hoaDon.getKhachHang();
-
-            Integer idDiaChiChon = request.getIdDiaChi();
-            String diaChiCuTheMoi = request.getDiaChiCuThe() != null ? request.getDiaChiCuThe().trim() : null;
-            Integer idTinhMoi = request.getThanhPho();
-            Integer idQuanMoi = request.getQuan();
-
-            boolean coThayDoiDiaChi = (idDiaChiChon != null) ||
-                    (diaChiCuTheMoi != null && !diaChiCuTheMoi.isEmpty()) ||
-                    idTinhMoi != null || idQuanMoi != null;
-
-            if (coThayDoiDiaChi) {
-                StringBuilder fullAddress = new StringBuilder();
-                DiaChi diaChiSeLamMacDinh = null;
-                Integer idDiaChiMacDinhMoi = null;
-
-                // CASE 1: Người dùng CHỌN 1 địa chỉ có sẵn trong danh sách
-                if (idDiaChiChon != null) {
-                    diaChiSeLamMacDinh = diaChiRepository.findById(idDiaChiChon)
-                            .orElseThrow(() -> new RuntimeException("Không tìm thấy địa chỉ ID: " + idDiaChiChon));
-
-                    if (!diaChiSeLamMacDinh.getKhachHang().getId().equals(kh.getId())) {
-                        throw new RuntimeException("Không được chọn địa chỉ của khách hàng khác!");
-                    }
-
-                    idDiaChiMacDinhMoi = idDiaChiChon;
-
-                    fullAddress.append(diaChiSeLamMacDinh.getDiaChiCuThe());
-                    if (diaChiSeLamMacDinh.getQuanHuyen() != null)
-                        fullAddress.append(", ").append(diaChiSeLamMacDinh.getQuanHuyen().getTenQuan());
-                    if (diaChiSeLamMacDinh.getTinhThanh() != null)
-                        fullAddress.append(", ").append(diaChiSeLamMacDinh.getTinhThanh().getTenTinh());
-
-                    diaChiSeLamMacDinh.setDiaChiCuThe(diaChiCuTheMoi != null ? diaChiCuTheMoi : diaChiSeLamMacDinh.getDiaChiCuThe());
-                    if (idTinhMoi != null) diaChiSeLamMacDinh.setTinhThanh(tinhThanhRepository.getById(idTinhMoi));
-                    if (idQuanMoi != null) diaChiSeLamMacDinh.setQuanHuyen(quanHuyenRepository.getById(idQuanMoi));
-                    diaChiRepository.save(diaChiSeLamMacDinh);
-
-                } else {
-                    // CASE 2: Người dùng NHẬP ĐỊA CHỈ MỚI hoàn toàn
-                    if (diaChiCuTheMoi != null && !diaChiCuTheMoi.isEmpty()) fullAddress.append(diaChiCuTheMoi);
-                    if (idQuanMoi != null) {
-                        QuanHuyen quan = quanHuyenRepository.findById(idQuanMoi)
-                                .orElseThrow(() -> new RuntimeException("Quận/huyện không tồn tại"));
-                        if (fullAddress.length() > 0) fullAddress.append(", ");
-                        fullAddress.append(quan.getTenQuan());
-                    }
-                    if (idTinhMoi != null) {
-                        TinhThanh tinh = tinhThanhRepository.findById(idTinhMoi)
-                                .orElseThrow(() -> new RuntimeException("Tỉnh/thành không tồn tại"));
-                        if (fullAddress.length() > 0) fullAddress.append(", ");
-                        fullAddress.append(tinh.getTenTinh());
-                    }
-
-                    diaChiSeLamMacDinh = new DiaChi();
-                    diaChiSeLamMacDinh.setKhachHang(kh);
-                    diaChiSeLamMacDinh.setDiaChiCuThe(diaChiCuTheMoi);
-                    if (idTinhMoi != null) diaChiSeLamMacDinh.setTinhThanh(tinhThanhRepository.getById(idTinhMoi));
-                    if (idQuanMoi != null) diaChiSeLamMacDinh.setQuanHuyen(quanHuyenRepository.getById(idQuanMoi));
-                    diaChiSeLamMacDinh.setTenDiaChi("Địa chỉ từ hóa đơn #" + hoaDon.getMaHoaDon());
-                    diaChiSeLamMacDinh.setTrangThai(true);
-
-                    diaChiSeLamMacDinh = diaChiRepository.save(diaChiSeLamMacDinh);
-                    idDiaChiMacDinhMoi = diaChiSeLamMacDinh.getId();
-                }
-
-                String newAddress = fullAddress.toString().trim();
-                String oldAddress = hoaDon.getDiaChiKhachHang();
-
-                if (!Objects.equals(newAddress, oldAddress)) {
-                    hoaDon.setDiaChiKhachHang(newAddress);
-
-                    diaChiRepository.disableAllExcept(kh.getId(), idDiaChiMacDinhMoi);
-
-                    diaChiSeLamMacDinh.setTrangThai(true);
-                    diaChiRepository.save(diaChiSeLamMacDinh);
-
-                    luuLichSu(hoaDon, "Cập nhật địa chỉ giao hàng",
-                            "Địa chỉ: '" + (oldAddress != null ? oldAddress : "(Trống)") + "' → '" + newAddress + "'", null);
-                }
-            }
-        }
-
-        // ==================== CẬP NHẬT GHI CHÚ ====================
-        if (request.getGhiChu() != null && !request.getGhiChu().equals(hoaDon.getGhiChu())) {
-            String old = hoaDon.getGhiChu();
-            hoaDon.setGhiChu(request.getGhiChu());
-            luuLichSu(hoaDon, "Cập nhật ghi chú",
-                    String.format("Ghi chú: '%s' → '%s'", old != null ? old : "(Trống)", request.getGhiChu()), null);
-        }
-
-        // ==================== CẬP NHẬT TRẠNG THÁI ====================
+        // Biến theo dõi thay đổi
+        Integer oldStatus = hoaDon.getTrangThai();
+        Integer newStatus = request.getTrangThai();
+        boolean hasAddressChange = false;
+        boolean hasProductChanges = false;
         boolean hasStatusChange = false;
-        if (request.getTrangThai() != null && !request.getTrangThai().equals(hoaDon.getTrangThai())) {
-            Integer oldStatus = hoaDon.getTrangThai();
-            Integer newStatus = request.getTrangThai();
 
-            hoaDon.setTrangThai(newStatus);
+        // ==================== XỬ LÝ TRẠNG THÁI VÀ TỒN KHO ====================
+        if (newStatus != null && !newStatus.equals(oldStatus)) {
+            hasStatusChange = true;
 
-            // CHỈ TRỪ KHO KHI CHUYỂN TỪ "Chờ xác nhận (0) SANG Chờ giao hàng (1) HOẶC CAO HƠN
-            boolean isConfirmingOrder = (oldStatus == 0) && (newStatus == 1 || newStatus == 2 || newStatus == 3);
-
-            if (isConfirmingOrder) {
-                System.out.println("Xác nhận đơn hàng - Bắt đầu trừ tồn kho cho hóa đơn #" + hoaDon.getMaHoaDon());
-
-                List<HoaDonChiTiet> chiTietList = hoaDonChiTietRepository.findByHoaDonId(hoaDon.getId());
-
-                for (HoaDonChiTiet ct : chiTietList) {
-                    ChiTietSanPham ctsp = ct.getChiTietSanPham();
-                    int soLuongCanTru = ct.getSoLuong();
-
-                    if (ctsp.getSoLuongTon() < soLuongCanTru) {
-                        throw new RuntimeException("Không đủ tồn kho để xác nhận đơn hàng cho sản phẩm: " +
-                                ctsp.getSanPham().getTenSanPham() + " (Còn: " + ctsp.getSoLuongTon() + ")");
-                    }
-
-                    ctsp.setSoLuongTon(ctsp.getSoLuongTon() - soLuongCanTru);
-                    chiTietSanPhamRepository.save(ctsp);
-
-                    System.out.println("Đã trừ tồn kho: " + ctsp.getSanPham().getTenSanPham() +
-                            " - SL: " + soLuongCanTru + " - Tồn mới: " + ctsp.getSoLuongTon());
-                }
-
-                luuLichSu(hoaDon, "Xác nhận đơn hàng - Trừ tồn kho",
-                        "Đã trừ tồn kho cho tất cả sản phẩm trong đơn hàng khi xác nhận giao hàng", null);
+            // Trừ tồn kho khi chuyển từ Chờ xác nhận (0) sang Chờ giao hàng (1)
+            if (oldStatus == 0 && newStatus == 1) {
+                subtractInventory(hoaDon);
             }
 
-            luuLichSu(hoaDon, "Cập nhật trạng thái đơn hàng",
-                    String.format("Trạng thái: '%s' → '%s'",
-                            getTrangThaiText(oldStatus),
-                            getTrangThaiText(newStatus)), null);
-
-            hasStatusChange = true;
+            // Trả tồn kho khi hủy đơn hàng (chuyển sang trạng thái 4)
+            if (newStatus == 4 ) {
+                handleOrderCancellation(hoaDon, false);
+            }
         }
 
-        // ==================== CẬP NHẬT NHÂN VIÊN ====================
+        // ==================== CẬP NHẬT THÔNG TIN CƠ BẢN ====================
+        if (request.getGhiChu() != null) {
+            hoaDon.setGhiChu(request.getGhiChu());
+        }
+
+        if (request.getTrangThai() != null) {
+            hoaDon.setTrangThai(request.getTrangThai());
+        }
+
+        if (request.getLoaiHoaDon() != null) {
+            hoaDon.setLoaiHoaDon(request.getLoaiHoaDon());
+        }
+
+        // Cập nhật thông tin tiền
+        if (request.getPhiVanChuyen() != null) {
+            hoaDon.setPhiVanChuyen(request.getPhiVanChuyen());
+        }
+
+        if (request.getPhiPhu() != null) {
+            hoaDon.setPhiPhu(request.getPhiPhu());
+        }
+
+        if (request.getPhiPhuMoi() != null) {
+            hoaDon.setPhiPhuMoi(request.getPhiPhuMoi());
+        }
+
+        if (request.getPhiPhuDetails() != null && !request.getPhiPhuDetails().isEmpty()) {
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                String phiPhuDetailsJson = mapper.writeValueAsString(request.getPhiPhuDetails());
+                hoaDon.setPhiPhuDetails(phiPhuDetailsJson);
+            } catch (Exception e) {
+                System.err.println("Lỗi chuyển phiPhuDetails thành JSON: " + e.getMessage());
+            }
+        }
+
+        // Cập nhật thông tin khách hàng
+        if (request.getIdKhachHang() != null) {
+            KhachHang khachHang = khachHangRepository.findById(request.getIdKhachHang())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng ID: " + request.getIdKhachHang()));
+            hoaDon.setKhachHang(khachHang);
+        }
+
+        // ==================== CẬP NHẬT CHI TIẾT SẢN PHẨM ====================
+        if (request.getChiTietSanPhams() != null && !request.getChiTietSanPhams().isEmpty()) {
+            hasProductChanges = true;
+
+            // Lấy danh sách sản phẩm cũ để so sánh
+            List<HoaDonChiTiet> existingDetails = hoaDonChiTietRepository.findByHoaDonId(hoaDon.getId());
+            Map<Integer, Integer> oldProductQuantities = new HashMap<>();
+
+            for (HoaDonChiTiet oldDetail : existingDetails) {
+                oldProductQuantities.put(oldDetail.getChiTietSanPham().getId(), oldDetail.getSoLuong());
+            }
+
+            // Xóa tất cả chi tiết cũ
+            List<Integer> existingDetailIds = existingDetails.stream()
+                    .map(HoaDonChiTiet::getId)
+                    .collect(Collectors.toList());
+
+            if (!existingDetailIds.isEmpty()) {
+                hoaDonChiTietRepository.deleteAllById(existingDetailIds);
+            }
+
+            // Thêm chi tiết mới
+            List<HoaDonChiTiet> newDetails = new ArrayList<>();
+            BigDecimal tongTienSanPham = BigDecimal.ZERO;
+
+            for (UpdateHoaDonRequest.ChiTietSanPhamRequest ctRequest : request.getChiTietSanPhams()) {
+                ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(ctRequest.getIdChiTietSanPham())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết sản phẩm ID: " + ctRequest.getIdChiTietSanPham()));
+
+                HoaDonChiTiet hdct = new HoaDonChiTiet();
+                hdct.setHoaDon(hoaDon);
+                hdct.setChiTietSanPham(ctsp);
+                hdct.setSoLuong(ctRequest.getSoLuong());
+
+                // Sử dụng giá từ request hoặc từ sản phẩm (không dùng giaSauGiam)
+                BigDecimal giaBan = ctRequest.getGiaBan() != null ? ctRequest.getGiaBan() : ctsp.getGiaBan();
+
+                hdct.setGiaBan(giaBan);
+
+                // Tính thành tiền = giá bán * số lượng
+                BigDecimal thanhTien = giaBan.multiply(BigDecimal.valueOf(ctRequest.getSoLuong()));
+                hdct.setThanhTien(thanhTien);
+                hdct.setTrangThai(true);
+
+                if (ctRequest.getGhiChu() != null) {
+                    hdct.setGhiChu(ctRequest.getGhiChu());
+                }
+
+                newDetails.add(hdct);
+
+                // Cộng dồn tổng tiền sản phẩm
+                tongTienSanPham = tongTienSanPham.add(thanhTien);
+
+                // Nếu đang trong trạng thái đã xác nhận (>= 1), cần điều chỉnh tồn kho
+                if (hoaDon.getTrangThai() != null && hoaDon.getTrangThai() >= 1) {
+                    adjustInventoryForProductChange(ctsp, ctRequest.getSoLuong(),
+                            oldProductQuantities.getOrDefault(ctsp.getId(), 0));
+                }
+            }
+
+            // Lưu tất cả chi tiết mới
+            hoaDonChiTietRepository.saveAll(newDetails);
+
+            // Cập nhật lại tổng tiền sản phẩm vào hóa đơn
+            hoaDon.setTongTien(tongTienSanPham);
+
+            // Ghi log
+            luuLichSu(hoaDon, "Cập nhật danh sách sản phẩm",
+                    String.format("Đã cập nhật %d sản phẩm trong hóa đơn", newDetails.size()), null);
+        }
+
+        // ==================== CẬP NHẬT THÔNG TIN KHÁC ====================
         if (request.getIdNhanVien() != null) {
             NhanVien nv = nhanVienRepository.findById(request.getIdNhanVien())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy nhân viên ID: " + request.getIdNhanVien()));
-
-            if (hoaDon.getNhanVien() == null || !hoaDon.getNhanVien().getId().equals(nv.getId())) {
-                String old = hoaDon.getNhanVien() != null ? hoaDon.getNhanVien().getHoTen() : "N/A";
-                hoaDon.setNhanVien(nv);
-                luuLichSu(hoaDon, "Cập nhật nhân viên", String.format("Nhân viên: '%s' → '%s'", old, nv.getHoTen()), null);
-            }
+            hoaDon.setNhanVien(nv);
         }
 
-        // ==================== CẬP NHẬT PHƯƠNG THỨC THANH TOÁN ====================
         if (request.getIdPhuongThucThanhToan() != null) {
             PhuongThucThanhToan pttt = phuongThucThanhToanRepository.findById(request.getIdPhuongThucThanhToan())
-                    .orElseThrow(() -> new RuntimeException("Không tìm thấy phương thức thanh toán"));
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy phương thức thanh toán ID: " + request.getIdPhuongThucThanhToan()));
 
-            String oldPTTT = hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()
-                    ? hoaDon.getHinhThucThanhToans().get(0).getPhuongThucThanhToan().getTenPhuongThucThanhToan()
-                    : "Chưa có";
+            // Cập nhật hình thức thanh toán
+            HinhThucThanhToan hinhThuc = hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()
+                    ? hoaDon.getHinhThucThanhToans().get(0)
+                    : new HinhThucThanhToan();
 
-            boolean needUpdate = hoaDon.getHinhThucThanhToans() == null ||
-                    hoaDon.getHinhThucThanhToans().isEmpty() ||
-                    !hoaDon.getHinhThucThanhToans().get(0).getPhuongThucThanhToan().getId().equals(pttt.getId());
-
-            if (needUpdate) {
-                if (hoaDon.getHinhThucThanhToans() != null) hoaDon.getHinhThucThanhToans().clear();
-
-                HinhThucThanhToan ht = new HinhThucThanhToan();
-                ht.setHoaDon(hoaDon);
-                ht.setPhuongThucThanhToan(pttt);
-                ht.setTrangThai(true);
-                if (hoaDon.getHinhThucThanhToans() == null) hoaDon.setHinhThucThanhToans(new ArrayList<>());
-                hoaDon.getHinhThucThanhToans().add(ht);
-
-                luuLichSu(hoaDon, "Cập nhật phương thức thanh toán",
-                        String.format("Phương thức thanh toán: '%s' → '%s'", oldPTTT, pttt.getTenPhuongThucThanhToan()), null);
-            }
+            hinhThuc.setHoaDon(hoaDon);
+            hinhThuc.setPhuongThucThanhToan(pttt);
+            hinhThuc.setTrangThai(true);
+            hinhThucThanhToanRepository.save(hinhThuc);
         }
 
-        hoaDon.setNgaySua(new Date());
-
-        // ==================== XỬ LÝ CẬP NHẬT SẢN PHẨM ====================
-        boolean hasProductChanges = false;
-        if (request.getChiTietSanPhams() != null && !request.getChiTietSanPhams().isEmpty()) {
-            System.out.println("🔄 Bắt đầu xử lý cập nhật sản phẩm...");
-
-            List<HoaDonChiTiet> chiTietHienTai = hoaDonChiTietRepository.findByHoaDonId(id);
-            System.out.println("📦 Số sản phẩm hiện tại: " + chiTietHienTai.size());
-
-            Map<Integer, HoaDonChiTiet> chiTietMap = chiTietHienTai.stream()
-                    .collect(Collectors.toMap(
-                            ct -> ct.getChiTietSanPham().getId(),
-                            Function.identity()
-                    ));
-
-            for (UpdateHoaDonRequest.ChiTietSanPhamRequest spReq : request.getChiTietSanPhams()) {
-                if (spReq.getIdChiTietSanPham() == null) {
-                    throw new RuntimeException("idChiTietSanPham không được null");
-                }
-
-                ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(spReq.getIdChiTietSanPham())
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy ChiTietSanPham ID: " + spReq.getIdChiTietSanPham()));
-
-                HoaDonChiTiet existingCT = chiTietMap.get(spReq.getIdChiTietSanPham());
-
-                if (existingCT != null) {
-                    int soLuongCu = existingCT.getSoLuong();
-                    int soLuongMoi = spReq.getSoLuong();
-                    int chechLech = soLuongMoi - soLuongCu;
-
-                    if (chechLech != 0) {
-                        if (chechLech > 0) {
-                            if (ctsp.getSoLuongTon() < chechLech) {
-                                throw new RuntimeException("Không đủ tồn kho cho sản phẩm: " + ctsp.getSanPham().getTenSanPham());
-                            }
-                            ctsp.setSoLuongTon(ctsp.getSoLuongTon() - chechLech);
-                        } else {
-                            ctsp.setSoLuongTon(ctsp.getSoLuongTon() + Math.abs(chechLech));
-                        }
-                        chiTietSanPhamRepository.save(ctsp);
-
-                        existingCT.setSoLuong(soLuongMoi);
-                        existingCT.setGiaBan(spReq.getGiaBan());
-                        existingCT.setThanhTien(spReq.getGiaBan().multiply(BigDecimal.valueOf(soLuongMoi)));
-                        existingCT.setGhiChu(spReq.getGhiChu());
-                        hoaDonChiTietRepository.save(existingCT);
-
-                        luuLichSu(hoaDon, "Cập nhật sản phẩm",
-                                String.format("Sản phẩm: %s - Số lượng: %d → %d",
-                                        ctsp.getSanPham().getTenSanPham(), soLuongCu, soLuongMoi), null);
-                        hasProductChanges = true;
-                    }
-                } else {
-                    if (ctsp.getSoLuongTon() < spReq.getSoLuong()) {
-                        throw new RuntimeException("Không đủ tồn kho cho sản phẩm: " + ctsp.getSanPham().getTenSanPham());
-                    }
-
-                    System.out.println("➕ Thêm mới sản phẩm: " + ctsp.getSanPham().getTenSanPham());
-                    ctsp.setSoLuongTon(ctsp.getSoLuongTon() - spReq.getSoLuong());
-                    chiTietSanPhamRepository.save(ctsp);
-
-                    HoaDonChiTiet newCT = new HoaDonChiTiet();
-                    newCT.setHoaDon(hoaDon);
-                    newCT.setChiTietSanPham(ctsp);
-                    newCT.setSoLuong(spReq.getSoLuong());
-                    newCT.setGiaBan(spReq.getGiaBan());
-                    newCT.setThanhTien(spReq.getGiaBan().multiply(BigDecimal.valueOf(spReq.getSoLuong())));
-                    newCT.setGhiChu(spReq.getGhiChu());
-                    hoaDonChiTietRepository.save(newCT);
-
-                    luuLichSu(hoaDon, "Thêm sản phẩm vào hóa đơn",
-                            String.format("Sản phẩm: %s - Số lượng: %d",
-                                    ctsp.getSanPham().getTenSanPham(), spReq.getSoLuong()), null);
-                    hasProductChanges = true;
-                }
-            }
-
-            Set<Integer> requestedProductIds = request.getChiTietSanPhams().stream()
-                    .map(UpdateHoaDonRequest.ChiTietSanPhamRequest::getIdChiTietSanPham)
-                    .collect(Collectors.toSet());
-
-            for (HoaDonChiTiet existingCT : chiTietHienTai) {
-                Integer existingProductId = existingCT.getChiTietSanPham().getId();
-                if (!requestedProductIds.contains(existingProductId)) {
-                    ChiTietSanPham ctsp = existingCT.getChiTietSanPham();
-
-                    ctsp.setSoLuongTon(ctsp.getSoLuongTon() + existingCT.getSoLuong());
-                    chiTietSanPhamRepository.save(ctsp);
-
-                    hoaDonChiTietRepository.delete(existingCT);
-
-                    luuLichSu(hoaDon, "Xóa sản phẩm khỏi hóa đơn",
-                            String.format("Sản phẩm: %s - Số lượng: %d",
-                                    ctsp.getSanPham().getTenSanPham(), existingCT.getSoLuong()), null);
-                    hasProductChanges = true;
-                }
-            }
-
-            System.out.println("✅ Hoàn thành cập nhật sản phẩm");
+        if (request.getIdPhieuGiamGia() != null) {
+            PhieuGiamGia pgg = phieuGiamGiaRepository.findById(request.getIdPhieuGiamGia())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy phiếu giảm giá ID: " + request.getIdPhieuGiamGia()));
+            hoaDon.setPhieuGiamGia(pgg);
         }
 
-        // ==================== TỰ ĐỘNG CẬP NHẬT GIẢM GIÁ ====================
-        if (hasProductChanges) {
-            autoUpdateGiamGiaWhenProductsChange(hoaDon, hasProductChanges);
+        // ==================== TÍNH TOÁN LẠI TỔNG TIỀN ====================
+        // Tính tổng tiền sản phẩm từ chi tiết (nếu có)
+        List<HoaDonChiTiet> currentDetails = hoaDonChiTietRepository.findByHoaDonId(hoaDon.getId());
+        BigDecimal tongTienSanPhamMoi = BigDecimal.ZERO;
+
+        if (!currentDetails.isEmpty()) {
+            tongTienSanPhamMoi = currentDetails.stream()
+                    .map(ct -> ct.getThanhTien() != null ? ct.getThanhTien() : BigDecimal.ZERO)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
         }
 
-        // ==================== TÍNH TOÁN TỔNG TIỀN ====================
-        BigDecimal tongTienSauGiam = calculateTongTienSauGiamGia(hoaDon);
+        // Cập nhật tổng tiền sản phẩm
+        hoaDon.setTongTien(tongTienSanPhamMoi);
 
-        if (hasProductChanges || !tongTienSauGiam.equals(hoaDon.getTongTienSauGiam() != null ? hoaDon.getTongTienSauGiam() : BigDecimal.ZERO)) {
-            BigDecimal oldTongTien = hoaDon.getTongTienSauGiam() != null ? hoaDon.getTongTienSauGiam() : BigDecimal.ZERO;
-            hoaDon.setTongTienSauGiam(tongTienSauGiam);
+        // Tính tổng tiền trước giảm
+        BigDecimal phiVanChuyen = hoaDon.getPhiVanChuyen() != null ? hoaDon.getPhiVanChuyen() : BigDecimal.ZERO;
+        BigDecimal phiPhu = hoaDon.getPhiPhu() != null ? hoaDon.getPhiPhu() : BigDecimal.ZERO;
+        BigDecimal tongTienTruocGiam = tongTienSanPhamMoi.add(phiVanChuyen).add(phiPhu);
 
-            luuLichSu(hoaDon, "Cập nhật tổng tiền hóa đơn",
-                    String.format("Tổng tiền sau giảm giá: %s → %s",
-                            formatMoney(oldTongTien),
-                            formatMoney(tongTienSauGiam)), null);
-            System.out.println("💰 Đã cập nhật tổng tiền sau giảm giá");
+        // Tính tiền giảm giá
+        BigDecimal tienGiamGia = calculateTienGiamGia(hoaDon, tongTienTruocGiam);
+
+        // Tính tổng tiền sau giảm
+        BigDecimal tongTienSauGiam = tongTienTruocGiam.subtract(tienGiamGia);
+        if (tongTienSauGiam.compareTo(BigDecimal.ZERO) < 0) {
+            tongTienSauGiam = BigDecimal.ZERO;
         }
+
+        // Cập nhật tổng tiền sau giảm
+        hoaDon.setTongTienSauGiam(tongTienSauGiam);
+
+        // ==================== TÍNH TOÁN SỐ TIỀN ĐÃ THANH TOÁN VÀ CÒN LẠI ====================
+        // Lấy số tiền đã thanh toán từ request (nếu có)
+        BigDecimal soTienThanhToan = request.getSoTienThanhToan() != null ?
+                request.getSoTienThanhToan() : BigDecimal.ZERO;
+
+        // Tính số tiền còn phải thanh toán
+        BigDecimal soTienCanThanhToan = tongTienSauGiam.subtract(soTienThanhToan);
+        if (soTienCanThanhToan.compareTo(BigDecimal.ZERO) < 0) {
+            soTienCanThanhToan = BigDecimal.ZERO;
+        }
+
+        // Ghi log về thay đổi tiền
+        luuLichSu(hoaDon, "Cập nhật tổng tiền",
+                String.format("Tổng tiền sản phẩm: %s, Phí vận chuyển: %s, Phụ phí: %s, Giảm giá: %s, Tổng cuối: %s, Đã thanh toán: %s, Còn lại: %s",
+                        formatMoney(tongTienSanPhamMoi),
+                        formatMoney(phiVanChuyen),
+                        formatMoney(phiPhu),
+                        formatMoney(tienGiamGia),
+                        formatMoney(tongTienSauGiam),
+                        formatMoney(soTienThanhToan),
+                        formatMoney(soTienCanThanhToan)), null);
 
         // ==================== CẬP NHẬT LỊCH SỬ THANH TOÁN ====================
-        if (hasStatusChange || hasProductChanges) {
+        if (hasProductChanges || hasStatusChange) {
             updatePaymentHistory(hoaDon, tongTienSauGiam, hasStatusChange);
         }
 
-        hoaDonRepository.save(hoaDon);
-        return new UpdateHoaDonResponse(true, "Cập nhật hóa đơn thành công");
+        // Cập nhật ngày sửa
+        hoaDon.setNgaySua(new Date());
+
+        // Lưu hóa đơn
+        HoaDon savedHoaDon = hoaDonRepository.save(hoaDon);
+
+        // ==================== TRẢ VỀ RESPONSE ĐẦY ĐỦ ====================
+        UpdateHoaDonResponse response = UpdateHoaDonResponse.builder()
+                .success(true)
+                .message("Cập nhật hóa đơn thành công")
+                .diaChiCuThe(request.getDiaChiCuThe())
+                .thanhPho(request.getThanhPho())
+                .quan(request.getQuan())
+                .phiPhu(phiPhu)
+                .phiPhuMoi(hoaDon.getPhiPhuMoi())
+                .tongTienSanPham(tongTienSanPhamMoi)
+                .phiVanChuyen(phiVanChuyen)
+                .tienGiamGia(tienGiamGia)
+                .tongTienSauGiam(tongTienSauGiam)
+                .soTienThanhToan(soTienThanhToan)  // Thêm số tiền đã thanh toán
+                .soTienCanThanhToan(soTienCanThanhToan)  // Thêm số tiền cần thanh toán
+                .tongTienCanThanhToan(soTienCanThanhToan) // Để tương thích với code cũ
+                .build();
+
+        return response;
     }
+
+    private void subtractInventory(HoaDon hoaDon) {
+        List<HoaDonChiTiet> chiTietList = hoaDonChiTietRepository.findByHoaDonId(hoaDon.getId());
+
+        if (chiTietList.isEmpty()) {
+            System.out.println("⚠️ Hóa đơn không có sản phẩm để trừ tồn kho");
+            return;
+        }
+
+        StringBuilder logMessage = new StringBuilder("Trừ tồn kho khi xác nhận đơn hàng: ");
+
+        for (HoaDonChiTiet chiTiet : chiTietList) {
+            ChiTietSanPham ctsp = chiTiet.getChiTietSanPham();
+            int soLuongMua = chiTiet.getSoLuong();
+
+            // Kiểm tra tồn kho
+            if (ctsp.getSoLuongTon() < soLuongMua) {
+                throw new RuntimeException(
+                        String.format("Không đủ tồn kho cho sản phẩm: %s. Tồn kho: %d, Cần: %d",
+                                ctsp.getSanPham().getTenSanPham(),
+                                ctsp.getSoLuongTon(),
+                                soLuongMua
+                        )
+                );
+            }
+
+            // Trừ tồn kho
+            int tonKhoMoi = ctsp.getSoLuongTon() - soLuongMua;
+            ctsp.setSoLuongTon(tonKhoMoi);
+            chiTietSanPhamRepository.save(ctsp);
+
+            logMessage.append(String.format("%s (-%d → %d), ",
+                    ctsp.getSanPham().getTenSanPham(),
+                    soLuongMua,
+                    tonKhoMoi));
+
+            System.out.println("📦 Trừ tồn kho: " + ctsp.getSanPham().getTenSanPham() +
+                    " - Số lượng: " + soLuongMua +
+                    " - Tồn kho mới: " + tonKhoMoi);
+        }
+
+        // Ghi log lịch sử
+        luuLichSu(hoaDon, "Xác nhận đơn hàng - Trừ tồn kho",
+                logMessage.toString().replaceAll(", $", ""), null);
+    }
+
+    /**
+     * Điều chỉnh tồn kho khi thay đổi sản phẩm trong đơn hàng đã được xác nhận
+     */
+    private void adjustInventoryForProductChange(ChiTietSanPham ctsp, int newQuantity, int oldQuantity) {
+        if (newQuantity == oldQuantity) {
+            return; // Không thay đổi số lượng
+        }
+
+        int quantityDifference = newQuantity - oldQuantity;
+
+        if (quantityDifference > 0) {
+            // Tăng số lượng -> cần kiểm tra tồn kho và trừ thêm
+            if (ctsp.getSoLuongTon() < quantityDifference) {
+                throw new RuntimeException(
+                        String.format("Không đủ tồn kho để tăng số lượng cho sản phẩm: %s. Tồn kho: %d, Cần thêm: %d",
+                                ctsp.getSanPham().getTenSanPham(),
+                                ctsp.getSoLuongTon(),
+                                quantityDifference
+                        )
+                );
+            }
+            ctsp.setSoLuongTon(ctsp.getSoLuongTon() - quantityDifference);
+            System.out.println("📦 Điều chỉnh tồn kho (tăng SL): " + ctsp.getSanPham().getTenSanPham() +
+                    " - Thêm: " + quantityDifference + " - Tồn kho mới: " + ctsp.getSoLuongTon());
+        } else {
+            // Giảm số lượng -> trả lại tồn kho
+            int returnQuantity = -quantityDifference;
+            ctsp.setSoLuongTon(ctsp.getSoLuongTon() + returnQuantity);
+            System.out.println("📦 Điều chỉnh tồn kho (giảm SL): " + ctsp.getSanPham().getTenSanPham() +
+                    " - Trả lại: " + returnQuantity + " - Tồn kho mới: " + ctsp.getSoLuongTon());
+        }
+
+        chiTietSanPhamRepository.save(ctsp);
+    }
+
 
     private void handleOrderCancellation(HoaDon hoaDon, boolean autoHoanTien) {
         System.out.println("🔄 Bắt đầu xử lý hủy đơn hàng #" + hoaDon.getMaHoaDon());
 
-        returnProductsToInventory(hoaDon);
+//        returnProductsToInventory(hoaDon);
 
-        // 2. Cập nhật lịch sử thanh toán HIỆN CÓ (nếu có)
         if (!autoHoanTien) {
             updatePaymentHistoryWhenCancelled(hoaDon);
             luuLichSu(hoaDon, "Hủy đơn hàng",
@@ -924,11 +954,9 @@ public class HoaDonService {
 
             LichSuThanhToan lichSuMoiNhat = lichSuThanhToanList.get(0);
 
-            // [QUAN TRỌNG] CHỈ cập nhật ghi chú, KHÔNG tạo bản ghi mới
             String ghiChuCuMoi = "Đơn hàng đã hủy (ngày " +
                     new SimpleDateFormat("dd/MM/yyyy").format(new Date()) + ") - Chưa hoàn tiền";
 
-            // [SỬA] Thêm điều kiện để không ghi đè nếu đã có ghi chú hoàn tiền
             if (lichSuMoiNhat.getGhiChu() != null &&
                     !lichSuMoiNhat.getGhiChu().contains("[HOÀN TIỀN]") &&
                     !lichSuMoiNhat.getGhiChu().contains("Đã hủy")) {
@@ -945,36 +973,36 @@ public class HoaDonService {
     }
 
 
-    private void returnProductsToInventory(HoaDon hoaDon) {
-        List<HoaDonChiTiet> chiTietHoaDon = hoaDonChiTietRepository.findByHoaDonId(hoaDon.getId());
-
-        if (chiTietHoaDon.isEmpty()) {
-            System.out.println("⚠️ Hóa đơn không có sản phẩm để trả về tồn kho");
-            return;
-        }
-
-        StringBuilder logMessage = new StringBuilder("Trả hàng về tồn kho: ");
-
-        for (HoaDonChiTiet chiTiet : chiTietHoaDon) {
-            ChiTietSanPham ctsp = chiTiet.getChiTietSanPham();
-            int soLuongTra = chiTiet.getSoLuong();
-
-            int tonKhoMoi = ctsp.getSoLuongTon() + soLuongTra;
-            ctsp.setSoLuongTon(tonKhoMoi);
-            chiTietSanPhamRepository.save(ctsp);
-
-            logMessage.append(String.format("%s (+%d), ",
-                    ctsp.getSanPham().getTenSanPham(), soLuongTra));
-
-            System.out.println("📦 Trả tồn kho: " + ctsp.getSanPham().getTenSanPham() +
-                    " - Số lượng: +" + soLuongTra +
-                    " - Tồn kho mới: " + tonKhoMoi);
-        }
-
-        // Ghi log lịch sử
-        luuLichSu(hoaDon, "Hủy đơn hàng - Trả hàng về tồn kho",
-                logMessage.toString().replaceAll(", $", ""), null);
-    }
+//    private void returnProductsToInventory(HoaDon hoaDon) {
+//        List<HoaDonChiTiet> chiTietHoaDon = hoaDonChiTietRepository.findByHoaDonId(hoaDon.getId());
+//
+//        if (chiTietHoaDon.isEmpty()) {
+//            System.out.println("⚠️ Hóa đơn không có sản phẩm để trả về tồn kho");
+//            return;
+//        }
+//
+//        StringBuilder logMessage = new StringBuilder("Trả hàng về tồn kho: ");
+//
+//        for (HoaDonChiTiet chiTiet : chiTietHoaDon) {
+//            ChiTietSanPham ctsp = chiTiet.getChiTietSanPham();
+//            int soLuongTra = chiTiet.getSoLuong();
+//
+//            int tonKhoMoi = ctsp.getSoLuongTon() + soLuongTra;
+//            ctsp.setSoLuongTon(tonKhoMoi);
+//            chiTietSanPhamRepository.save(ctsp);
+//
+//            logMessage.append(String.format("%s (+%d), ",
+//                    ctsp.getSanPham().getTenSanPham(), soLuongTra));
+//
+//            System.out.println("📦 Trả tồn kho: " + ctsp.getSanPham().getTenSanPham() +
+//                    " - Số lượng: +" + soLuongTra +
+//                    " - Tồn kho mới: " + tonKhoMoi);
+//        }
+//
+//        // Ghi log lịch sử
+//        luuLichSu(hoaDon, "Hủy đơn hàng - Trả hàng về tồn kho",
+//                logMessage.toString().replaceAll(", $", ""), null);
+//    }
 
     private void updatePaymentHistory(HoaDon hoaDon, BigDecimal tongTienSauGiam, boolean hasStatusChange) {
         try {
@@ -1004,7 +1032,7 @@ public class HoaDonService {
                 lichSuThanhToan = existingPayments.get(0);
                 if (!lichSuThanhToan.getSoTien().equals(tongTienSauGiam)) {
                     lichSuThanhToan.setSoTien(tongTienSauGiam);
-                    lichSuThanhToan.setNgayThanhToan(new Date());
+                    // KHÔNG cập nhật ngày thanh toán ở đây để không ảnh hưởng đến logic
                 }
             }
 
@@ -1014,67 +1042,78 @@ public class HoaDonService {
             String oldGhiChu = lichSuThanhToan.getGhiChu();
             String newGhiChu = "";
 
-            Boolean loaiHoaDon = hoaDon.getLoaiHoaDon(); // true = tại quầy, false = online
-            Integer trangThaiHoaDon = hoaDon.getTrangThai(); // trạng thái đơn hiện tại
-            boolean isTienMat = phuongThuc.getTenPhuongThucThanhToan().toLowerCase().contains("tiền mặt");
+            // ==================== LOGIC CHÍNH ====================
+            boolean isOnlineOrder = !hoaDon.getLoaiHoaDon(); // false = online
+            boolean isTienMat = phuongThuc.getTenPhuongThucThanhToan().toLowerCase().contains("tiền mặt") ||
+                    "COD".equalsIgnoreCase(phuongThuc.getMaPhuongThucThanhToan());
+            Integer trangThaiHoaDon = hoaDon.getTrangThai();
 
-            if (loaiHoaDon != null && loaiHoaDon) {
-                // Tại quầy: giữ nguyên logic cũ
+            if (isOnlineOrder) {
+                // HÓA ĐƠN ONLINE
+                if (isTienMat) {
+                    // Online + Tiền mặt (COD)
+                    if (trangThaiHoaDon != null && trangThaiHoaDon == 3) {
+                        // Trạng thái Đã hoàn thành -> Đã thanh toán
+                        lichSuThanhToan.setTrangThai(true);
+                        lichSuThanhToan.setNgayThanhToan(new Date());
+                        newGhiChu = "Đã thanh toán (Tiền mặt/COD) - Hoàn thành - Số tiền: " +
+                                formatMoney(tongTienSauGiam);
+                    } else {
+                        // Các trạng thái khác -> Chưa thanh toán
+                        lichSuThanhToan.setTrangThai(false);
+                        lichSuThanhToan.setNgayThanhToan(null);
+                        newGhiChu = "Chưa thanh toán (Tiền mặt/COD) - " +
+                                getTrangThaiText(trangThaiHoaDon) + " - Số tiền: " +
+                                formatMoney(tongTienSauGiam);
+                    }
+                } else {
+                    // Online + Chuyển khoản -> Luôn là Đã thanh toán
+                    lichSuThanhToan.setTrangThai(true);
+                    if (lichSuThanhToan.getNgayThanhToan() == null) {
+                        lichSuThanhToan.setNgayThanhToan(new Date());
+                    }
+                    newGhiChu = "Đã thanh toán (Chuyển khoản) - " +
+                            getTrangThaiText(trangThaiHoaDon) + " - Số tiền: " +
+                            formatMoney(tongTienSauGiam);
+                }
+            } else {
+                // HÓA ĐƠN TẠI QUẦY - Logic cũ
                 switch (trangThaiHoaDon) {
                     case 0:
                         lichSuThanhToan.setTrangThai(false);
-                        newGhiChu = "Chờ xác nhận thanh toán - Số tiền: " + formatMoney(tongTienSauGiam) +
-                                (tienGiamGia.compareTo(BigDecimal.ZERO) > 0 ? " (Đã giảm: " + formatMoney(tienGiamGia) + ")" : "");
+                        lichSuThanhToan.setNgayThanhToan(null);
+                        newGhiChu = "Chờ xác nhận thanh toán - Số tiền: " + formatMoney(tongTienSauGiam);
                         break;
                     case 1:
                     case 2:
                     case 3:
                         lichSuThanhToan.setTrangThai(true);
-                        newGhiChu = "Đã thanh toán - " + getTrangThaiText(trangThaiHoaDon) + " - Số tiền: " + formatMoney(tongTienSauGiam) +
-                                (tienGiamGia.compareTo(BigDecimal.ZERO) > 0 ? " (Đã giảm: " + formatMoney(tienGiamGia) + ")" : "");
+                        if (lichSuThanhToan.getNgayThanhToan() == null) {
+                            lichSuThanhToan.setNgayThanhToan(new Date());
+                        }
+                        newGhiChu = "Đã thanh toán - " + getTrangThaiText(trangThaiHoaDon) +
+                                " - Số tiền: " + formatMoney(tongTienSauGiam);
                         break;
                     case 4:
                         lichSuThanhToan.setTrangThai(false);
-                        newGhiChu = "Đơn hàng đã hủy - Số tiền: " + formatMoney(tongTienSauGiam) +
-                                (tienGiamGia.compareTo(BigDecimal.ZERO) > 0 ? " (Đã giảm: " + formatMoney(tienGiamGia) + ")" : "");
+                        newGhiChu = "Đơn hàng đã hủy - Số tiền: " + formatMoney(tongTienSauGiam);
                         break;
                     default:
                         lichSuThanhToan.setTrangThai(false);
-                        newGhiChu = "Chờ xử lý thanh toán - Số tiền: " + formatMoney(tongTienSauGiam) +
-                                (tienGiamGia.compareTo(BigDecimal.ZERO) > 0 ? " (Đã giảm: " + formatMoney(tienGiamGia) + ")" : "");
+                        newGhiChu = "Chờ xử lý thanh toán - Số tiền: " + formatMoney(tongTienSauGiam);
                 }
-            } else {
-                boolean daThanhToan = lichSuThanhToan.getTrangThai();
+            }
 
-                if (daThanhToan) {
-                    lichSuThanhToan.setTrangThai(true);
-                    newGhiChu = "Đã thanh toán - " + getTrangThaiText(trangThaiHoaDon) + " - Số tiền: " + formatMoney(tongTienSauGiam) +
-                            (tienGiamGia.compareTo(BigDecimal.ZERO) > 0 ? " (Đã giảm: " + formatMoney(tienGiamGia) + ")" : "");
-                } else {
-
-                    if (isTienMat) {
-                        if (trangThaiHoaDon != null && trangThaiHoaDon == 3) {
-                            lichSuThanhToan.setTrangThai(true);
-                            newGhiChu = "Đã thanh toán (Tiền mặt) - Hoàn thành - Số tiền: " + formatMoney(tongTienSauGiam) +
-                                    (tienGiamGia.compareTo(BigDecimal.ZERO) > 0 ? " (Đã giảm: " + formatMoney(tienGiamGia) + ")" : "");
-                        } else {
-                            lichSuThanhToan.setTrangThai(false);
-                            newGhiChu = "Chưa thanh toán (Tiền mặt) - Số tiền: " + formatMoney(tongTienSauGiam) +
-                                    (tienGiamGia.compareTo(BigDecimal.ZERO) > 0 ? " (Đã giảm: " + formatMoney(tienGiamGia) + ")" : "");
-                        }
-                    } else {
-                        lichSuThanhToan.setTrangThai(false);
-                        newGhiChu = "Chưa thanh toán - Số tiền: " + formatMoney(tongTienSauGiam) +
-                                (tienGiamGia.compareTo(BigDecimal.ZERO) > 0 ? " (Đã giảm: " + formatMoney(tienGiamGia) + ")" : "");
-                    }
-                }
+            // Thêm thông tin giảm giá nếu có
+            if (tienGiamGia.compareTo(BigDecimal.ZERO) > 0) {
+                newGhiChu += " (Đã giảm: " + formatMoney(tienGiamGia) + ")";
             }
 
             lichSuThanhToan.setGhiChu(newGhiChu);
 
             if (!newGhiChu.equals(oldGhiChu) || !daCoLichSuThanhToan) {
                 lichSuThanhToanRepository.save(lichSuThanhToan);
-                System.out.println("✅ Đã cập nhật lịch sử thanh toán");
+                System.out.println("✅ Đã cập nhật lịch sử thanh toán: " + newGhiChu);
             }
 
         } catch (Exception e) {
@@ -1083,69 +1122,50 @@ public class HoaDonService {
         }
     }
 
-
-
-    private void updatePaymentHistoryToRefunded(HoaDon hoaDon) {
-        try {
-            List<LichSuThanhToan> lichSuThanhToanList = lichSuThanhToanRepository
-                    .findByHoaDonIdOrderByNgayThanhToanDesc(hoaDon.getId());
-
-            if (lichSuThanhToanList.isEmpty()) {
-                System.out.println("⚠️ Không tìm thấy lịch sử thanh toán để hoàn tiền");
-                return;
-            }
-
-            LichSuThanhToan lichSuMoiNhat = lichSuThanhToanList.get(0);
-
-            // Tạo bản ghi hoàn tiền
-            LichSuThanhToan lichSuHoanTien = new LichSuThanhToan();
-            lichSuHoanTien.setHoaDon(hoaDon);
-            lichSuHoanTien.setPhuongThucThanhToan(lichSuMoiNhat.getPhuongThucThanhToan());
-            lichSuHoanTien.setSoTien(lichSuMoiNhat.getSoTien());
-            lichSuHoanTien.setNgayThanhToan(new Date());
-            lichSuHoanTien.setTrangThai(true);
-            lichSuHoanTien.setGhiChu("[HOÀN TIỀN] Đã hoàn tiền do hủy đơn hàng - Số tiền: " +
-                    formatMoney(lichSuMoiNhat.getSoTien()));
-
-            lichSuThanhToanRepository.save(lichSuHoanTien);
-
-            // Cập nhật ghi chú của lịch sử cũ
-            String ghiChuCuMoi = lichSuMoiNhat.getGhiChu() + " (Đã hoàn tiền ngày " +
-                    new SimpleDateFormat("dd/MM/yyyy").format(new Date()) + ")";
-            lichSuMoiNhat.setGhiChu(ghiChuCuMoi);
-            lichSuThanhToanRepository.save(lichSuMoiNhat);
-
-            System.out.println("💰 Đã tạo bản ghi hoàn tiền tự động: " +
-                    formatMoney(lichSuMoiNhat.getSoTien()));
-
-        } catch (Exception e) {
-            System.err.println("❌ Lỗi khi tạo bản ghi hoàn tiền: " + e.getMessage());
-            e.printStackTrace();
-            throw new RuntimeException("Không thể xử lý hoàn tiền tự động: " + e.getMessage());
-        }
-    }
-
-    private BigDecimal calculateTongTienSauGiamGia(HoaDon hoaDon) {
-        try {
-            BigDecimal tongTienSanPham = BigDecimal.ZERO;
-            if (hoaDon.getHoaDonChiTiets() != null && !hoaDon.getHoaDonChiTiets().isEmpty()) {
-                tongTienSanPham = hoaDon.getHoaDonChiTiets().stream()
-                        .map(ct -> ct.getThanhTien() != null ? ct.getThanhTien() : BigDecimal.ZERO)
-                        .reduce(BigDecimal.ZERO, BigDecimal::add);
-            }
-
-            BigDecimal phiVanChuyen = hoaDon.getPhiVanChuyen() != null ? hoaDon.getPhiVanChuyen() : BigDecimal.ZERO;
-            BigDecimal tongTienTruocGiam = tongTienSanPham.add(phiVanChuyen);
-
-            BigDecimal tienGiamGia = calculateTienGiamGia(hoaDon, tongTienTruocGiam);
-            BigDecimal tongTienSauGiam = tongTienTruocGiam.subtract(tienGiamGia);
-
-            return tongTienSauGiam.compareTo(BigDecimal.ZERO) > 0 ? tongTienSauGiam : BigDecimal.ZERO;
-        } catch (Exception e) {
-            System.err.println("Lỗi tính tổng tiền sau giảm giá: " + e.getMessage());
-            return BigDecimal.ZERO;
-        }
-    }
+//    @Transactional
+//    public void updatePaymentHistoryWhenStatusChanged(Integer idHoaDon, Integer newStatus) {
+//        try {
+//            HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
+//                    .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn"));
+//
+//            // Lấy lịch sử thanh toán gần nhất
+//            List<LichSuThanhToan> lichSuList = lichSuThanhToanRepository
+//                    .findByHoaDonIdOrderByNgayThanhToanDesc(idHoaDon);
+//
+//            if (lichSuList.isEmpty()) {
+//                System.out.println("⚠️ Không tìm thấy lịch sử thanh toán để cập nhật");
+//                return;
+//            }
+//
+//            LichSuThanhToan lichSu = lichSuList.get(0);
+//            PhuongThucThanhToan pt = lichSu.getPhuongThucThanhToan();
+//
+//            boolean isOnlineOrder = !hoaDon.getLoaiHoaDon();
+//            boolean isTienMat = pt.getTenPhuongThucThanhToan().toLowerCase().contains("tiền mặt") ||
+//                    "COD".equalsIgnoreCase(pt.getMaPhuongThucThanhToan());
+//
+//            // Chỉ xử lý nếu là hóa đơn online + tiền mặt
+//            if (isOnlineOrder && isTienMat) {
+//                if (newStatus == 3) {
+//                    // Chuyển sang trạng thái Hoàn thành -> Cập nhật thành Đã thanh toán
+//                    lichSu.setTrangThai(true);
+//                    lichSu.setNgayThanhToan(new Date());
+//                    lichSu.setGhiChu("Đã thanh toán (Tiền mặt) - Hoàn thành - Số tiền: " +
+//                            formatMoney(lichSu.getSoTien()));
+//
+//                    lichSuThanhToanRepository.save(lichSu);
+//                    System.out.println("✅ Đã cập nhật lịch sử thanh toán khi đơn hàng hoàn thành");
+//
+//                    // Ghi log lịch sử
+//                    luuLichSu(hoaDon, "Cập nhật thanh toán",
+//                            "Cập nhật trạng thái thanh toán từ 'Chưa thanh toán' sang 'Đã thanh toán' khi đơn hàng hoàn thành",
+//                            null);
+//                }
+//            }
+//        } catch (Exception e) {
+//            System.err.println("❌ Lỗi khi cập nhật lịch sử thanh toán theo trạng thái: " + e.getMessage());
+//        }
+//    }
 
     private BigDecimal calculateTienGiamGia(HoaDon hoaDon, BigDecimal tongTienTruocGiam) {
         if (hoaDon.getPhieuGiamGia() == null) {
@@ -1196,31 +1216,7 @@ public class HoaDonService {
         return tienGiam;
     }
 
-    private void autoUpdateGiamGiaWhenProductsChange(HoaDon hoaDon, boolean hasProductChanges) {
-        if (hasProductChanges && hoaDon.getPhieuGiamGia() != null) {
-            System.out.println("🔄 Tự động kiểm tra lại điều kiện phiếu giảm giá sau khi thay đổi sản phẩm");
 
-            BigDecimal tongTienTruocGiam = calculateTongTienTruocGiam(hoaDon);
-            BigDecimal tienGiamGiaMoi = calculateTienGiamGia(hoaDon, tongTienTruocGiam);
-            BigDecimal tongTienSauGiamMoi = tongTienTruocGiam.subtract(tienGiamGiaMoi);
-
-            BigDecimal tongTienSauGiamHienTai = hoaDon.getTongTienSauGiam() != null ?
-                    hoaDon.getTongTienSauGiam() : BigDecimal.ZERO;
-
-            if (!tongTienSauGiamMoi.equals(tongTienSauGiamHienTai)) {
-                System.out.println("🔄 Cập nhật tự động tổng tiền sau giảm giá:");
-                System.out.println("   - Từ: " + formatMoney(tongTienSauGiamHienTai));
-                System.out.println("   - Thành: " + formatMoney(tongTienSauGiamMoi));
-
-                hoaDon.setTongTienSauGiam(tongTienSauGiamMoi);
-
-                luuLichSu(hoaDon, "Tự động cập nhật giảm giá",
-                        String.format("Tổng tiền sau giảm giá: %s → %s (do thay đổi sản phẩm)",
-                                formatMoney(tongTienSauGiamHienTai),
-                                formatMoney(tongTienSauGiamMoi)), null);
-            }
-        }
-    }
 
     private BigDecimal calculateTongTienTruocGiam(HoaDon hoaDon) {
         try {
@@ -1309,12 +1305,14 @@ public class HoaDonService {
     public HoaDon add(HoaDonRequest req) {
         HoaDon hoaDon = new HoaDon();
 
+        // ==================== XỬ LÝ NGÀY TẠO ====================
         if (req.getNgayTao() != null) {
             hoaDon.setNgayTao(req.getNgayTao());
         } else {
             hoaDon.setNgayTao(new Date());
         }
 
+        // ==================== XỬ LÝ NGÀY THANH TOÁN ====================
         if (req.getNgayThanhToan() != null) {
             hoaDon.setNgayThanhToan(req.getNgayThanhToan());
         } else {
@@ -1325,6 +1323,77 @@ public class HoaDonService {
 
         hoaDon.setNguoiTao(req.getNguoiTao() != null ? req.getNguoiTao() : 1);
 
+        // ==================== XỬ LÝ SỐ TIỀN THANH TOÁN ====================
+        BigDecimal soTienThanhToanValue;
+
+        // Kiểm tra loại hóa đơn và phương thức thanh toán
+        boolean isOnlineOrder = req.getLoaiHoaDon() != null && !req.getLoaiHoaDon(); // false = online
+        boolean isTienMat = false;
+
+        // Kiểm tra phương thức thanh toán
+        if (req.getIdPhuongThucThanhToan() != null) {
+            try {
+                PhuongThucThanhToan pt = phuongThucThanhToanRepository.findById(req.getIdPhuongThucThanhToan())
+                        .orElse(null);
+                if (pt != null) {
+                    isTienMat = pt.getTenPhuongThucThanhToan().toLowerCase().contains("tiền mặt") ||
+                            "COD".equalsIgnoreCase(pt.getMaPhuongThucThanhToan());
+                }
+            } catch (Exception e) {
+                System.err.println("Lỗi khi kiểm tra phương thức thanh toán: " + e.getMessage());
+            }
+        }
+
+        // Logic xác định số tiền đã thanh toán
+        if (isOnlineOrder && isTienMat) {
+            // Hóa đơn online + tiền mặt: chưa thanh toán (COD)
+            soTienThanhToanValue = BigDecimal.ZERO;
+            System.out.println("⚠️ Hóa đơn online + tiền mặt (COD): đặt soTienThanhToan = 0");
+        } else if (isOnlineOrder && !isTienMat) {
+            // Hóa đơn online + chuyển khoản: đã thanh toán
+            soTienThanhToanValue = req.getSoTienThanhToan() != null ?
+                    req.getSoTienThanhToan() :
+                    (req.getTongTienSauGiam() != null ? req.getTongTienSauGiam() : req.getTongTien());
+            System.out.println("✅ Hóa đơn online + chuyển khoản: đặt soTienThanhToan = " + formatMoney(soTienThanhToanValue));
+        } else if (!isOnlineOrder) {
+            // Hóa đơn tại quầy
+            if (req.getTrangThai() != null && req.getTrangThai() != 0) {
+                // Đã thanh toán tại quầy
+                soTienThanhToanValue = req.getSoTienThanhToan() != null ?
+                        req.getSoTienThanhToan() :
+                        (req.getTongTienSauGiam() != null ? req.getTongTienSauGiam() : req.getTongTien());
+                System.out.println("✅ Hóa đơn tại quầy (đã thanh toán): đặt soTienThanhToan = " + formatMoney(soTienThanhToanValue));
+            } else {
+                // Chưa thanh toán tại quầy
+                soTienThanhToanValue = BigDecimal.ZERO;
+                System.out.println("⚠️ Hóa đơn tại quầy (chưa thanh toán): đặt soTienThanhToan = 0");
+            }
+        } else {
+            // Mặc định
+            soTienThanhToanValue = req.getSoTienThanhToan() != null ?
+                    req.getSoTienThanhToan() : BigDecimal.ZERO;
+        }
+
+        // Thiết lập ngày thanh toán
+        if (req.getNgayThanhToan() != null) {
+            hoaDon.setNgayThanhToan(req.getNgayThanhToan());
+        } else {
+            // Chỉ đặt ngày thanh toán nếu đã thanh toán
+            if (soTienThanhToanValue.compareTo(BigDecimal.ZERO) > 0) {
+                hoaDon.setNgayThanhToan(new Date());
+            } else {
+                hoaDon.setNgayThanhToan(null);
+            }
+        }
+
+        hoaDon.setSoTienThanhToan(soTienThanhToanValue);
+        hoaDon.setNguoiTao(req.getNguoiTao() != null ? req.getNguoiTao() : 1);
+
+        System.out.println("💰 FINAL - soTienThanhToan được đặt: " + formatMoney(soTienThanhToanValue) +
+                " | Loại đơn: " + (isOnlineOrder ? "Online" : "Tại quầy") +
+                " | Phương thức: " + (isTienMat ? "Tiền mặt" : "Chuyển khoản"));
+
+        // ==================== XỬ LÝ KHÁCH HÀNG ====================
         KhachHang khachHang = null;
         if (req.getIdKhachHang() != null) {
             khachHang = khachHangRepository.findById(req.getIdKhachHang())
@@ -1334,6 +1403,13 @@ public class HoaDonService {
             System.out.println("=== DEBUG THÊM ĐỊA CHỈ BẮT ĐẦU ===");
             System.out.println("Khách hàng: " + khachHang.getHoTen() + " (ID: " + khachHang.getId() + ")");
 
+            if (req.getEmail() != null && !req.getEmail().isEmpty()) {
+                khachHang.setEmail(req.getEmail());
+                khachHangRepository.save(khachHang);
+                System.out.println("✅ Đã cập nhật email cho khách hàng hiện có: " + req.getEmail());
+            }
+
+            // Xử lý địa chỉ cho khách hàng hiện có
             if (req.getDiaChiKhachHang() != null && !req.getDiaChiKhachHang().isEmpty() &&
                     !req.getDiaChiKhachHang().equals("Chưa có địa chỉ")) {
 
@@ -1390,6 +1466,7 @@ public class HoaDonService {
             }
             System.out.println("=== DEBUG THÊM ĐỊA CHỈ KẾT THÚC ===");
         } else {
+            // Tạo khách hàng mới nếu không có idKhachHang
             if (req.getHoTen() != null && !req.getHoTen().isEmpty() &&
                     req.getSdt() != null && !req.getSdt().isEmpty()) {
 
@@ -1399,10 +1476,19 @@ public class HoaDonService {
                     if (existingCustomer.isPresent()) {
                         khachHang = existingCustomer.get();
                         System.out.println("✅ Sử dụng khách hàng đã tồn tại: " + khachHang.getHoTen() + " (ID: " + khachHang.getId() + ")");
+                        if (req.getEmail() != null && !req.getEmail().isEmpty()) {
+                            khachHang.setEmail(req.getEmail());
+                            khachHangRepository.save(khachHang);
+                            System.out.println("✅ Đã cập nhật email cho khách hàng hiện có: " + req.getEmail());
+                        }
                     } else {
                         KhachHang newKhachHang = new KhachHang();
                         newKhachHang.setHoTen(req.getHoTen());
                         newKhachHang.setSdt(req.getSdt());
+                        if (req.getEmail() != null && !req.getEmail().isEmpty()) {
+                            newKhachHang.setEmail(req.getEmail());
+                            System.out.println("✅ Đã thêm email cho khách hàng mới: " + req.getEmail());
+                        }
                         newKhachHang.setGioiTinh(true);
                         newKhachHang.setNgaySinh(new Date());
                         newKhachHang.setTrangThai(true);
@@ -1411,6 +1497,7 @@ public class HoaDonService {
                         khachHang = khachHangRepository.save(newKhachHang);
                         System.out.println("🎉 ĐÃ TẠO KHÁCH HÀNG MỚI: " + khachHang.getHoTen() + " (ID: " + khachHang.getId() + ")");
 
+                        // Thêm địa chỉ cho khách hàng mới
                         if (req.getIdTinh() != null && req.getIdQuan() != null && req.getDiaChiCuThe() != null) {
                             try {
                                 TinhThanh tinhThanh = tinhThanhRepository.findById(req.getIdTinh())
@@ -1447,11 +1534,13 @@ public class HoaDonService {
             }
         }
 
+        // ==================== XỬ LÝ NHÂN VIÊN ====================
         NhanVien nhanVien = nhanVienRepository.findById(
                 req.getIdNhanVien() != null ? req.getIdNhanVien() : 1
         ).orElse(null);
         hoaDon.setNhanVien(nhanVien);
 
+        // ==================== XỬ LÝ PHIẾU GIẢM GIÁ ====================
         PhieuGiamGia giamGia = null;
         if (req.getIdPhieuGiamGia() != null) {
             giamGia = phieuGiamGiaRepository.findById(req.getIdPhieuGiamGia())
@@ -1467,22 +1556,22 @@ public class HoaDonService {
             hoaDon.setPhieuGiamGia(giamGia);
         }
 
+        // ==================== THIẾT LẬP CÁC THUỘC TÍNH KHÁC ====================
         hoaDon.setLoaiHoaDon(req.getLoaiHoaDon() != null ? req.getLoaiHoaDon() : false);
-
-
         hoaDon.setPhiVanChuyen(req.getPhiVanChuyen() != null ? req.getPhiVanChuyen() : BigDecimal.ZERO);
         hoaDon.setTongTien(req.getTongTien() != null ? req.getTongTien() : BigDecimal.ZERO);
         hoaDon.setTongTienSauGiam(req.getTongTienSauGiam() != null ? req.getTongTienSauGiam() : BigDecimal.ZERO);
         hoaDon.setDiaChiKhachHang(req.getDiaChiKhachHang());
         hoaDon.setGhiChu(req.getGhiChu());
-        hoaDon.setNgayThanhToan(new Date());
 
+        // ==================== XỬ LÝ TRẠNG THÁI ====================
         Integer trangThai = req.getTrangThai();
         if (trangThai == null) {
             throw new RuntimeException("Trạng thái hóa đơn không được để trống");
         }
         hoaDon.setTrangThai(trangThai);
 
+        // ==================== XỬ LÝ CHI TIẾT HÓA ĐƠN ====================
         if (req.getChiTietList() == null || req.getChiTietList().isEmpty()) {
             throw new RuntimeException("Không có chi tiết sản phẩm trong hóa đơn");
         }
@@ -1492,10 +1581,6 @@ public class HoaDonService {
         for (HoaDonChiTietRequest ctReq : req.getChiTietList()) {
             ChiTietSanPham ctsp = chiTietSanPhamRepository.findById(ctReq.getIdChiTietSanPham())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết sản phẩm"));
-
-            // if (ctsp.getSoLuongTon() < ctReq.getSoLuong()) {
-            //     throw new RuntimeException("Không đủ tồn kho");
-            // }
 
             BigDecimal giaGoc = ctsp.getGiaBan();
             BigDecimal giaSauGiam = getGiaSauGiamFromDotGiamGia(ctsp.getId(), giaGoc);
@@ -1510,18 +1595,70 @@ public class HoaDonService {
             hdct.setTrangThai(true);
 
             listCT.add(hdct);
-
-            // ctsp.setSoLuongTon(ctsp.getSoLuongTon() - ctReq.getSoLuong());
-            // chiTietSanPhamRepository.save(ctsp);
         }
 
         hoaDon.setHoaDonChiTiets(listCT);
+
+        // ==================== LƯU HÓA ĐƠN ====================
         HoaDon saved = hoaDonRepository.save(hoaDon);
 
+        // ==================== QUAN TRỌNG: REFRESH ENTITY ĐỂ LẤY MÃ HÓA ĐƠN ====================
+        // Flush để đảm bảo lưu xuống database
+        hoaDonRepository.flush();
+
+        // Refresh entity từ database để lấy computed column (maHoaDon)
+        if (entityManager != null) {
+            try {
+                entityManager.refresh(saved);
+                System.out.println("✅ Đã refresh entity từ database");
+            } catch (Exception e) {
+                System.err.println("❌ Lỗi khi refresh entity: " + e.getMessage());
+                // Fallback: query lại entity
+                saved = hoaDonRepository.findById(saved.getId())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn sau khi lưu"));
+            }
+        } else {
+            // Fallback nếu không có EntityManager
+            saved = hoaDonRepository.findById(saved.getId())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn sau khi lưu"));
+        }
+
+        System.out.println("✅ Mã hóa đơn sau khi refresh: " + saved.getMaHoaDon());
+        System.out.println("✅ Thông tin hóa đơn: ID=" + saved.getId() + ", Mã HD=" + saved.getMaHoaDon());
+
+        // ==================== GỬI EMAIL XÁC NHẬN (VỚI ENTITY ĐÃ ĐƯỢC REFRESH) ====================
+        if (!saved.getLoaiHoaDon()) {
+            try {
+                String toEmail = null;
+
+                if (saved.getKhachHang() != null && saved.getKhachHang().getEmail() != null) {
+                    toEmail = saved.getKhachHang().getEmail();
+                    System.out.println("📧 Lấy email từ khách hàng: " + toEmail);
+                }
+
+                // Nếu không có trong khách hàng, thử lấy từ request
+                if ((toEmail == null || toEmail.isEmpty()) && req.getEmail() != null) {
+                    toEmail = req.getEmail();
+                    System.out.println("📧 Lấy email từ request: " + toEmail);
+                }
+
+                if (toEmail != null && !toEmail.isEmpty()) {
+                    sendOrderConfirmationEmail(saved, toEmail);
+                } else {
+                    System.out.println("⚠️ Không có email để gửi xác nhận đơn hàng #" + saved.getId());
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ Lỗi khi gửi email xác nhận: " + e.getMessage());
+                e.printStackTrace();
+                // KHÔNG throw exception ở đây để không rollback giao dịch
+            }
+        }
+
+        // ==================== TẠO LỊCH SỬ HÓA ĐƠN ====================
         LichSuHoaDon log = new LichSuHoaDon();
         log.setHoaDon(saved);
         log.setKhachHang(khachHang);
-        log.setNhanVien(nhanVien);
+        log.setNhanVien(saved.getNhanVien());
         log.setTrangThai(true);
         log.setNgayCapNhat(new Date());
 
@@ -1549,6 +1686,7 @@ public class HoaDonService {
 
         lichSuHoaDonRepository.save(log);
 
+        // ==================== XỬ LÝ PHƯƠNG THỨC THANH TOÁN ====================
         if (req.getIdPhuongThucThanhToan() != null) {
             PhuongThucThanhToan pt = phuongThucThanhToanRepository.findById(req.getIdPhuongThucThanhToan())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy phương thức thanh toán"));
@@ -1561,17 +1699,51 @@ public class HoaDonService {
                             req.getSoTienThanhToan() :
                             saved.getTongTienSauGiam()
             );
-            ls.setGhiChu(req.getGhiChuThanhToan());
-            if (trangThai != 0) {
+
+            // ==================== XỬ LÝ LOGIC THANH TOÁN ====================
+
+            if (isOnlineOrder && isTienMat) {
+                // Hóa đơn online + tiền mặt: chưa thanh toán
+                ls.setTrangThai(false);
+                if (trangThai == 3) {
+                    // Nếu ngay lúc tạo đã là trạng thái hoàn thành
+                    ls.setGhiChu("Đã thanh toán (Tiền mặt) - Hoàn thành - Số tiền: " +
+                            formatMoney(ls.getSoTien()));
+                    ls.setNgayThanhToan(new Date());
+                    ls.setTrangThai(true);
+                } else {
+                    ls.setGhiChu("Chưa thanh toán (Tiền mặt) - Số tiền: " +
+                            formatMoney(ls.getSoTien()));
+                    ls.setNgayThanhToan(null); // Chưa thanh toán nên không có ngày
+                }
+            } else if (isOnlineOrder && !isTienMat) {
+                // Hóa đơn online + chuyển khoản: đã thanh toán
+                ls.setTrangThai(true);
                 ls.setNgayThanhToan(new Date());
+                ls.setGhiChu("Đã thanh toán (Chuyển khoản) - Số tiền: " +
+                        formatMoney(ls.getSoTien()));
+            } else {
+                // Hóa đơn tại quầy: xử lý theo logic cũ
+                if (trangThai != 0) {
+                    ls.setNgayThanhToan(new Date());
+                    ls.setTrangThai(true);
+                    ls.setGhiChu("Đã thanh toán tại quầy - Số tiền: " +
+                            formatMoney(ls.getSoTien()));
+                } else {
+                    ls.setTrangThai(false);
+                    ls.setGhiChu("Chờ thanh toán tại quầy - Số tiền: " +
+                            formatMoney(ls.getSoTien()));
+                }
             }
-            ls.setTrangThai(true);
+
+            // Thêm ghi chú từ request nếu có
+            if (req.getGhiChuThanhToan() != null) {
+                ls.setGhiChu(ls.getGhiChu() + " - " + req.getGhiChuThanhToan());
+            }
+
             lichSuThanhToanRepository.save(ls);
 
-            boolean loaiThanhToan =
-                    pt.getTenPhuongThucThanhToan().toLowerCase().contains("chuyển") ||
-                            pt.getTenPhuongThucThanhToan().toLowerCase().contains("online");
-
+            boolean loaiThanhToan = !isTienMat;
             HinhThucThanhToan hinhThuc = new HinhThucThanhToan();
             hinhThuc.setHoaDon(saved);
             hinhThuc.setPhuongThucThanhToan(pt);
@@ -1581,12 +1753,153 @@ public class HoaDonService {
         }
 
         System.out.println("🎉 HOÀN TẤT TẠO HÓA ĐƠN - ID: " + saved.getId() +
+                ", Mã HD: " + saved.getMaHoaDon() +
                 ", Trạng thái: " + saved.getTrangThai() +
                 ", Loại: " + saved.getLoaiHoaDon() +
                 ", Khách hàng: " + (khachHang != null ? khachHang.getHoTen() : "Khách lẻ"));
+
         return saved;
     }
 
+    private void sendOrderConfirmationEmail(HoaDon hoaDon, String toEmail) {
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm");
+            NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("vi", "VN"));
+
+            String subject = "Xác nhận đơn hàng #" + hoaDon.getMaHoaDon() + " - The Autumn";
+
+            StringBuilder content = new StringBuilder();
+            content.append("<!DOCTYPE html>");
+            content.append("<html lang='vi'>");
+            content.append("<head>");
+            content.append("<meta charset='UTF-8'>");
+            content.append("<meta name='viewport' content='width=device-width, initial-scale=1.0'>");
+            content.append("<title>Xác nhận đơn hàng</title>");
+            content.append("<style>");
+            content.append("body { font-family: 'Arial', sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f9f9f9; }");
+            content.append(".container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 10px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }");
+            content.append(".header { background: linear-gradient(135deg, #E67E22, #D35400); color: white; padding: 30px 20px; text-align: center; }");
+            content.append(".header h1 { margin: 0; font-size: 28px; font-weight: bold; }");
+            content.append(".content { padding: 40px 30px; }");
+            content.append(".info-box { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #E67E22; }");
+            content.append(".product-table { width: 100%; border-collapse: collapse; margin: 20px 0; }");
+            content.append(".product-table th { background: #E67E22; color: white; padding: 12px; text-align: left; }");
+            content.append(".product-table td { padding: 12px; border-bottom: 1px solid #ddd; }");
+            content.append(".total-box { background: #e7f3ff; padding: 15px; border-radius: 8px; margin: 20px 0; }");
+            content.append(".footer { text-align: center; padding: 25px; font-size: 12px; color: #666; background: #f8f9fa; border-top: 1px solid #eee; }");
+            content.append("</style>");
+            content.append("</head>");
+            content.append("<body>");
+            content.append("<div class='container'>");
+            content.append("<div class='header'>");
+            content.append("<h1>THE AUTUMN</h1>");
+            content.append("<p>Hệ thống thời trang cao cấp</p>");
+            content.append("</div>");
+            content.append("<div class='content'>");
+
+            content.append("<h2 style='color: #E67E22; margin-top: 0;'>🎉 Đơn hàng của bạn đã được đặt thành công!</h2>");
+            content.append("<p>Cảm ơn bạn đã đặt hàng tại <strong>The Autumn</strong>. Chúng tôi sẽ xử lý đơn hàng của bạn trong thời gian sớm nhất.</p>");
+
+            // Thông tin đơn hàng
+            content.append("<div class='info-box'>");
+            content.append("<h3 style='color: #E67E22;'>📦 Thông tin đơn hàng</h3>");
+            content.append("<p><strong>Mã đơn hàng:</strong> ").append(hoaDon.getMaHoaDon()).append("</p>");
+            content.append("<p><strong>Ngày đặt:</strong> ").append(dateFormat.format(hoaDon.getNgayTao())).append("</p>");
+            content.append("<p><strong>Trạng thái:</strong> ").append(getTrangThaiText(hoaDon.getTrangThai())).append("</p>");
+            if (hoaDon.getKhachHang() != null) {
+                content.append("<p><strong>Khách hàng:</strong> ").append(hoaDon.getKhachHang().getHoTen()).append("</p>");
+                content.append("<p><strong>Số điện thoại:</strong> ").append(hoaDon.getKhachHang().getSdt()).append("</p>");
+            }
+            content.append("</div>");
+
+            // Thông tin giao hàng
+            if (hoaDon.getDiaChiKhachHang() != null && !hoaDon.getDiaChiKhachHang().isEmpty()) {
+                content.append("<div class='info-box'>");
+                content.append("<h3 style='color: #E67E22;'>📍 Địa chỉ giao hàng</h3>");
+                content.append("<p>").append(hoaDon.getDiaChiKhachHang()).append("</p>");
+                content.append("</div>");
+            }
+
+            // Chi tiết sản phẩm
+            if (hoaDon.getHoaDonChiTiets() != null && !hoaDon.getHoaDonChiTiets().isEmpty()) {
+                content.append("<h3 style='color: #E67E22;'>🛒 Chi tiết sản phẩm</h3>");
+                content.append("<table class='product-table'>");
+                content.append("<thead>");
+                content.append("<tr>");
+                content.append("<th>Sản phẩm</th>");
+                content.append("<th>Số lượng</th>");
+                content.append("<th>Đơn giá</th>");
+                content.append("<th>Thành tiền</th>");
+                content.append("</tr>");
+                content.append("</thead>");
+                content.append("<tbody>");
+
+                for (HoaDonChiTiet ct : hoaDon.getHoaDonChiTiets()) {
+                    content.append("<tr>");
+                    if (ct.getChiTietSanPham() != null && ct.getChiTietSanPham().getSanPham() != null) {
+                        content.append("<td>").append(ct.getChiTietSanPham().getSanPham().getTenSanPham()).append("</td>");
+                    } else {
+                        content.append("<td>Sản phẩm</td>");
+                    }
+                    content.append("<td>").append(ct.getSoLuong()).append("</td>");
+                    content.append("<td>").append(currencyFormat.format(ct.getGiaBan())).append("</td>");
+                    content.append("<td>").append(currencyFormat.format(ct.getThanhTien())).append("</td>");
+                    content.append("</tr>");
+                }
+
+                content.append("</tbody>");
+                content.append("</table>");
+            }
+
+            // Tổng thanh toán
+            content.append("<div class='total-box'>");
+            content.append("<h3 style='color: #E67E22;'>💰 Tổng thanh toán</h3>");
+            content.append("<p><strong>Tổng tiền sản phẩm:</strong> ").append(currencyFormat.format(hoaDon.getTongTien() != null ? hoaDon.getTongTien() : BigDecimal.ZERO)).append("</p>");
+            if (hoaDon.getPhiVanChuyen() != null && hoaDon.getPhiVanChuyen().compareTo(BigDecimal.ZERO) > 0) {
+                content.append("<p><strong>Phí vận chuyển:</strong> ").append(currencyFormat.format(hoaDon.getPhiVanChuyen())).append("</p>");
+            }
+            if (hoaDon.getPhieuGiamGia() != null) {
+                content.append("<p><strong>Giảm giá:</strong> -").append(currencyFormat.format(
+                        hoaDon.getTongTien() != null && hoaDon.getTongTienSauGiam() != null ?
+                                hoaDon.getTongTien().subtract(hoaDon.getTongTienSauGiam()) : BigDecimal.ZERO
+                )).append("</p>");
+            }
+            content.append("<p style='font-size: 18px; font-weight: bold; color: #E67E22;'>");
+            content.append("Tổng cộng: ").append(currencyFormat.format(hoaDon.getTongTienSauGiam() != null ? hoaDon.getTongTienSauGiam() : BigDecimal.ZERO));
+            content.append("</p>");
+            content.append("</div>");
+
+            // Thông tin thêm
+            content.append("<div class='info-box'>");
+            content.append("<h3 style='color: #E67E22;'>📞 Liên hệ hỗ trợ</h3>");
+            content.append("<p>Nếu bạn có bất kỳ câu hỏi nào về đơn hàng, vui lòng liên hệ:</p>");
+            content.append("<p>📧 Email: TheAutumnShop@gmail.com</p>");
+            content.append("<p>📞 Hotline: 0900 123 456</p>");
+            content.append("<p>🕒 Giờ làm việc: 8:00 - 22:00 hàng ngày</p>");
+            content.append("</div>");
+
+            content.append("<p style='margin-top: 30px;'>Chúng tôi sẽ gửi thông báo cập nhật trạng thái đơn hàng qua email.</p>");
+            content.append("<p>Trân trọng,<br><strong>Đội ngũ The Autumn</strong></p>");
+
+            content.append("</div>"); // end content
+            content.append("<div class='footer'>");
+            content.append("<p><strong>The Autumn - Hệ thống thời trang cao cấp</strong></p>");
+            content.append("<p>© 2025 The Autumn. All rights reserved.</p>");
+            content.append("</div>");
+            content.append("</div>"); // end container
+            content.append("</body>");
+            content.append("</html>");
+
+            // Gửi email
+            emailService.sendEmail(toEmail, subject, content.toString());
+
+            System.out.println("📧 Đã gửi email xác nhận đến: " + toEmail + " cho đơn hàng #" + hoaDon.getId());
+
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi gửi email xác nhận: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
 
     private BigDecimal getGiaSauGiamFromDotGiamGia(Integer idChiTietSanPham, BigDecimal giaGoc) {
@@ -1759,12 +2072,7 @@ public class HoaDonService {
                 .findByHoaDonIdAndChiTietSanPhamId(idHoaDon, idChiTietSanPham)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm trong hóa đơn"));
 
-        // Lấy thông tin sản phẩm để trả lại tồn kho
         ChiTietSanPham ctsp = chiTietToDelete.getChiTietSanPham();
-        int soLuongXoa = chiTietToDelete.getSoLuong();
-
-        // Trả lại tồn kho
-        ctsp.setSoLuongTon(ctsp.getSoLuongTon() + soLuongXoa);
         chiTietSanPhamRepository.save(ctsp);
 
         // Xóa chi tiết hóa đơn
@@ -1772,10 +2080,9 @@ public class HoaDonService {
 
         capNhatTongTienHoaDon(hoaDon);
 
-        // Ghi log lịch sử
         luuLichSu(hoaDon, "Xóa sản phẩm khỏi hóa đơn",
-                String.format("Đã xóa sản phẩm: %s - Số lượng: %d - Trả lại tồn kho: %d",
-                        ctsp.getSanPham().getTenSanPham(), soLuongXoa, soLuongXoa), null);
+                String.format("Đã xóa sản phẩm: %s ",
+                        ctsp.getSanPham().getTenSanPham()), null);
 
         System.out.println("✅ Đã xóa sản phẩm khỏi hóa đơn: " + ctsp.getSanPham().getTenSanPham());
     }
@@ -1832,7 +2139,6 @@ public class HoaDonService {
 
     @Transactional
     public HoanTienResponse hoanTienHoaDon(Integer idHoaDon, HoanTienRequest request) {
-
         try {
             // 1. Lấy hóa đơn
             HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
@@ -1846,32 +2152,38 @@ public class HoaDonService {
                 throw new RuntimeException("Không tìm thấy lịch sử thanh toán để hoàn tiền");
             }
 
-            // ⭐ SỬA LỖI QUAN TRỌNG: truyền đúng tham số
+            // 3. Kiểm tra điều kiện hoàn tiền
             validateHoanTienConditions(hoaDon, lichSu);
 
-            // 3. Lấy thanh toán gần nhất
+            // 4. Lấy thanh toán gần nhất
             LichSuThanhToan thanhToanGanNhat = lichSu.get(0);
 
-            // 4. Tạo bản ghi hoàn tiền
+            // 5. Tạo bản ghi hoàn tiền
             LichSuThanhToan lichSuHoanTien = createLichSuHoanTien(
                     hoaDon,
                     thanhToanGanNhat,
                     request
             );
 
-            // 5. Cập nhật trạng thái hóa đơn
+            // 6. Cập nhật số tiền đã thanh toán về 0
+            hoaDon.setSoTienThanhToan(BigDecimal.ZERO);
+
+            // 7. Cập nhật trạng thái hóa đơn
             updateTrangThaiHoaDonKhiHoanTien(hoaDon, request);
 
-            // 6. Trả hàng về kho khi hủy
+            // 8. Trả hàng về kho khi hủy
             if (request.getLyDoHoanTien() != null &&
                     request.getLyDoHoanTien().toLowerCase().contains("hủy")) {
-                returnProductsToInventory(hoaDon);
+                // returnProductsToInventory(hoaDon);
             }
 
-            // 7. Lưu lịch sử chi tiết
+            // 9. Lưu hóa đơn
+            hoaDonRepository.save(hoaDon);
+
+            // 10. Lưu lịch sử chi tiết
             luuLichSuHoanTien(hoaDon, lichSuHoanTien, request);
 
-            // 8. Gửi mail nếu có
+            // 11. Gửi mail nếu có
             sendEmailHoanTien(hoaDon, lichSuHoanTien);
 
             return new HoanTienResponse(
@@ -1889,43 +2201,57 @@ public class HoaDonService {
         }
     }
 
+    // Cập nhật phương thức validateHoanTienConditions để cho phép hoàn tiền khi soTienThanhToan > 0
     public void validateHoanTienConditions(HoaDon hoaDon, List<LichSuThanhToan> lichSuThanhToan) {
 
         boolean loaiHoaDonTaiQuay = Boolean.TRUE.equals(hoaDon.getLoaiHoaDon()); // true = tại quầy
         boolean loaiHoaDonOnline = Boolean.FALSE.equals(hoaDon.getLoaiHoaDon()); // false = online
 
-        // Lấy lịch sử thanh toán gần nhất
-        LichSuThanhToan lsMoiNhat =
-                lichSuThanhToan.isEmpty() ? null : lichSuThanhToan.get(0);
-
-        PhuongThucThanhToan pt = lsMoiNhat != null ? lsMoiNhat.getPhuongThucThanhToan() : null;
-        String maPT = pt != null ? pt.getMaPhuongThucThanhToan() : null;
-
         // ========== 1️⃣ KIỂM TRA LOẠI HÓA ĐƠN = TẠI QUẦY ==========
         if (loaiHoaDonTaiQuay) {
+            // Kiểm tra xem có số tiền đã thanh toán không
+            BigDecimal soTienDaThanhToan = hoaDon.getSoTienThanhToan() != null ?
+                    hoaDon.getSoTienThanhToan() : BigDecimal.ZERO;
 
-            // Với hóa đơn tại quầy: chỉ cần trạng thái là đã hủy là được hoàn
-            if (hoaDon.getTrangThai() == null || hoaDon.getTrangThai() != 4) {
-                throw new RuntimeException("Chỉ có thể hoàn tiền cho hóa đơn tại quầy đã hủy.");
+            if (soTienDaThanhToan.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new RuntimeException("Hóa đơn tại quầy chưa thanh toán, không thể hoàn tiền.");
             }
 
-            // Không kiểm tra đã thanh toán hay chưa
-            // Không kiểm tra phương thức thanh toán
-            // → return để bỏ qua kiểm tra online
+            // Kiểm tra trạng thái hóa đơn - cho phép hoàn tiền ngay cả khi chưa hủy
+            // nhưng phải có số tiền đã thanh toán
+            if (hoaDon.getTrangThai() == 0) {
+                throw new RuntimeException("Hóa đơn tại quầy đang ở trạng thái chờ xác nhận, chưa thể hoàn tiền.");
+            }
+
             return;
         }
 
         // ========== 2️⃣ KIỂM TRA HOÁ ĐƠN ONLINE ==========
         if (loaiHoaDonOnline) {
+            // Kiểm tra xem có số tiền đã thanh toán không
+            BigDecimal soTienDaThanhToan = BigDecimal.ZERO;
 
-            if (hoaDon.getTrangThai() != 4) {
-                throw new RuntimeException("Chỉ thể hoàn tiền cho hóa đơn online đã hủy.");
+            // Ưu tiên lấy từ trường soTienThanhToan
+            if (hoaDon.getSoTienThanhToan() != null) {
+                soTienDaThanhToan = hoaDon.getSoTienThanhToan();
+            } else {
+                // Hoặc tính từ lịch sử thanh toán
+                if (!lichSuThanhToan.isEmpty()) {
+                    soTienDaThanhToan = lichSuThanhToan.stream()
+                            .filter(ls -> ls.getTrangThai() != null && ls.getTrangThai())
+                            .map(LichSuThanhToan::getSoTien)
+                            .reduce(BigDecimal.ZERO, BigDecimal::add);
+                }
             }
 
-            // Nếu chưa có thanh toán → đơn COD chưa thanh toán → không hoàn tiền
-            if (lsMoiNhat == null || lsMoiNhat.getSoTien().compareTo(BigDecimal.ZERO) == 0) {
-                throw new RuntimeException("Đơn hàng chưa được thanh toán, không thể hoàn tiền.");
+            if (soTienDaThanhToan.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new RuntimeException("Đơn hàng online chưa được thanh toán, không thể hoàn tiền.");
             }
+
+            // Lấy lịch sử thanh toán gần nhất
+            LichSuThanhToan lsMoiNhat = lichSuThanhToan.isEmpty() ? null : lichSuThanhToan.get(0);
+            PhuongThucThanhToan pt = lsMoiNhat != null ? lsMoiNhat.getPhuongThucThanhToan() : null;
+            String maPT = pt != null ? pt.getMaPhuongThucThanhToan() : null;
 
             // Nếu là thanh toán COD (tiền mặt)
             if ("COD".equalsIgnoreCase(maPT) || "TIEN_MAT".equalsIgnoreCase(maPT)) {
@@ -1941,11 +2267,11 @@ public class HoaDonService {
                 .map(LichSuThanhToan::getSoTien)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        BigDecimal tongTien = hoaDon.getTongTienSauGiam() != null
-                ? hoaDon.getTongTienSauGiam()
-                : BigDecimal.ZERO;
+        // Lấy số tiền đã thanh toán hiện tại
+        BigDecimal soTienDaThanhToan = hoaDon.getSoTienThanhToan() != null ?
+                hoaDon.getSoTienThanhToan() : BigDecimal.ZERO;
 
-        if (tongTienDaHoan.compareTo(tongTien) >= 0) {
+        if (tongTienDaHoan.compareTo(soTienDaThanhToan) >= 0) {
             throw new RuntimeException("Hóa đơn đã hoàn đủ số tiền, không thể hoàn thêm.");
         }
 
@@ -1960,7 +2286,19 @@ public class HoaDonService {
         }
     }
 
+    // Cập nhật phương thức updateTrangThaiHoaDonKhiHoanTien để reset ngày thanh toán
+    private void updateTrangThaiHoaDonKhiHoanTien(HoaDon hoaDon, HoanTienRequest request) {
+        // Reset ngày thanh toán khi hoàn tiền
+        hoaDon.setNgayThanhToan(null);
 
+        // Cập nhật trạng thái nếu là hủy đơn
+        if (request.getLyDoHoanTien() != null &&
+                request.getLyDoHoanTien().toLowerCase().contains("hủy")) {
+            hoaDon.setTrangThai(4); // Trạng thái đã hủy
+        }
+    }
+
+    // Thêm phương thức để tạo ghi chú hoàn tiền chi tiết hơn
     private LichSuThanhToan createLichSuHoanTien(
             HoaDon hoaDon,
             LichSuThanhToan lichSuCu,
@@ -1970,20 +2308,31 @@ public class HoaDonService {
         lichSuHoanTien.setHoaDon(hoaDon);
         lichSuHoanTien.setPhuongThucThanhToan(lichSuCu.getPhuongThucThanhToan());
 
-        // Tính số tiền hoàn (có thể hoàn toàn bộ hoặc 1 phần)
-        BigDecimal soTienHoan = request.getSoTienHoan() != null
-                ? request.getSoTienHoan().min(lichSuCu.getSoTien())
-                : lichSuCu.getSoTien();
+        // Lấy số tiền đã thanh toán hiện tại
+        BigDecimal soTienDaThanhToan = hoaDon.getSoTienThanhToan() != null ?
+                hoaDon.getSoTienThanhToan() : lichSuCu.getSoTien();
+
+        // Số tiền hoàn có thể là toàn bộ hoặc một phần
+        BigDecimal soTienHoan;
+        if (request.getSoTienHoan() != null &&
+                request.getSoTienHoan().compareTo(BigDecimal.ZERO) > 0) {
+            // Hoàn một phần
+            soTienHoan = request.getSoTienHoan().min(soTienDaThanhToan);
+        } else {
+            // Hoàn toàn bộ
+            soTienHoan = soTienDaThanhToan;
+        }
 
         lichSuHoanTien.setSoTien(soTienHoan);
         lichSuHoanTien.setNgayThanhToan(new Date());
-        lichSuHoanTien.setTrangThai(true);
+        lichSuHoanTien.setTrangThai(false); // Đặt false vì đây là giao dịch hoàn tiền (không phải thanh toán)
 
         // Tạo ghi chú chi tiết
         String ghiChu = String.format(
-                "[HOÀN TIỀN] %s - Số tiền: %s - Phương thức: %s%s",
+                "[HOÀN TIỀN] %s - Số tiền hoàn: %s (Số tiền đã thanh toán trước đó: %s) - Phương thức: %s%s",
                 request.getLyDoHoanTien() != null ? request.getLyDoHoanTien() : "Hoàn tiền đơn hàng",
                 formatMoney(soTienHoan),
+                formatMoney(soTienDaThanhToan),
                 lichSuCu.getPhuongThucThanhToan().getTenPhuongThucThanhToan(),
                 request.getGhiChuBoSung() != null ? " - " + request.getGhiChuBoSung() : ""
         );
@@ -1991,21 +2340,17 @@ public class HoaDonService {
         lichSuHoanTien.setGhiChu(ghiChu);
 
         // Cập nhật ghi chú của lịch sử cũ
-        String ghiChuCuMoi = lichSuCu.getGhiChu() + " (Đã hoàn tiền ngày " + new SimpleDateFormat("dd/MM/yyyy").format(new Date()) + ")";
+        String ghiChuCuMoi = lichSuCu.getGhiChu() +
+                String.format(" (Đã hoàn tiền %s ngày %s)",
+                        formatMoney(soTienHoan),
+                        new SimpleDateFormat("dd/MM/yyyy").format(new Date()));
+
         lichSuCu.setGhiChu(ghiChuCuMoi);
         lichSuThanhToanRepository.save(lichSuCu);
 
         return lichSuThanhToanRepository.save(lichSuHoanTien);
     }
 
-    private void updateTrangThaiHoaDonKhiHoanTien(HoaDon hoaDon, HoanTienRequest request) {
-        // Chỉ cập nhật trạng thái nếu là hủy đơn
-        if (request.getLyDoHoanTien() != null &&
-                request.getLyDoHoanTien().toLowerCase().contains("hủy")) {
-            hoaDon.setTrangThai(4); // Trạng thái đã hủy
-            hoaDonRepository.save(hoaDon);
-        }
-    }
 
     private void luuLichSuHoanTien(HoaDon hoaDon, LichSuThanhToan lichSuHoanTien, HoanTienRequest request) {
         String moTa = String.format(
@@ -2019,7 +2364,245 @@ public class HoaDonService {
 
         luuLichSu(hoaDon, "Hoàn tiền hóa đơn", moTa, request.getIdNhanVienThucHien());
     }
+    // Thêm phương thức lấy thông tin thanh toán trước khi thực hiện
+    public ThanhToanResponse getThongTinThanhToan(Integer idHoaDon) {
+        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn ID: " + idHoaDon));
 
+        // Kiểm tra xem hóa đơn đã được thanh toán chưa
+        if (hoaDon.getTrangThai() == 3) {
+            throw new RuntimeException("Hóa đơn đã được thanh toán hoàn tất");
+        }
+
+        if (hoaDon.getTrangThai() == 4) {
+            throw new RuntimeException("Hóa đơn đã bị hủy, không thể thanh toán");
+        }
+
+        // Tính toán số tiền cần thanh toán
+        BigDecimal tongTienSauGiam = hoaDon.getTongTienSauGiam() != null ?
+                hoaDon.getTongTienSauGiam() : BigDecimal.ZERO;
+
+        // Lấy số tiền đã thanh toán
+        BigDecimal soTienDaThanhToan = BigDecimal.ZERO;
+        if (hoaDon.getSoTienThanhToan() != null) {
+            soTienDaThanhToan = hoaDon.getSoTienThanhToan();
+        } else {
+            // Hoặc tính từ lịch sử thanh toán
+            List<LichSuThanhToan> lichSu = lichSuThanhToanRepository
+                    .findByHoaDonIdOrderByNgayThanhToanDesc(idHoaDon);
+
+            if (!lichSu.isEmpty()) {
+                soTienDaThanhToan = lichSu.stream()
+                        .filter(ls -> ls.getTrangThai() != null && ls.getTrangThai())
+                        .map(LichSuThanhToan::getSoTien)
+                        .reduce(BigDecimal.ZERO, BigDecimal::add);
+            }
+        }
+
+        BigDecimal soTienCanThanhToan = tongTienSauGiam.subtract(soTienDaThanhToan);
+        if (soTienCanThanhToan.compareTo(BigDecimal.ZERO) < 0) {
+            soTienCanThanhToan = BigDecimal.ZERO;
+        }
+
+        ThanhToanResponse response = new ThanhToanResponse();
+        response.setSuccess(true);
+        response.setMessage("Lấy thông tin thanh toán thành công");
+        response.setIdHoaDon(hoaDon.getId());
+        response.setMaHoaDon(hoaDon.getMaHoaDon());
+        response.setSoTienCanThanhToanTruoc(soTienCanThanhToan);
+        response.setSoTienDaThanhToan(soTienDaThanhToan);
+        response.setSoTienConLai(soTienCanThanhToan); // Ban đầu chưa thanh toán, số tiền còn lại = số tiền cần thanh toán
+
+        // Lấy thông tin phương thức thanh toán hiện tại (nếu có)
+        if (hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()) {
+            HinhThucThanhToan hinhThuc = hoaDon.getHinhThucThanhToans().get(0);
+            if (hinhThuc.getPhuongThucThanhToan() != null) {
+                response.setIdPhuongThucThanhToan(hinhThuc.getPhuongThucThanhToan().getId());
+                response.setTenPhuongThucThanhToan(hinhThuc.getPhuongThucThanhToan().getTenPhuongThucThanhToan());
+            }
+        }
+
+        return response;
+    }
+
+    // Phương thức chính để cập nhật thanh toán
+    @Transactional
+    public ThanhToanResponse updateThanhToan(ThanhToanRequest request) {
+        try {
+            HoaDon hoaDon = hoaDonRepository.findById(request.getIdHoaDon())
+                    .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn ID: " + request.getIdHoaDon()));
+
+            // ==================== KIỂM TRA ĐIỀU KIỆN ====================
+            if (hoaDon.getTrangThai() == 3) {
+                throw new RuntimeException("Hóa đơn đã được thanh toán hoàn tất");
+            }
+
+            if (hoaDon.getTrangThai() == 4) {
+                throw new RuntimeException("Hóa đơn đã bị hủy, không thể thanh toán");
+            }
+
+            // Lấy thông tin phương thức thanh toán
+            PhuongThucThanhToan phuongThucThanhToan = null;
+            if (request.getIdPhuongThucThanhToan() != null) {
+                phuongThucThanhToan = phuongThucThanhToanRepository.findById(request.getIdPhuongThucThanhToan())
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy phương thức thanh toán ID: " + request.getIdPhuongThucThanhToan()));
+            }
+
+            // ==================== TÍNH TOÁN SỐ TIỀN ====================
+            BigDecimal tongTienSauGiam = hoaDon.getTongTienSauGiam() != null ?
+                    hoaDon.getTongTienSauGiam() : BigDecimal.ZERO;
+
+            // Lấy số tiền đã thanh toán trước đó
+            BigDecimal soTienDaThanhToanTruoc = BigDecimal.ZERO;
+            if (hoaDon.getSoTienThanhToan() != null) {
+                soTienDaThanhToanTruoc = hoaDon.getSoTienThanhToan();
+            }
+
+            // Số tiền thanh toán lần này
+            BigDecimal soTienThanhToanLanNay = request.getSoTienThanhToan() != null ?
+                    request.getSoTienThanhToan() : BigDecimal.ZERO;
+
+            if (soTienThanhToanLanNay.compareTo(BigDecimal.ZERO) <= 0) {
+                throw new RuntimeException("Số tiền thanh toán phải lớn hơn 0");
+            }
+
+            // Tổng số tiền đã thanh toán sau cập nhật
+            BigDecimal tongTienDaThanhToanSau = soTienDaThanhToanTruoc.add(soTienThanhToanLanNay);
+
+            // Kiểm tra không thanh toán quá tổng tiền
+            if (tongTienDaThanhToanSau.compareTo(tongTienSauGiam) > 0) {
+                throw new RuntimeException(
+                        String.format("Số tiền thanh toán vượt quá tổng tiền. Tổng tiền: %s, Đã thanh toán: %s, Thanh toán thêm: %s",
+                                formatMoney(tongTienSauGiam),
+                                formatMoney(soTienDaThanhToanTruoc),
+                                formatMoney(soTienThanhToanLanNay)
+                        )
+                );
+            }
+
+            // Tính số tiền còn lại sau khi thanh toán
+            BigDecimal soTienConLaiSau = tongTienSauGiam.subtract(tongTienDaThanhToanSau);
+
+            // ==================== CẬP NHẬT HÓA ĐƠN ====================
+            // Cập nhật số tiền đã thanh toán
+            hoaDon.setSoTienThanhToan(tongTienDaThanhToanSau);
+
+            // Nếu thanh toán đủ -> cập nhật trạng thái
+            if (soTienConLaiSau.compareTo(BigDecimal.ZERO) == 0) {
+                hoaDon.setNgayThanhToan(new Date());
+            }
+
+            hoaDon.setNgaySua(new Date());
+            hoaDonRepository.save(hoaDon);
+
+            // ==================== TẠO LỊCH SỬ THANH TOÁN ====================
+            LichSuThanhToan lichSuThanhToan = new LichSuThanhToan();
+            lichSuThanhToan.setHoaDon(hoaDon);
+            lichSuThanhToan.setPhuongThucThanhToan(phuongThucThanhToan);
+            lichSuThanhToan.setSoTien(soTienThanhToanLanNay);
+            lichSuThanhToan.setNgayThanhToan(new Date());
+            lichSuThanhToan.setTrangThai(true); // Đã thanh toán
+
+            String ghiChu = String.format("Thanh toán %s số tiền: %s%s",
+                    soTienConLaiSau.compareTo(BigDecimal.ZERO) == 0 ? "đủ" : "một phần",
+                    formatMoney(soTienThanhToanLanNay),
+                    request.getGhiChu() != null ? " - " + request.getGhiChu() : ""
+            );
+
+            if (request.getMaGiaoDich() != null && !request.getMaGiaoDich().isEmpty()) {
+                ghiChu += String.format(" - Mã giao dịch: %s", request.getMaGiaoDich());
+                lichSuThanhToan.setMaGiaoDich(request.getMaGiaoDich());
+            }
+
+            lichSuThanhToan.setGhiChu(ghiChu);
+            lichSuThanhToanRepository.save(lichSuThanhToan);
+
+            // ==================== CẬP NHẬT HÌNH THỨC THANH TOÁN ====================
+            // Nếu có phương thức thanh toán mới, cập nhật hoặc tạo mới
+            if (phuongThucThanhToan != null) {
+                HinhThucThanhToan hinhThucThanhToan;
+
+                if (hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()) {
+                    // Cập nhật phương thức thanh toán hiện tại
+                    hinhThucThanhToan = hoaDon.getHinhThucThanhToans().get(0);
+                    hinhThucThanhToan.setPhuongThucThanhToan(phuongThucThanhToan);
+                } else {
+                    // Tạo mới hình thức thanh toán
+                    hinhThucThanhToan = new HinhThucThanhToan();
+                    hinhThucThanhToan.setHoaDon(hoaDon);
+                    hinhThucThanhToan.setPhuongThucThanhToan(phuongThucThanhToan);
+                    hinhThucThanhToan.setTrangThai(true);
+                }
+
+                hinhThucThanhToanRepository.save(hinhThucThanhToan);
+            }
+
+            // ==================== GHI LỊCH SỬ HÓA ĐƠN ====================
+            String moTaLichSu = String.format("Thanh toán %s số tiền: %s. Đã thanh toán: %s/%s, Còn lại: %s",
+                    soTienConLaiSau.compareTo(BigDecimal.ZERO) == 0 ? "đủ" : "một phần",
+                    formatMoney(soTienThanhToanLanNay),
+                    formatMoney(tongTienDaThanhToanSau),
+                    formatMoney(tongTienSauGiam),
+                    formatMoney(soTienConLaiSau)
+            );
+
+            luuLichSu(hoaDon, "Cập nhật thanh toán", moTaLichSu, request.getIdNhanVienThucHien());
+
+            // ==================== TRẢ VỀ KẾT QUẢ ====================
+            ThanhToanResponse response = new ThanhToanResponse();
+            response.setSuccess(true);
+            response.setMessage(
+                    soTienConLaiSau.compareTo(BigDecimal.ZERO) == 0 ?
+                            "Thanh toán thành công toàn bộ hóa đơn" :
+                            String.format("Thanh toán thành công một phần. Đã thanh toán: %s, Còn lại: %s",
+                                    formatMoney(soTienThanhToanLanNay),
+                                    formatMoney(soTienConLaiSau))
+            );
+            response.setIdHoaDon(hoaDon.getId());
+            response.setMaHoaDon(hoaDon.getMaHoaDon());
+            response.setSoTienCanThanhToanTruoc(tongTienSauGiam.subtract(soTienDaThanhToanTruoc));
+            response.setSoTienDaThanhToan(soTienThanhToanLanNay);
+            response.setSoTienConLai(soTienConLaiSau);
+            response.setNgayThanhToan(new Date());
+
+            if (phuongThucThanhToan != null) {
+                response.setIdPhuongThucThanhToan(phuongThucThanhToan.getId());
+                response.setTenPhuongThucThanhToan(phuongThucThanhToan.getTenPhuongThucThanhToan());
+            }
+
+            response.setMaGiaoDich(request.getMaGiaoDich());
+            response.setGhiChu(ghiChu);
+
+            System.out.println("✅ Đã cập nhật thanh toán cho hóa đơn #" + hoaDon.getMaHoaDon());
+
+            return response;
+
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi khi cập nhật thanh toán: " + e.getMessage());
+            throw new RuntimeException("Không thể cập nhật thanh toán: " + e.getMessage());
+        }
+    }
+
+    // Phương thức thanh toán toàn bộ (tiện ích)
+    @Transactional
+    public ThanhToanResponse thanhToanToanBo(Integer idHoaDon, Integer idPhuongThucThanhToan, Integer idNhanVienThucHien) {
+        HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn ID: " + idHoaDon));
+
+        // Lấy thông tin thanh toán để biết số tiền cần thanh toán
+        ThanhToanResponse thongTin = getThongTinThanhToan(idHoaDon);
+        BigDecimal soTienCanThanhToan = thongTin.getSoTienCanThanhToanTruoc();
+
+        // Tạo request thanh toán toàn bộ
+        ThanhToanRequest request = new ThanhToanRequest();
+        request.setIdHoaDon(idHoaDon);
+        request.setSoTienThanhToan(soTienCanThanhToan);
+        request.setIdPhuongThucThanhToan(idPhuongThucThanhToan);
+        request.setIdNhanVienThucHien(idNhanVienThucHien);
+        request.setGhiChu("Thanh toán toàn bộ hóa đơn");
+
+        return updateThanhToan(request);
+    }
     private void sendEmailHoanTien(HoaDon hoaDon, LichSuThanhToan lichSuHoanTien) {
         if (hoaDon.getKhachHang() != null &&
                 hoaDon.getKhachHang().getEmail() != null &&
@@ -2063,7 +2646,57 @@ public class HoaDonService {
             }
         }
     }
+    private boolean kiemTraDaThanhToan(HoaDon hoaDon) {
+        // Kiểm tra xem hóa đơn đã thanh toán chưa
+        // Dựa vào trạng thái hoặc lịch sử thanh toán
+        if (hoaDon.getTrangThai() != null) {
+            // Trạng thái 3 (đã hoàn thành) thường là đã thanh toán
+            return hoaDon.getTrangThai() == 3;
+        }
 
+        // Hoặc kiểm tra lịch sử thanh toán
+        List<LichSuThanhToan> lichSu = lichSuThanhToanRepository
+                .findByHoaDonIdOrderByNgayThanhToanDesc(hoaDon.getId());
+
+        if (!lichSu.isEmpty()) {
+            LichSuThanhToan ls = lichSu.get(0);
+            return ls.getTrangThai() != null && ls.getTrangThai();
+        }
+
+        return false;
+    }
+
+
+
+    private BigDecimal tinhPhiPhuDoiDiaChi(HoaDon hoaDon) {
+        // Logic tính phụ phí đổi địa chỉ
+        // Có thể dựa vào khoảng cách, vùng miền, etc.
+
+        // Ví dụ: phí cố định 30,000 VND
+        return BigDecimal.valueOf(30000);
+    }
+
+    private BigDecimal tinhPhiPhuThemSanPham(HoaDon hoaDon, UpdateHoaDonRequest request) {
+        // Logic tính phụ phí thêm sản phẩm
+        // Ví dụ: mỗi sản phẩm thêm mới tính 10,000 VND
+
+        if (request.getChiTietSanPhams() == null) {
+            return BigDecimal.ZERO;
+        }
+
+        // Đếm số sản phẩm thêm mới
+        List<HoaDonChiTiet> chiTietHienTai = hoaDonChiTietRepository.findByHoaDonId(hoaDon.getId());
+        Set<Integer> sanPhamHienTai = chiTietHienTai.stream()
+                .map(ct -> ct.getChiTietSanPham().getId())
+                .collect(Collectors.toSet());
+
+        long soSanPhamThemMoi = request.getChiTietSanPhams().stream()
+                .filter(sp -> !sanPhamHienTai.contains(sp.getIdChiTietSanPham()))
+                .count();
+
+        // Phí 10,000 VND cho mỗi sản phẩm thêm mới
+        return BigDecimal.valueOf(soSanPhamThemMoi * 10000);
+    }
 }
 
 

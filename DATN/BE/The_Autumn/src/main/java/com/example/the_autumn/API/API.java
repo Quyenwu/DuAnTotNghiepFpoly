@@ -17,6 +17,7 @@ import javax.net.ssl.X509TrustManager;
 
 public class API {
 
+
     private static void disableSSLVerification() throws Exception {
         TrustManager[] trustAllCerts = new TrustManager[]{
                 new X509TrustManager() {

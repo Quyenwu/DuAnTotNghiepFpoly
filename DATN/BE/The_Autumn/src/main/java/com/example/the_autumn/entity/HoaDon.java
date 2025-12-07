@@ -81,6 +81,20 @@ public class HoaDon {
     @Column(name = "trang_thai")
     private Integer trangThai;
 
+    @Column(name = "phi_phu")
+    private BigDecimal phiPhu = BigDecimal.ZERO;
+
+    @Column(name = "phi_phu_moi")
+    private BigDecimal phiPhuMoi = BigDecimal.ZERO;
+
+    @Column(name = "so_tien_thanh_toan")
+    private BigDecimal soTienThanhToan;
+
+    @Column(name = "so_tien_can_thanh_toan")
+    private BigDecimal soTienCanThanhToan;
+
+    @Column(name = "phi_phu_details")
+    private String phiPhuDetails;
     @OneToMany(mappedBy = "hoaDon", fetch = FetchType.LAZY,cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LichSuThanhToan> lichSuThanhToans;
 
