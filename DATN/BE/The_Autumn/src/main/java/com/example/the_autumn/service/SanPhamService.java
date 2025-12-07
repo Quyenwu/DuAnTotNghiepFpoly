@@ -62,14 +62,17 @@ public class SanPhamService {
         Page<SanPhamResponse> spRes = pageSp.map(SanPhamResponse::new);
         return new PageableObject<>(spRes);
     }
-    public List<SanPhamResponse> getTopSanPhamBanChay() {
-        List<SanPham> sanPhams = spRepo.findAllSanPhamBanChay();
+    public List<SanPhamResponse> getTopSanPhamBanChay(String timeRange) {
+        // Lấy tất cả sản phẩm active với hóa đơn
+        List<SanPham> allSanPhams = spRepo.findAllSanPhamActiveWithHoaDon();
 
-        // Tính tongSoLuongDaMua cho mỗi sp
-        List<SanPhamResponse> responses = sanPhams.stream().map(sp -> new SanPhamResponse(sp))
-                .sorted((a, b) -> b.getTongSoLuongDaMua().compareTo(a.getTongSoLuongDaMua())) // sắp xếp giảm dần
-                .limit(20) // top 20
-                .toList();
+        // Map sang SanPhamResponse với timeRange
+        List<SanPhamResponse> responses = allSanPhams.stream()
+                .map(sp -> new SanPhamResponse(sp, timeRange))
+                .filter(sp -> sp.getTongSoLuongDaMua() > 0) // Chỉ lấy sản phẩm đã bán trong khoảng thời gian
+                .sorted((a, b) -> b.getTongSoLuongDaMua().compareTo(a.getTongSoLuongDaMua()))
+                .limit(20)
+                .collect(Collectors.toList());
 
         return responses;
     }

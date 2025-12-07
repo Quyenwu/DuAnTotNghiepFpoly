@@ -145,9 +145,14 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
 
     @Query("""
     SELECT sp FROM SanPham sp
+    LEFT JOIN FETCH sp.chiTietSanPham ct
+    LEFT JOIN FETCH ct.hoaDonChiTiets hdct
+    LEFT JOIN FETCH hdct.hoaDon hd
     WHERE sp.trangThai = true
-""")
-    List<SanPham> findAllSanPhamBanChay();
+    AND ct.trangThai = true
+    ORDER BY sp.id
+    """)
+    List<SanPham> findAllSanPhamActiveWithHoaDon();
 
 }
 
