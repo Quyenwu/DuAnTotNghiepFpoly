@@ -1,6 +1,7 @@
 package com.example.the_autumn.repository;
 
 import com.example.the_autumn.dto.SanPhamTrangChuProjection;
+import com.example.the_autumn.entity.HoaDonChiTiet;
 import com.example.the_autumn.entity.SanPham;
 
 import com.example.the_autumn.model.response.SanPhamResponse;
@@ -146,13 +147,21 @@ public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
     @Query("""
     SELECT sp FROM SanPham sp
     LEFT JOIN FETCH sp.chiTietSanPham ct
-    LEFT JOIN FETCH ct.hoaDonChiTiets hdct
-    LEFT JOIN FETCH hdct.hoaDon hd
     WHERE sp.trangThai = true
     AND ct.trangThai = true
     ORDER BY sp.id
     """)
-    List<SanPham> findAllSanPhamActiveWithHoaDon();
+    List<SanPham> findAllSanPhamActive();
+
+    @Query("""
+    SELECT hdct FROM HoaDonChiTiet hdct
+    LEFT JOIN FETCH hdct.chiTietSanPham ct
+    LEFT JOIN FETCH hdct.hoaDon hd
+    WHERE ct.id IN :ctspIds
+    AND hd.trangThai = 3
+    ORDER BY hd.ngayThanhToan DESC
+    """)
+    List<HoaDonChiTiet> findHoaDonChiTietsByCtspIds(@Param("ctspIds") List<Integer> ctspIds);
 
 }
 
