@@ -19,10 +19,7 @@ import org.springframework.expression.ExpressionException;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -49,6 +46,9 @@ public class SanPhamService {
     @Autowired
     private KieuDangRepository kdRepo;
 
+    @Autowired
+    private HoaDonChiTietRepository hdctRepo;
+
     public List<SanPhamResponse> findAll(){
         return spRepo.findAll().stream()
                 .sorted((a, b) -> b.getNgayTao().compareTo(a.getNgayTao()))
@@ -62,13 +62,61 @@ public class SanPhamService {
         Page<SanPhamResponse> spRes = pageSp.map(SanPhamResponse::new);
         return new PageableObject<>(spRes);
     }
-    public List<SanPhamResponse> getTopSanPhamBanChay(String timeRange) {
-        // Lấy tất cả sản phẩm active với hóa đơn
-        List<SanPham> allSanPhams = spRepo.findAllSanPhamActiveWithHoaDon();
 
-        // Map sang SanPhamResponse với timeRange
+    public List<SanPhamResponse> getTopSanPhamBanChay(String timeRange) {
+        // Lấy tất cả sản phẩm active
+        List<SanPham> allSanPhams = spRepo.findAllSanPhamActive();
+
+        // Tạo một map để lưu số lượng đã bán theo từng chi tiết sản phẩm
+        Map<Integer, Map<Integer, Integer>> soldQuantityByTimeRange = new HashMap<>();
+
+        // Lấy tất cả chi tiết sản phẩm ID
+        List<Integer> ctspIds = allSanPhams.stream()
+                .flatMap(sp -> sp.getChiTietSanPham().stream())
+                .map(ChiTietSanPham::getId)
+                .collect(Collectors.toList());
+
+        // Lấy tất cả hóa đơn chi tiết liên quan
+        List<HoaDonChiTiet> hdctList = spRepo.findHoaDonChiTietsByCtspIds(ctspIds);
+
+        // Tính toán số lượng đã bán theo timeRange
+        for (HoaDonChiTiet hdct : hdctList) {
+            if (hdct.getChiTietSanPham() != null && hdct.getHoaDon() != null) {
+                Integer ctspId = hdct.getChiTietSanPham().getId();
+                Date ngayThanhToan = hdct.getHoaDon().getNgayThanhToan();
+                Integer soLuong = hdct.getSoLuong();
+
+                // Kiểm tra timeRange
+                boolean matchesTimeRange = checkTimeRange(ngayThanhToan, timeRange);
+
+                if (matchesTimeRange) {
+                    soldQuantityByTimeRange
+                            .computeIfAbsent(ctspId, k -> new HashMap<>())
+                            .put(hdct.getId(), soLuong);
+                }
+            }
+        }
+
+        // Map sang SanPhamResponse với timeRange và số lượng đã bán
         List<SanPhamResponse> responses = allSanPhams.stream()
-                .map(sp -> new SanPhamResponse(sp, timeRange))
+                .map(sp -> {
+                    SanPhamResponse response = new SanPhamResponse(sp, timeRange);
+
+                    // Tính tổng số lượng đã bán cho sản phẩm này
+                    int totalSold = sp.getChiTietSanPham().stream()
+                            .mapToInt(ctsp ->
+                                    soldQuantityByTimeRange.getOrDefault(ctsp.getId(), new HashMap<>())
+                                            .values().stream()
+                                            .mapToInt(Integer::intValue)
+                                            .sum()
+                            )
+                            .sum();
+
+                    // Cập nhật tongSoLuongDaMua
+                    response.setTongSoLuongDaMua(totalSold);
+
+                    return response;
+                })
                 .filter(sp -> sp.getTongSoLuongDaMua() > 0) // Chỉ lấy sản phẩm đã bán trong khoảng thời gian
                 .sorted((a, b) -> b.getTongSoLuongDaMua().compareTo(a.getTongSoLuongDaMua()))
                 .limit(20)
@@ -76,6 +124,33 @@ public class SanPhamService {
 
         return responses;
     }
+
+    private boolean checkTimeRange(Date ngayThanhToan, String timeRange) {
+        if (ngayThanhToan == null) return false;
+
+        Calendar calNgayThanhToan = Calendar.getInstance();
+        calNgayThanhToan.setTime(ngayThanhToan);
+
+        Calendar calNow = Calendar.getInstance();
+
+        switch (timeRange) {
+            case "day": // Hôm nay
+                return calNgayThanhToan.get(Calendar.YEAR) == calNow.get(Calendar.YEAR) &&
+                        calNgayThanhToan.get(Calendar.MONTH) == calNow.get(Calendar.MONTH) &&
+                        calNgayThanhToan.get(Calendar.DAY_OF_MONTH) == calNow.get(Calendar.DAY_OF_MONTH);
+            case "week": // Tuần này
+                return calNgayThanhToan.get(Calendar.YEAR) == calNow.get(Calendar.YEAR) &&
+                        calNgayThanhToan.get(Calendar.WEEK_OF_YEAR) == calNow.get(Calendar.WEEK_OF_YEAR);
+            case "month": // Tháng này
+                return calNgayThanhToan.get(Calendar.YEAR) == calNow.get(Calendar.YEAR) &&
+                        calNgayThanhToan.get(Calendar.MONTH) == calNow.get(Calendar.MONTH);
+            case "year": // Năm nay
+                return calNgayThanhToan.get(Calendar.YEAR) == calNow.get(Calendar.YEAR);
+            default: // "all" - Tất cả thời gian
+                return true;
+        }
+    }
+
     public PageableObject<SanPhamResponse> filterSanPhamWithPaging(
             Integer pageNo,
             Integer pageSize,
@@ -339,7 +414,7 @@ public class SanPhamService {
                                 }
                                 return ktDTO;
                             })
-                            .sorted(Comparator.comparing(KichThuocVariantDTO::getTenKichThuoc)) // Sắp xếp size
+                            .sorted(Comparator.comparing(KichThuocVariantDTO::getTenKichThuoc))
                             .collect(Collectors.toList());
 
                     mauSacDTO.setKichThuocList(kichThuocList);
