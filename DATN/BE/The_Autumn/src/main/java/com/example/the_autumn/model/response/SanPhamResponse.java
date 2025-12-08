@@ -119,6 +119,10 @@ public class SanPhamResponse {
         }
     }
 
+    public SanPhamResponse() {
+
+    }
+
     // Hàm tính tổng số lượng đã mua theo timeRange
     private Integer calculateTongSoLuongDaMua(SanPham sp, String timeRange) {
         if (sp.getChiTietSanPham() == null || sp.getChiTietSanPham().isEmpty()) {
