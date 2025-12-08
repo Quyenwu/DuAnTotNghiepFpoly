@@ -602,6 +602,8 @@ public class HoaDonService {
             // Trả tồn kho khi hủy đơn hàng (chuyển sang trạng thái 4)
             if (newStatus == 4 ) {
                 handleOrderCancellation(hoaDon, false);
+            }if (newStatus == 3) {
+                handleOrderCompletion(hoaDon);
             }
         }
 
@@ -2602,6 +2604,93 @@ public class HoaDonService {
         request.setGhiChu("Thanh toán toàn bộ hóa đơn");
 
         return updateThanhToan(request);
+    }
+    private void handleOrderCompletion(HoaDon hoaDon) {
+        System.out.println("✅ Xử lý đơn hàng hoàn thành #" + hoaDon.getMaHoaDon());
+
+        // 1. Tính toán số tiền chưa thanh toán
+        BigDecimal tongTienSauGiam = hoaDon.getTongTienSauGiam() != null ?
+                hoaDon.getTongTienSauGiam() : BigDecimal.ZERO;
+
+        // Lấy số tiền đã thanh toán hiện tại
+        BigDecimal soTienDaThanhToan = hoaDon.getSoTienThanhToan() != null ?
+                hoaDon.getSoTienThanhToan() : BigDecimal.ZERO;
+
+        // Tính số tiền chưa thanh toán
+        BigDecimal soTienChuaThanhToan = tongTienSauGiam.subtract(soTienDaThanhToan);
+
+        if (soTienChuaThanhToan.compareTo(BigDecimal.ZERO) > 0) {
+            // 2. Cập nhật số tiền đã thanh toán = tổng tiền sau giảm
+            BigDecimal soTienMoi = soTienDaThanhToan.add(soTienChuaThanhToan);
+            hoaDon.setSoTienThanhToan(soTienMoi);
+            hoaDon.setSoTienCanThanhToan(BigDecimal.ZERO);
+            hoaDon.setNgayThanhToan(new Date());
+
+            System.out.println("💰 Cập nhật số tiền đã thanh toán: " +
+                    formatMoney(soTienDaThanhToan) + " → " + formatMoney(soTienMoi));
+
+            // 3. Cập nhật lịch sử thanh toán
+            updatePaymentHistoryWhenCompleted(hoaDon, soTienChuaThanhToan);
+
+            // 4. Ghi log lịch sử
+            luuLichSu(hoaDon, "Hoàn thành đơn hàng",
+                    String.format("Đã hoàn thành đơn hàng. Cập nhật số tiền đã thanh toán: %s → %s. Đã thanh toán thêm: %s",
+                            formatMoney(soTienDaThanhToan),
+                            formatMoney(soTienMoi),
+                            formatMoney(soTienChuaThanhToan)), null);
+        } else {
+            System.out.println("ℹ️ Đơn hàng đã thanh toán đủ, không cần cập nhật");
+        }
+    }
+    private void updatePaymentHistoryWhenCompleted(HoaDon hoaDon, BigDecimal soTienChuaThanhToan) {
+        try {
+            // Lấy phương thức thanh toán từ hóa đơn
+            PhuongThucThanhToan phuongThuc = null;
+            if (hoaDon.getHinhThucThanhToans() != null && !hoaDon.getHinhThucThanhToans().isEmpty()) {
+                phuongThuc = hoaDon.getHinhThucThanhToans().get(0).getPhuongThucThanhToan();
+            } else {
+                // Nếu không có, lấy phương thức mặc định (Tiền mặt)
+                phuongThuc = phuongThucThanhToanRepository.findByTrangThai(true)
+                        .stream()
+                        .filter(pt -> pt.getTenPhuongThucThanhToan().toLowerCase().contains("tiền mặt"))
+                        .findFirst()
+                        .orElseThrow(() -> new RuntimeException("Không tìm thấy phương thức thanh toán mặc định"));
+            }
+
+            // Tạo lịch sử thanh toán mới cho số tiền chưa thanh toán
+            LichSuThanhToan lichSuThanhToan = new LichSuThanhToan();
+            lichSuThanhToan.setHoaDon(hoaDon);
+            lichSuThanhToan.setPhuongThucThanhToan(phuongThuc);
+            lichSuThanhToan.setSoTien(soTienChuaThanhToan);
+            lichSuThanhToan.setNgayThanhToan(new Date());
+            lichSuThanhToan.setTrangThai(true);
+
+            // Xác định ghi chú dựa trên loại hóa đơn
+            String ghiChu;
+            if (Boolean.TRUE.equals(hoaDon.getLoaiHoaDon())) {
+                // Hóa đơn tại quầy
+                ghiChu = String.format("Thanh toán nốt khi hoàn thành đơn hàng tại quầy - Số tiền: %s",
+                        formatMoney(soTienChuaThanhToan));
+            } else {
+                // Hóa đơn online
+                if (phuongThuc.getTenPhuongThucThanhToan().toLowerCase().contains("tiền mặt")) {
+                    ghiChu = String.format("Thanh toán COD khi nhận hàng - Số tiền: %s",
+                            formatMoney(soTienChuaThanhToan));
+                } else {
+                    ghiChu = String.format("Thanh toán hoàn tất khi giao hàng thành công - Số tiền: %s",
+                            formatMoney(soTienChuaThanhToan));
+                }
+            }
+
+            lichSuThanhToan.setGhiChu(ghiChu);
+            lichSuThanhToanRepository.save(lichSuThanhToan);
+
+            System.out.println("📝 Đã tạo lịch sử thanh toán khi hoàn thành đơn hàng: " + ghiChu);
+
+        } catch (Exception e) {
+            System.err.println("❌ Lỗi khi cập nhật lịch sử thanh toán khi hoàn thành: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
     private void sendEmailHoanTien(HoaDon hoaDon, LichSuThanhToan lichSuHoanTien) {
         if (hoaDon.getKhachHang() != null &&
