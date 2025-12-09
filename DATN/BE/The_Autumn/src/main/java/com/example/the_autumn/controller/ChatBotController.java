@@ -21,7 +21,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/chatbot")
-@CrossOrigin(origins = {"http://localhost:5173","http://localhost:5174/" , "http://localhost:3000","http://192.203.4.118:5173"})
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:5174/", "http://localhost:3000", "http://192.203.4.118:5173"})
 public class ChatBotController {
 
     private final AIService aiService;
@@ -127,6 +127,7 @@ public class ChatBotController {
 
         return ResponseEntity.ok(Map.of("message", "Đã gửi tin nhắn nhân viên thành công"));
     }
+
     @GetMapping("/rooms")
     public ResponseEntity<?> getAllRooms() {
         List<PhongChat> rooms = phongRepo.findAll();
@@ -167,6 +168,7 @@ public class ChatBotController {
                 "khachHang", kh.getHoTen()
         ));
     }
+
     @GetMapping("/rooms/guest")
     public ResponseEntity<?> getRoomForGuest() {
         // Tìm phòng cho khách lẻ đã tồn tại
@@ -213,7 +215,7 @@ public class ChatBotController {
 
         return ResponseEntity.ok(Map.of(
                 "roomId", room.getId(),
-                "khachHang", room.getKhachHang().getHoTen(),
+                "khachHang", room.getKhachHang() != null ? room.getKhachHang().getHoTen() : "Khách lẻ",
                 "nhanVien", nv.getHoTen(),
                 "loai", room.getLoai()
         ));
@@ -232,7 +234,7 @@ public class ChatBotController {
         if (type == 1) {
             simp.convertAndSend("/topic/staff/notifications", Map.of(
                     "roomId", room.getId(),
-                    "khachHang", room.getKhachHang().getHoTen(),
+                    "khachHang", room.getKhachHang() != null ? room.getKhachHang().getHoTen() : "Khách lẻ",
                     "message", "Khách cần hỗ trợ"
             ));
         }
@@ -242,6 +244,7 @@ public class ChatBotController {
                 "loai", room.getLoai()
         ));
     }
+
     @PostMapping("/rooms/leave")
     public ResponseEntity<?> leaveRoom(@RequestParam Integer roomId, @RequestParam Integer idNhanVien) {
         PhongChat room = phongRepo.findById(roomId)
