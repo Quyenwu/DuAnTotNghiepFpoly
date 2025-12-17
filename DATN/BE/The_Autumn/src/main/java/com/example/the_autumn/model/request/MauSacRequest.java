@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Getter
 @Setter
 public class MauSacRequest {
@@ -12,6 +14,7 @@ public class MauSacRequest {
     private String maMauSac;
     @NotBlank(message = "Tên màu sắc không được để trống")
     private String tenMauSac;
+    private Date ngayTao;
     private String maHex;
     private Boolean trangThai;
 }

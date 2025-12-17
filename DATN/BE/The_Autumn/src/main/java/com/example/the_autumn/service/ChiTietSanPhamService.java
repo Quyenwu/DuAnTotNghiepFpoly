@@ -5,6 +5,7 @@ import com.example.the_autumn.model.request.AddVariantRequest;
 import com.example.the_autumn.model.request.TaoBienTheRequest;
 import com.example.the_autumn.model.request.UpdateChiTietSanPhamRequest;
 import com.example.the_autumn.model.response.ChiTietSanPhamResponse;
+import com.example.the_autumn.model.response.MauSacResponse;
 import com.example.the_autumn.model.response.PageableObject;
 import com.example.the_autumn.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,7 +58,10 @@ public class ChiTietSanPhamService {
     private KieuDangRepository kdRepo;
 
     public List<ChiTietSanPhamResponse> findAll() {
-        return ctspRepo.findAll().stream().map(ChiTietSanPhamResponse::new).toList();
+        return ctspRepo.findAll().stream()
+                .sorted((a, b) -> b.getNgayTao().compareTo(a.getNgayTao()))
+                .map(ChiTietSanPhamResponse::new)
+                .collect(Collectors.toList());
     }
 
     public PageableObject<ChiTietSanPhamResponse> phanTrang(Integer pageNo, Integer pageSize) {

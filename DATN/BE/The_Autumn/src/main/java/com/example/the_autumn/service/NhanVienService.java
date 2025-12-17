@@ -115,7 +115,6 @@ public class NhanVienService {
         nv.setSdt(request.getSdt());
         nv.setDiaChi(request.getDiaChi());
         nv.setEmail(request.getEmail());
-        nv.setCccd(request.getCccd());
         nv.setNgaySinh(request.getNgaySinh());
         nv.setHinhAnh(request.getHinhAnh());
         nv.setTrangThai(request.getTrangThai());

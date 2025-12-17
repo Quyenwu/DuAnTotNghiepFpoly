@@ -3,11 +3,13 @@ package com.example.the_autumn.service;
 import com.example.the_autumn.entity.MauSac;
 import com.example.the_autumn.model.request.MauSacRequest;
 import com.example.the_autumn.model.response.MauSacResponse;
+import com.example.the_autumn.model.response.PhieuGiamGiaRespone;
 import com.example.the_autumn.repository.MauSacRepository;
 import com.example.the_autumn.util.MapperUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,12 +22,14 @@ public class MauSacService {
     public List<MauSacResponse> findAll() {
         return mauSacRepo.findAll()
                 .stream()
+                .sorted((a, b) -> b.getNgayTao().compareTo(a.getNgayTao()))
                 .map(MauSacResponse::new)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     public void add(MauSacRequest request) {
         MauSac ms = MapperUtils.map(request, MauSac.class);
+        ms.setNgayTao(new Date());
         ms.setTrangThai(true);
         mauSacRepo.save(ms);
     }
