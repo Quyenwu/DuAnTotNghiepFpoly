@@ -65,9 +65,6 @@ public class NhanVien {
     @Column(name = "dia_chi", length = 500)
     private String diaChi;
 
-    @Column(name = "cccd")
-    @Size(min = 12, max = 15, message = "CCCD phải có từ 12 đến 15 ký tự")
-    private String cccd;
 
     @Column(name = "hinh_anh", length = 254)
     private String hinhAnh;
