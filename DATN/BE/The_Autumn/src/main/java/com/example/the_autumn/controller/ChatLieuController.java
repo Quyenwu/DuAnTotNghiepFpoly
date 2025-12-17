@@ -17,6 +17,17 @@ public class ChatLieuController {
     @GetMapping("playlist")
     public ResponseObject<?> hienThiDuLieu(){return new ResponseObject<>(clService.findAll());}
 
+    @GetMapping("detail/{id}")
+    public ResponseObject<?> detail(@PathVariable("id") Integer id){
+        return new ResponseObject<>(clService.detail(id));
+    }
+
+    @PutMapping("update/{id}")
+    public ResponseObject<?> updateChatLieu(@PathVariable("id") Integer id, @RequestBody ChatLieuRequest chatLieuRequest){
+        clService.update(id, chatLieuRequest);
+        return new ResponseObject<>(null, "update chất liệu thành công");
+    }
+
     @PostMapping("add")
     public ResponseObject<?> add(@RequestBody ChatLieuRequest chatLieuRq){
         clService.add(chatLieuRq);

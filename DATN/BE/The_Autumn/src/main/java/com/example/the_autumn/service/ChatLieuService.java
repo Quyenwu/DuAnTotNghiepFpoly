@@ -24,11 +24,24 @@ public class ChatLieuService {
                 .toList();
     }
 
+    public ChatLieuResponse detail(Integer id){
+        ChatLieu chatLieu = chatLieuRepo.findById(id).get();
+        return new ChatLieuResponse(chatLieu);
+    }
+
     public void add(ChatLieuRequest request) {
         ChatLieu chatLieu = MapperUtils.map(request, ChatLieu.class);
         chatLieu.setTrangThai(true);
         chatLieuRepo.save(chatLieu);
     }
+
+    public void update(Integer id, ChatLieuRequest request){
+        ChatLieu chatLieu = chatLieuRepo.findById(id)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy chất liệu"));
+        MapperUtils.mapToExisting(request, chatLieu);
+        chatLieuRepo.save(chatLieu);
+    }
+
 
     public List<ChatLieuResponse> findByName(String name) {
         return chatLieuRepo.findByTenChatLieuContainingIgnoreCase(name)
