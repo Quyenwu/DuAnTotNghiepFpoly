@@ -765,9 +765,9 @@ public class HoaDonService {
 
         // Tính tổng tiền trước giảm
         BigDecimal phiVanChuyen = hoaDon.getPhiVanChuyen() != null ? hoaDon.getPhiVanChuyen() : BigDecimal.ZERO;
-        BigDecimal phiPhu = hoaDon.getPhiPhu() != null ? hoaDon.getPhiPhu() : BigDecimal.ZERO;
-        BigDecimal tongTienTruocGiam = tongTienSanPhamMoi.add(phiVanChuyen).add(phiPhu);
-
+//        BigDecimal phiPhu = hoaDon.getPhiPhu() != null ? hoaDon.getPhiPhu() : BigDecimal.ZERO;
+//        BigDecimal tongTienTruocGiam = tongTienSanPhamMoi.add(phiVanChuyen).add(phiPhu);
+        BigDecimal tongTienTruocGiam = tongTienSanPhamMoi.add(phiVanChuyen);
         // Tính tiền giảm giá
         BigDecimal tienGiamGia = calculateTienGiamGia(hoaDon, tongTienTruocGiam);
 
@@ -793,10 +793,10 @@ public class HoaDonService {
 
         // Ghi log về thay đổi tiền
         luuLichSu(hoaDon, "Cập nhật tổng tiền",
-                String.format("Tổng tiền sản phẩm: %s, Phí vận chuyển: %s, Phụ phí: %s, Giảm giá: %s, Tổng cuối: %s, Đã thanh toán: %s, Còn lại: %s",
+                String.format("Tổng tiền sản phẩm: %s, Phí vận chuyển: %s, Giảm giá: %s, Tổng cuối: %s, Đã thanh toán: %s, Còn lại: %s",
                         formatMoney(tongTienSanPhamMoi),
                         formatMoney(phiVanChuyen),
-                        formatMoney(phiPhu),
+//                        formatMoney(phiPhu),
                         formatMoney(tienGiamGia),
                         formatMoney(tongTienSauGiam),
                         formatMoney(soTienThanhToan),
@@ -820,7 +820,7 @@ public class HoaDonService {
                 .diaChiCuThe(request.getDiaChiCuThe())
                 .thanhPho(request.getThanhPho())
                 .quan(request.getQuan())
-                .phiPhu(phiPhu)
+//                .phiPhu(phiPhu)
                 .phiPhuMoi(hoaDon.getPhiPhuMoi())
                 .tongTienSanPham(tongTienSanPhamMoi)
                 .phiVanChuyen(phiVanChuyen)
@@ -2591,11 +2591,9 @@ public class HoaDonService {
         HoaDon hoaDon = hoaDonRepository.findById(idHoaDon)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy hóa đơn ID: " + idHoaDon));
 
-        // Lấy thông tin thanh toán để biết số tiền cần thanh toán
         ThanhToanResponse thongTin = getThongTinThanhToan(idHoaDon);
         BigDecimal soTienCanThanhToan = thongTin.getSoTienCanThanhToanTruoc();
 
-        // Tạo request thanh toán toàn bộ
         ThanhToanRequest request = new ThanhToanRequest();
         request.setIdHoaDon(idHoaDon);
         request.setSoTienThanhToan(soTienCanThanhToan);
@@ -2742,8 +2740,6 @@ public class HoaDonService {
             // Trạng thái 3 (đã hoàn thành) thường là đã thanh toán
             return hoaDon.getTrangThai() == 3;
         }
-
-        // Hoặc kiểm tra lịch sử thanh toán
         List<LichSuThanhToan> lichSu = lichSuThanhToanRepository
                 .findByHoaDonIdOrderByNgayThanhToanDesc(hoaDon.getId());
 
@@ -2758,10 +2754,7 @@ public class HoaDonService {
 
 
     private BigDecimal tinhPhiPhuDoiDiaChi(HoaDon hoaDon) {
-        // Logic tính phụ phí đổi địa chỉ
-        // Có thể dựa vào khoảng cách, vùng miền, etc.
 
-        // Ví dụ: phí cố định 30,000 VND
         return BigDecimal.valueOf(30000);
     }
 
@@ -2784,7 +2777,7 @@ public class HoaDonService {
                 .count();
 
         // Phí 10,000 VND cho mỗi sản phẩm thêm mới
-        return BigDecimal.valueOf(soSanPhamThemMoi * 10000);
+        return BigDecimal.valueOf(soSanPhamThemMoi );
     }
 }
 
