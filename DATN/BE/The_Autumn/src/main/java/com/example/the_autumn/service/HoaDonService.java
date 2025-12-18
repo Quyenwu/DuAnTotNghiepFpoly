@@ -35,6 +35,8 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.criteria.Join;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -117,29 +119,32 @@ public class HoaDonService {
     @Autowired
     private VnPayService vnPayService;
 
-    public PageHoaDonRequest<HoaDonRespone> getAll(Pageable pageable) {
-        Pageable sortedPageable = PageRequest.of(
-                pageable.getPageNumber(),
-                pageable.getPageSize(),
-                Sort.by(Sort.Direction.DESC, "ngayTao")
-        );
-
-        Page<HoaDon> page = hoaDonRepository.findAll(sortedPageable);
-
-        List<HoaDonRespone> dtoList = page.getContent().stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
-
-        return new PageHoaDonRequest<>(
-                dtoList,
-                page.getTotalPages(),
-                page.getTotalElements(),
-                page.getNumber(),
-                page.getSize(),
-                page.isFirst(),
-                page.isLast()
-        );
-    }
+//    public PageHoaDonRequest<HoaDonRespone> getAll(Pageable pageable) {
+//        Pageable sortedPageable = PageRequest.of(
+//                pageable.getPageNumber(),
+//                pageable.getPageSize(),
+//                Sort.by(Sort.Direction.DESC, "ngayTao")
+//        );
+//
+//        Specification<HoaDon> spec = (root, query, cb) ->
+//                cb.notEqual(root.get("trangThai"), 5);
+//
+//        Page<HoaDon> page = hoaDonRepository.findAll(spec, sortedPageable);
+//
+//        List<HoaDonRespone> dtoList = page.getContent().stream()
+//                .map(this::convertToDTO)
+//                .collect(Collectors.toList());
+//
+//        return new PageHoaDonRequest<>(
+//                dtoList,
+//                page.getTotalPages(),
+//                page.getTotalElements(),
+//                page.getNumber(),
+//                page.getSize(),
+//                page.isFirst(),
+//                page.isLast()
+//        );
+//    }
 
     private HoaDonRespone convertToDTO(HoaDon hd) {
         HoaDonRespone dto = new HoaDonRespone();
@@ -347,31 +352,65 @@ public class HoaDonService {
         Specification<HoaDon> spec = (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
+            // ⭐ ĐIỀU KIỆN MẶC ĐỊNH: LOẠI BỎ TRẠNG THÁI 5
+            // Chỉ hiển thị trạng thái 5 nếu người dùng CHỦ ĐỘNG lọc với trangThai = 5
+            if (trangThai == null || trangThai != 5) {
+                predicates.add(cb.notEqual(root.get("trangThai"), 5));
+            }
+
+            // Tìm kiếm theo searchText (tìm trong mã HD, tên KH, tên NV)
             if (searchText != null && !searchText.trim().isEmpty()) {
                 String searchPattern = "%" + searchText.toLowerCase().trim() + "%";
+
                 Predicate maPredicate = cb.like(cb.lower(root.get("maHoaDon")), searchPattern);
-                Predicate tenKhPredicate = cb.like(cb.lower(root.get("khachHang").get("hoTen")), searchPattern);
-                Predicate tenNvPredicate = cb.like(cb.lower(root.get("nhanVien").get("hoTen")), searchPattern);
+
+                // Tìm theo tên khách hàng (nếu có)
+                Join<HoaDon, KhachHang> khachHangJoin = root.join("khachHang", JoinType.LEFT);
+                Predicate tenKhPredicate = cb.like(cb.lower(khachHangJoin.get("hoTen")), searchPattern);
+
+                // Tìm theo tên nhân viên (nếu có)
+                Join<HoaDon, NhanVien> nhanVienJoin = root.join("nhanVien", JoinType.LEFT);
+                Predicate tenNvPredicate = cb.like(cb.lower(nhanVienJoin.get("hoTen")), searchPattern);
 
                 predicates.add(cb.or(maPredicate, tenKhPredicate, tenNvPredicate));
             }
 
+            // Lọc theo loại hóa đơn
             if (loaiHoaDon != null && !loaiHoaDon.isEmpty()) {
                 predicates.add(root.get("loaiHoaDon").in(loaiHoaDon));
             }
 
+            // ⭐ Lọc theo trạng thái (nếu có)
+            // Nếu người dùng chủ động lọc trạng thái, thì hiển thị theo ý họ
             if (trangThai != null) {
+                // Nếu là trạng thái 5, thay thế điều kiện loại bỏ ở trên
+                if (trangThai == 5) {
+                    // Tìm và xóa điều kiện loại bỏ trạng thái 5 đã thêm ở trên
+                    predicates.removeIf(p -> {
+                        try {
+                            return p.toString().contains("trangThai != 5");
+                        } catch (Exception e) {
+                            return false;
+                        }
+                    });
+                }
                 predicates.add(cb.equal(root.get("trangThai"), trangThai));
             }
+
+            // Lọc theo ngày tạo
             if (ngayTao != null) {
                 LocalDateTime startOfDay = ngayTao.atStartOfDay();
                 LocalDateTime endOfDay = ngayTao.atTime(23, 59, 59);
                 predicates.add(cb.between(root.get("ngayTao"), startOfDay, endOfDay));
             }
 
+            // Lọc theo hình thức thanh toán
             if (hinhThucThanhToan != null && !hinhThucThanhToan.trim().isEmpty()) {
+                Join<HoaDon, HinhThucThanhToan> hinhThucJoin = root.join("hinhThucThanhToans", JoinType.LEFT);
+                Join<HinhThucThanhToan, PhuongThucThanhToan> phuongThucJoin = hinhThucJoin.join("phuongThucThanhToan", JoinType.LEFT);
+
                 predicates.add(cb.like(
-                        cb.lower(root.get("hinhThucThanhToans").get("phuongThucThanhToan").get("tenPhuongThucThanhToan")),
+                        cb.lower(phuongThucJoin.get("tenPhuongThucThanhToan")),
                         "%" + hinhThucThanhToan.toLowerCase().trim() + "%"
                 ));
             }
@@ -382,7 +421,7 @@ public class HoaDonService {
         Page<HoaDon> pageResult = hoaDonRepository.findAll(spec, pageable);
 
         List<HoaDonRespone> dtoList = pageResult.getContent().stream()
-                .map(HoaDonRespone::new)
+                .map(this::convertToDTO)
                 .collect(Collectors.toList());
 
         return new PageHoaDonRequest<>(
@@ -2786,7 +2825,7 @@ public class HoaDonService {
         HoaDon hoaDon = new HoaDon();
         hoaDon.setTrangThai(request.getTrangThai() != null ? request.getTrangThai() : 5);
         hoaDon.setNgayTao(new Date());
-
+        hoaDon.setLoaiHoaDon(true);
         if (request.getIdNhanVien() == null) {
             throw new RuntimeException("ID nhân viên là bắt buộc");
         }
@@ -2905,12 +2944,13 @@ public class HoaDonService {
         KhachHang khachHang = hoaDon.getKhachHang();
 
         if (req.getIdKhachHang() != null) {
+            // *** TRƯỜNG HỢP 1: CÓ ID KHÁCH HÀNG (KHÁCH HÀNG ĐÃ ĐĂNG KÝ) ***
             khachHang = khachHangRepository.findById(req.getIdKhachHang())
                     .orElseThrow(() -> new RuntimeException("Không tìm thấy khách hàng ID: " + req.getIdKhachHang()));
             hoaDon.setKhachHang(khachHang);
 
             System.out.println("=== DEBUG CẬP NHẬT ĐỊA CHỈ BẮT ĐẦU ===");
-            System.out.println("Khách hàng: " + khachHang.getHoTen() + " (ID: " + khachHang.getId() + ")");
+            System.out.println("Khách hàng đã đăng ký: " + khachHang.getHoTen() + " (ID: " + khachHang.getId() + ")");
 
             if (req.getEmail() != null && !req.getEmail().isEmpty()) {
                 khachHang.setEmail(req.getEmail());
@@ -2918,7 +2958,7 @@ public class HoaDonService {
                 System.out.println("✅ Đã cập nhật email cho khách hàng hiện có: " + req.getEmail());
             }
 
-            // Xử lý địa chỉ cho khách hàng hiện có
+            // Xử lý địa chỉ CHO KHÁCH HÀNG ĐÃ ĐĂNG KÝ - LƯU VÀO DANH SÁCH ĐỊA CHỈ
             if (isBanGiaoHang && req.getDiaChiKhachHang() != null && !req.getDiaChiKhachHang().isEmpty() &&
                     !req.getDiaChiKhachHang().equals("Chưa có địa chỉ")) {
 
@@ -2951,7 +2991,7 @@ public class HoaDonService {
 
                             DiaChi savedAddress = diaChiRepository.save(newAddress);
 
-                            System.out.println("🎉 ĐÃ THÊM ĐỊA CHỈ MỚI THÀNH CÔNG!");
+                            System.out.println("🎉 ĐÃ THÊM ĐỊA CHỈ MỚI VÀO DANH SÁCH ĐỊA CHỈ KHÁCH HÀNG!");
                             System.out.println("📍 Địa chỉ ID: " + savedAddress.getId());
                             System.out.println("📍 Chi tiết: " + savedAddress.getDiaChiCuThe());
 
@@ -2973,71 +3013,122 @@ public class HoaDonService {
             }
             System.out.println("=== DEBUG CẬP NHẬT ĐỊA CHỈ KẾT THÚC ===");
         } else {
-            // Tạo khách hàng mới nếu không có idKhachHang
-            if (req.getHoTen() != null && !req.getHoTen().isEmpty() &&
-                    req.getSdt() != null && !req.getSdt().isEmpty()) {
+            // *** TRƯỜNG HỢP 2: KHÔNG CÓ ID KHÁCH HÀNG (KHÁCH LẺ) ***
+            System.out.println("=== XỬ LÝ KHÁCH LẺ ===");
 
-                try {
-                    Optional<KhachHang> existingCustomer = khachHangRepository.findBySdt(req.getSdt());
+            if (isBanGiaoHang) {
+                // *** BÁN GIAO HÀNG VỚI KHÁCH LẺ: KHÔNG LƯU KHÁCH HÀNG MỚI ***
+                System.out.println("🚚 BÁN GIAO HÀNG CHO KHÁCH LẺ - KHÔNG LƯU THÔNG TIN KHÁCH HÀNG");
 
-                    if (existingCustomer.isPresent()) {
-                        khachHang = existingCustomer.get();
-                        System.out.println("✅ Sử dụng khách hàng đã tồn tại: " + khachHang.getHoTen() + " (ID: " + khachHang.getId() + ")");
-                        if (req.getEmail() != null && !req.getEmail().isEmpty()) {
-                            khachHang.setEmail(req.getEmail());
-                            khachHangRepository.save(khachHang);
-                            System.out.println("✅ Đã cập nhật email cho khách hàng hiện có: " + req.getEmail());
-                        }
-                    } else {
-                        KhachHang newKhachHang = new KhachHang();
-                        newKhachHang.setHoTen(req.getHoTen());
-                        newKhachHang.setSdt(req.getSdt());
-                        if (req.getEmail() != null && !req.getEmail().isEmpty()) {
-                            newKhachHang.setEmail(req.getEmail());
-                            System.out.println("✅ Đã thêm email cho khách hàng mới: " + req.getEmail());
-                        }
-                        newKhachHang.setGioiTinh(true);
-                        newKhachHang.setNgaySinh(new Date());
-                        newKhachHang.setTrangThai(true);
-                        newKhachHang.setNgayTao(new Date());
+                // Đặt khách hàng là null
+                hoaDon.setKhachHang(null);
 
-                        khachHang = khachHangRepository.save(newKhachHang);
-                        System.out.println("🎉 ĐÃ TẠO KHÁCH HÀNG MỚI: " + khachHang.getHoTen() + " (ID: " + khachHang.getId() + ")");
+                // *** XỬ LÝ ĐỊA CHỈ: CHỈ LƯU VÀO HÓA ĐƠN ***
+                StringBuilder diaChiBuilder = new StringBuilder();
 
-                        // Thêm địa chỉ cho khách hàng mới (chỉ khi là đơn giao hàng)
-                        if (isBanGiaoHang && req.getIdTinh() != null && req.getIdQuan() != null && req.getDiaChiCuThe() != null) {
-                            try {
-                                TinhThanh tinhThanh = tinhThanhRepository.findById(req.getIdTinh())
-                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy tỉnh/thành ID: " + req.getIdTinh()));
+                // Thêm tên khách hàng và số điện thoại (nếu có)
+                if (req.getHoTen() != null && !req.getHoTen().isEmpty()) {
+                    diaChiBuilder.append("Người nhận: ").append(req.getHoTen());
+                }
 
-                                QuanHuyen quanHuyen = quanHuyenRepository.findById(req.getIdQuan())
-                                        .orElseThrow(() -> new RuntimeException("Không tìm thấy quận/huyện ID: " + req.getIdQuan()));
+                if (req.getSdt() != null && !req.getSdt().isEmpty()) {
+                    if (diaChiBuilder.length() > 0) diaChiBuilder.append(" - ");
+                    diaChiBuilder.append("SĐT: ").append(req.getSdt());
+                }
 
-                                DiaChi newAddress = new DiaChi();
-                                newAddress.setKhachHang(khachHang);
-                                newAddress.setTinhThanh(tinhThanh);
-                                newAddress.setQuanHuyen(quanHuyen);
-                                newAddress.setDiaChiCuThe(req.getDiaChiCuThe());
-                                newAddress.setTrangThai(true);
-                                newAddress.setTenDiaChi("Địa chỉ mặc định");
+                if (diaChiBuilder.length() > 0) {
+                    diaChiBuilder.append("\n");
+                }
 
-                                DiaChi savedAddress = diaChiRepository.save(newAddress);
-                                System.out.println("📍 ĐÃ THÊM ĐỊA CHỈ CHO KHÁCH HÀNG MỚI: " + savedAddress.getDiaChiCuThe());
+                // Thêm địa chỉ cụ thể
+                if (req.getDiaChiCuThe() != null && !req.getDiaChiCuThe().isEmpty()) {
+                    diaChiBuilder.append(req.getDiaChiCuThe());
+                } else if (req.getDiaChiKhachHang() != null && !req.getDiaChiKhachHang().isEmpty()) {
+                    diaChiBuilder.append(req.getDiaChiKhachHang());
+                }
 
-                            } catch (Exception e) {
-                                System.out.println("⚠️ Không thể thêm địa chỉ cho khách hàng mới: " + e.getMessage());
+                // Nếu có tỉnh/quận, thêm vào địa chỉ hiển thị
+                if (req.getIdTinh() != null || req.getIdQuan() != null) {
+                    try {
+                        if (req.getIdQuan() != null) {
+                            QuanHuyen quanHuyen = quanHuyenRepository.findById(req.getIdQuan())
+                                    .orElse(null);
+                            if (quanHuyen != null) {
+                                if (diaChiBuilder.length() > 0) diaChiBuilder.append(", ");
+                                diaChiBuilder.append(quanHuyen.getTenQuan());
                             }
                         }
+
+                        if (req.getIdTinh() != null) {
+                            TinhThanh tinhThanh = tinhThanhRepository.findById(req.getIdTinh())
+                                    .orElse(null);
+                            if (tinhThanh != null) {
+                                if (diaChiBuilder.length() > 0) diaChiBuilder.append(", ");
+                                diaChiBuilder.append(tinhThanh.getTenTinh());
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.out.println("⚠️ Không thể lấy thông tin tỉnh/quận: " + e.getMessage());
                     }
+                }
 
-                    hoaDon.setKhachHang(khachHang);
+                String diaChiHienThi = diaChiBuilder.toString().trim();
 
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    hoaDon.setKhachHang(null);
+                if (!diaChiHienThi.isEmpty()) {
+                    // *** CHỈ LƯU ĐỊA CHỈ VÀO HÓA ĐƠN ***
+                    hoaDon.setDiaChiKhachHang(diaChiHienThi);
+                    System.out.println("📍 Địa chỉ giao hàng (khách lẻ): " + diaChiHienThi);
+                    System.out.println("ℹ️ Không lưu khách hàng mới, chỉ lưu địa chỉ vào hóa đơn");
+                } else {
+                    hoaDon.setDiaChiKhachHang("Khách lẻ - Không có địa chỉ chi tiết");
+                    System.out.println("ℹ️ Không có địa chỉ chi tiết cho khách lẻ");
                 }
             } else {
-                hoaDon.setKhachHang(null);
+                // *** BÁN TẠI CỬA HÀNG VỚI KHÁCH LẺ ***
+                System.out.println("🏪 BÁN TẠI CỬA HÀNG CHO KHÁCH LẺ");
+
+                // Vẫn tạo/tìm khách hàng để lưu lịch sử
+                if (req.getHoTen() != null && !req.getHoTen().isEmpty() &&
+                        req.getSdt() != null && !req.getSdt().isEmpty()) {
+
+                    try {
+                        Optional<KhachHang> existingCustomer = khachHangRepository.findBySdt(req.getSdt());
+
+                        if (existingCustomer.isPresent()) {
+                            khachHang = existingCustomer.get();
+                            System.out.println("✅ Sử dụng khách hàng đã tồn tại: " + khachHang.getHoTen() + " (ID: " + khachHang.getId() + ")");
+                        } else {
+                            // Tạo khách hàng mới nhưng KHÔNG có địa chỉ
+                            System.out.println("🎉 TẠO KHÁCH HÀNG LẺ CHO BÁN TẠI CỬA HÀNG");
+
+                            KhachHang newKhachHang = new KhachHang();
+                            newKhachHang.setHoTen(req.getHoTen());
+                            newKhachHang.setSdt(req.getSdt());
+                            if (req.getEmail() != null && !req.getEmail().isEmpty()) {
+                                newKhachHang.setEmail(req.getEmail());
+                                System.out.println("✅ Đã thêm email cho khách hàng mới: " + req.getEmail());
+                            }
+                            newKhachHang.setGioiTinh(true);
+                            newKhachHang.setNgaySinh(new Date());
+                            newKhachHang.setTrangThai(true);
+                            newKhachHang.setNgayTao(new Date());
+
+                            khachHang = khachHangRepository.save(newKhachHang);
+                            System.out.println("✅ ĐÃ TẠO KHÁCH HÀNG LẺ: " + khachHang.getHoTen() + " (ID: " + khachHang.getId() + ")");
+                        }
+
+                        hoaDon.setKhachHang(khachHang);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        hoaDon.setKhachHang(null);
+                        System.out.println("❌ Lỗi khi xử lý thông tin khách lẻ");
+                    }
+                } else {
+                    // Không có thông tin khách hàng
+                    hoaDon.setKhachHang(null);
+                    System.out.println("ℹ️ Không có thông tin khách hàng, đặt là null");
+                }
             }
         }
 
@@ -3077,7 +3168,9 @@ public class HoaDonService {
             hoaDon.setTongTienSauGiam(req.getTongTien());
         }
 
-        if (req.getDiaChiKhachHang() != null) {
+        // Lưu ý: Đối với khách lẻ giao hàng, địa chỉ đã được xử lý ở trên
+        // Chỉ ghi đè nếu request có gửi diaChiKhachHang và là khách hàng đã đăng ký
+        if (req.getIdKhachHang() != null && req.getDiaChiKhachHang() != null) {
             hoaDon.setDiaChiKhachHang(req.getDiaChiKhachHang());
         }
 

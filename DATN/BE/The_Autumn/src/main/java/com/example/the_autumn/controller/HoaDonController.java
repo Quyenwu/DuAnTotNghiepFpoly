@@ -140,29 +140,27 @@ public class HoaDonController {
 
     @GetMapping
     public ResponseEntity<PageHoaDonRequest<HoaDonRespone>> getAllOrSearch(
-            @RequestParam(required = false) String searchText,  // ⭐ THAY: gộp 3 ô thành 1
+            @RequestParam(required = false) String searchText,
             @RequestParam(required = false) List<Boolean> loaiHoaDon,
             @RequestParam(required = false) Integer trangThai,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate ngayTao,
-            @RequestParam(required = false) String hinhThucThanhToan,  // ⭐ THÊM: lọc hình thức thanh toán
+            @RequestParam(required = false) String hinhThucThanhToan,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size
     ) {
-        if (searchText != null || loaiHoaDon != null && !loaiHoaDon.isEmpty() || trangThai != null ||
-                ngayTao != null || hinhThucThanhToan != null) {
-            PageHoaDonRequest<HoaDonRespone> response = hoaDonService.timkiemVaLoc(
-                    searchText,  // ⭐ THAY
-                    loaiHoaDon, trangThai, ngayTao, hinhThucThanhToan,  // ⭐ THAY & THÊM
-                    page, size
-            );
-            return ResponseEntity.ok(response);
-        }
-        PageHoaDonRequest<HoaDonRespone> response = hoaDonService.getAll(PageRequest.of(page, size));
+        // GỌI DUY NHẤT MỘT PHƯƠNG THỨC timkiemVaLoc
+        PageHoaDonRequest<HoaDonRespone> response = hoaDonService.timkiemVaLoc(
+                searchText,
+                loaiHoaDon,
+                trangThai,
+                ngayTao,
+                hinhThucThanhToan,
+                page,
+                size
+        );
         return ResponseEntity.ok(response);
     }
 
-
-    // Các method khác giữ nguyên...
     @GetMapping("/export")
     public void exportExcel(HttpServletResponse response) {
         try {
