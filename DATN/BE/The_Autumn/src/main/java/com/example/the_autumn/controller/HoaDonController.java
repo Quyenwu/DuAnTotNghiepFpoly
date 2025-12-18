@@ -1101,5 +1101,29 @@ public class HoaDonController {
         return "Có thể hoàn tiền";
     }
 
+    @PostMapping("/tao-hoa-don-rong")
+        public ResponseObject<?> addHoaDonRong(@RequestBody HoaDonRequest request) {
+            HoaDon hoaDon = hoaDonService.addHoaDon(request);
+            return new ResponseObject<>(hoaDon, "Thêm thành công");
+    }
+
+    @GetMapping(value = "/hoa-don-cho", params = "trangThai")
+    public ResponseObject<List<HoaDon>> getHoaDonCho(@RequestParam Integer trangThai) {
+        List<HoaDon> list = hoaDonService.getHoaDonTheoTrangThai(trangThai);
+        return new ResponseObject<>(list, "Lấy danh sách hóa đơn thành công");
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseObject<Void> deleteHoaDon(@PathVariable Integer id) {
+        hoaDonService.deleteHoaDon(id);
+        return new ResponseObject<>(null, "Xóa hóa đơn thành công");
+    }
+
+    @PutMapping("/update-hoa-don/{id}")
+    public ResponseObject<?> updateHoaDon(@PathVariable Integer id, @RequestBody HoaDonRequest request) {
+        hoaDonService.updateHoaDon(id, request);
+        return new ResponseObject<>(null, "Update hóa đơn thành công");
+    }
+
 }
 
