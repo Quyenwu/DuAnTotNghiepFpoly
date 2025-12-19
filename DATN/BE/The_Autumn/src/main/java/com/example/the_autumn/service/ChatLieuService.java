@@ -40,6 +40,7 @@ public class ChatLieuService {
     public void add(ChatLieuRequest request) {
         ChatLieu chatLieu = MapperUtils.map(request, ChatLieu.class);
         chatLieu.setTrangThai(true);
+        chatLieu.setNgayTao(new Date());
         chatLieuRepo.save(chatLieu);
     }
 
