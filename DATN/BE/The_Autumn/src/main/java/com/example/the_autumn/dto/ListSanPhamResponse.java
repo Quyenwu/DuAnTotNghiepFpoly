@@ -10,7 +10,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.Date;
 import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -24,16 +26,20 @@ public class ListSanPhamResponse {
     private Integer tongSoLuongDaMua;
     private List<String> hinhAnhSanPham;
 
-    public  ListSanPhamResponse(SanPham sp) {
+    // 🚨 THÊM 2 TRƯỜNG NÀY
+    private Date createdDate;
+    private Date updatedDate;
+
+    public ListSanPhamResponse(SanPham sp) {
         this.id = sp.getId();
-
         this.tenSanPham = sp.getTenSanPham();
-
         this.trangThai = sp.getTrangThai();
 
+        // 🚨 THÊM: Lấy ngày tạo và ngày sửa
+        this.createdDate = sp.getNgayTao();
+        this.updatedDate = sp.getNgaySua();
 
         if (sp.getChiTietSanPham() != null && !sp.getChiTietSanPham().isEmpty()) {
-
             this.hinhAnhSanPham = sp.getChiTietSanPham().stream()
                     .flatMap(ctsp -> ctsp.getAnhs().stream())
                     .map(Anh::getDuongDanAnh)
@@ -44,7 +50,6 @@ public class ListSanPhamResponse {
             this.chiTietSanPhams = sp.getChiTietSanPham().stream()
                     .map(ChiTietSanPhamDTO::new)
                     .toList();
-
 
             List<BigDecimal> giaList = sp.getChiTietSanPham().stream()
                     .filter(ct -> ct.getGiaBan() != null)
@@ -58,6 +63,7 @@ public class ListSanPhamResponse {
                 this.giaThapNhat = BigDecimal.ZERO;
                 this.giaCaoNhat = BigDecimal.ZERO;
             }
+
             if (sp.getChiTietSanPham() != null && !sp.getChiTietSanPham().isEmpty()) {
                 this.tongSoLuongDaMua = sp.getChiTietSanPham().stream()
                         .flatMap(ct -> ct.getHoaDonChiTiets().stream())
@@ -66,13 +72,12 @@ public class ListSanPhamResponse {
             } else {
                 this.tongSoLuongDaMua = 0;
             }
-
         } else {
             this.chiTietSanPhams = List.of();
             this.giaThapNhat = BigDecimal.ZERO;
             this.giaCaoNhat = BigDecimal.ZERO;
             this.hinhAnhSanPham = List.of();
+            this.tongSoLuongDaMua = 0;
         }
     }
-
 }

@@ -13,19 +13,30 @@ public class CacheCleanupScheduler {
     @Autowired
     private CacheManager cacheManager;
 
-    // Xóa cache knowledge_base_summary mỗi 30 phút
-    @Scheduled(fixedRate = 30 * 60 * 1000) // 30 phút
+    // 🚨 GIẢM TỪ 30 phút xuống 5 phút cho sản phẩm
+    @Scheduled(fixedRate = 1 * 60 * 1000) // 5 phút thay vì 30 phút
     public void clearKnowledgeSummaryCache() {
         if (cacheManager.getCache("knowledge_base_summary") != null) {
             cacheManager.getCache("knowledge_base_summary").clear();
+            System.out.println("🔄 Đã xóa cache knowledge_base_summary");
         }
     }
 
     // Xóa cache ai_answer_cache mỗi 10 phút
-    @Scheduled(fixedRate = 10 * 60 * 1000) // 10 phút
+    @Scheduled(fixedRate =1 * 60 * 1000) // 10 phút
     public void clearAiAnswerCache() {
         if (cacheManager.getCache("ai_answer_cache") != null) {
             cacheManager.getCache("ai_answer_cache").clear();
         }
     }
+
+    // 🚨 THÊM: Xóa cache chi tiết mỗi 5 phút
+    @Scheduled(fixedRate = 1 * 60 * 1000) // 5 phút
+    public void clearKnowledgeBaseCache() {
+        if (cacheManager.getCache("knowledge_base") != null) {
+            cacheManager.getCache("knowledge_base").clear();
+            System.out.println("🔄 Đã xóa cache knowledge_base");
+        }
+    }
+
 }

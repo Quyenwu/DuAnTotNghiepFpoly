@@ -49,6 +49,9 @@ public class SanPhamService {
     @Autowired
     private HoaDonChiTietRepository hdctRepo;
 
+    @Autowired
+    private KnowledgeBaseService knowledgeBaseService;
+
     public List<SanPhamResponse> findAll(){
         return spRepo.findAll().stream()
                 .sorted((a, b) -> b.getNgayTao().compareTo(a.getNgayTao()))
@@ -257,10 +260,20 @@ public class SanPhamService {
         sp.setNgayTao(new Date());
         sp.setTrangThai(true);
         spRepo.save(sp);
+        knowledgeBaseService.clearProductCache();
+
+        System.out.println("🆕 [" + new Date() + "] Đã thêm sản phẩm mới: " + sp.getTenSanPham() +
+                " - Xóa cache AI thành công!");
     }
 
     public void delete(Integer id){
+        String tenSanPham = spRepo.findById(id)
+                .map(SanPham::getTenSanPham)
+                .orElse("Unknown");
         spRepo.deleteById(id);
+        knowledgeBaseService.clearProductCache();
+        System.out.println("🗑️ [" + new Date() + "] Đã xóa sản phẩm: " + tenSanPham +
+                " - Xóa cache AI thành công!");
     }
 
     public SanPhamResponse getSanPhamDetailWithVariants(Integer idSanPham) {
@@ -288,6 +301,9 @@ public class SanPhamService {
         sp.setTrangThai(trangThai);
         sp.setNgaySua(new Date());
         spRepo.save(sp);
+        knowledgeBaseService.clearProductCache();
+        System.out.println("🔄 [" + new Date() + "] Đã cập nhật trạng thái sản phẩm ID=" + id +
+                " thành " + trangThai + " - Xóa cache AI thành công!");
     }
 
     @Transactional
@@ -339,6 +355,9 @@ public class SanPhamService {
         SanPham saved = spRepo.save(sanPham);
 
         System.out.println("✅ Service: Đã cập nhật sản phẩm ID=" + id);
+        knowledgeBaseService.clearProductCache();
+        System.out.println("✅ [" + new Date() + "] Service: Đã cập nhật sản phẩm ID=" + id +
+                " - Xóa cache AI thành công!");
 
         return new SanPhamResponse(saved);
     }

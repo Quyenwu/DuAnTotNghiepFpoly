@@ -4,21 +4,22 @@ import com.example.the_autumn.dto.SanPhamTrangChuProjection;
 import com.example.the_autumn.entity.HoaDonChiTiet;
 import com.example.the_autumn.entity.SanPham;
 
-import com.example.the_autumn.model.response.SanPhamResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Repository;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
 public interface SanPhamRepository extends JpaRepository<SanPham, Integer> {
 
     List<SanPham> findByTenSanPhamAndTrangThai(String tenSanPham, Boolean trangThai);
+    Page<SanPham> findByTrangThai(Boolean trangThai, Pageable pageable);
+    List<SanPham> findByTrangThaiAndNgayTaoAfter(Boolean trangThai, Date ngayTao);
     List<SanPham> findByTrangThai(Boolean trangThai);
     @Query("select sp from SanPham sp where (:q is null or lower(sp.tenSanPham) like lower(concat('%', :q, '%')) or lower(sp.maSanPham) like lower(concat('%', :q, '%')))")
     Page<SanPham> search(String q, Pageable pageable);
