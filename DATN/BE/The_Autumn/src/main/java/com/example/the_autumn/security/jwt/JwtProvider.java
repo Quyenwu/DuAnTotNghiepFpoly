@@ -46,7 +46,6 @@ public class JwtProvider {
         claims.put("maNhanVien", userPrinciple.getUser().getMaNhanVien());
         claims.put("gioiTinh", userPrinciple.getUser().getGioiTinh());
         claims.put("ngaySinh", userPrinciple.getUser().getNgaySinh());
-        claims.put("cccd", userPrinciple.getUser().getCccd());
         claims.put("hinhAnh", userPrinciple.getUser().getHinhAnh());
 
         if (userPrinciple.getUser().getChucVu() != null) {
