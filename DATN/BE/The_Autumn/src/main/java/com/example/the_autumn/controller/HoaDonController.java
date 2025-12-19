@@ -140,29 +140,27 @@ public class HoaDonController {
 
     @GetMapping
     public ResponseEntity<PageHoaDonRequest<HoaDonRespone>> getAllOrSearch(
-            @RequestParam(required = false) String searchText,  // ⭐ THAY: gộp 3 ô thành 1
+            @RequestParam(required = false) String searchText,
             @RequestParam(required = false) List<Boolean> loaiHoaDon,
             @RequestParam(required = false) Integer trangThai,
             @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate ngayTao,
-            @RequestParam(required = false) String hinhThucThanhToan,  // ⭐ THÊM: lọc hình thức thanh toán
+            @RequestParam(required = false) String hinhThucThanhToan,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size
     ) {
-        if (searchText != null || loaiHoaDon != null && !loaiHoaDon.isEmpty() || trangThai != null ||
-                ngayTao != null || hinhThucThanhToan != null) {
-            PageHoaDonRequest<HoaDonRespone> response = hoaDonService.timkiemVaLoc(
-                    searchText,  // ⭐ THAY
-                    loaiHoaDon, trangThai, ngayTao, hinhThucThanhToan,  // ⭐ THAY & THÊM
-                    page, size
-            );
-            return ResponseEntity.ok(response);
-        }
-        PageHoaDonRequest<HoaDonRespone> response = hoaDonService.getAll(PageRequest.of(page, size));
+        // GỌI DUY NHẤT MỘT PHƯƠNG THỨC timkiemVaLoc
+        PageHoaDonRequest<HoaDonRespone> response = hoaDonService.timkiemVaLoc(
+                searchText,
+                loaiHoaDon,
+                trangThai,
+                ngayTao,
+                hinhThucThanhToan,
+                page,
+                size
+        );
         return ResponseEntity.ok(response);
     }
 
-
-    // Các method khác giữ nguyên...
     @GetMapping("/export")
     public void exportExcel(HttpServletResponse response) {
         try {
@@ -1099,6 +1097,30 @@ public class HoaDonController {
             return "Chỉ có thể hoàn tiền cho đơn hàng đã thanh toán";
         }
         return "Có thể hoàn tiền";
+    }
+
+    @PostMapping("/tao-hoa-don-rong")
+        public ResponseObject<?> addHoaDonRong(@RequestBody HoaDonRequest request) {
+            HoaDon hoaDon = hoaDonService.addHoaDon(request);
+            return new ResponseObject<>(hoaDon, "Thêm thành công");
+    }
+
+    @GetMapping(value = "/hoa-don-cho", params = "trangThai")
+    public ResponseObject<List<HoaDon>> getHoaDonCho(@RequestParam Integer trangThai) {
+        List<HoaDon> list = hoaDonService.getHoaDonTheoTrangThai(trangThai);
+        return new ResponseObject<>(list, "Lấy danh sách hóa đơn thành công");
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseObject<Void> deleteHoaDon(@PathVariable Integer id) {
+        hoaDonService.deleteHoaDon(id);
+        return new ResponseObject<>(null, "Xóa hóa đơn thành công");
+    }
+
+    @PutMapping("/update-hoa-don/{id}")
+    public ResponseObject<?> updateHoaDon(@PathVariable Integer id, @RequestBody HoaDonRequest request) {
+        hoaDonService.updateHoaDon(id, request);
+        return new ResponseObject<>(null, "Update hóa đơn thành công");
     }
 
 }

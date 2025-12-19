@@ -1,5 +1,6 @@
 package com.example.the_autumn.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.CascadeType;
@@ -16,6 +17,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Date;
 import java.util.List;
 
 @NoArgsConstructor
@@ -39,7 +41,13 @@ public class CoAo {
 
     @Column(name = "trang_thai")
     private Boolean trangThai;
+    @Column(name = "ngay_tao")
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date ngayTao;
 
+    @Column(name = "ngay_sua")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date ngaySua;
     @OneToMany(mappedBy = "coAo",fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<SanPham> sanPham;
 }

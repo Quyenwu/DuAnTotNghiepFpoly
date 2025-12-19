@@ -4,6 +4,8 @@ import com.example.the_autumn.entity.MauSac;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
+
 @Getter
 @Setter
 public class MauSacResponse {
@@ -11,6 +13,7 @@ public class MauSacResponse {
     private String maMauSac;
     private String tenMauSac;
     private Boolean trangThai;
+    private Date ngayTao;
     private String maHex;
 
     public MauSacResponse(MauSac ms) {
@@ -18,6 +21,7 @@ public class MauSacResponse {
         this.maMauSac = ms.getMaMauSac();
         this.tenMauSac = ms.getTenMauSac();
         this.trangThai = ms.getTrangThai();
+        this.ngayTao = ms.getNgayTao();
         this.maHex = ms.getMaHex();
     }
 }

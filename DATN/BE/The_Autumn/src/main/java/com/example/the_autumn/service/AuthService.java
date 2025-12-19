@@ -45,7 +45,6 @@ public class AuthService {
         nv.setSdt(req.getSdt());
         nv.setGioiTinh(req.getGioiTinh());
         nv.setNgaySinh(req.getNgaySinh());
-        nv.setCccd(req.getCccd());
         nv.setHinhAnh(req.getHinhAnh());
         nv.setTrangThai(true);
         nv.setNgayTao(new Date());
@@ -125,7 +124,6 @@ public class AuthService {
         response.setSdt(nhanVien.getSdt());
         response.setDiaChi(nhanVien.getDiaChi());
         response.setHinhAnh(nhanVien.getHinhAnh());
-        response.setCccd(nhanVien.getCccd());
         response.setMatKhau("***");
         response.setNgayTao(nhanVien.getNgayTao());
         response.setNgaySua(nhanVien.getNgaySua());
