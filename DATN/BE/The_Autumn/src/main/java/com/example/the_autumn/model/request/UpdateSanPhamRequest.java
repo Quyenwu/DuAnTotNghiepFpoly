@@ -30,8 +30,7 @@ public class UpdateSanPhamRequest {
     @NotNull(message = "Tay áo không được để trống")
     private Integer idTayAo;
 
-    @Size(max = 50, message = "Trọng lượng tối đa 50 ký tự")
-    private String trongLuong;
+    private Integer trongLuong;
 
     private Boolean trangThai;
 }

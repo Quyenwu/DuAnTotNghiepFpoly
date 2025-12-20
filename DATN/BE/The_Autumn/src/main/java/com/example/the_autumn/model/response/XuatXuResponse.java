@@ -4,6 +4,8 @@ import com.example.the_autumn.entity.XuatXu;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Date;
+
 
 @Getter
 @Setter
@@ -15,6 +17,8 @@ public class XuatXuResponse {
 
     private String tenXuatXu;
 
+    private Date ngayTao;
+
     private Boolean trangThai;
 
     public XuatXuResponse(XuatXu xx) {
@@ -22,5 +26,6 @@ public class XuatXuResponse {
         this.maXuatXu = xx.getMaXuatXu();
         this.tenXuatXu = xx.getTenXuatXu();
         this.trangThai = xx.getTrangThai();
+        this.ngayTao = xx.getNgayTao();
     }
 }

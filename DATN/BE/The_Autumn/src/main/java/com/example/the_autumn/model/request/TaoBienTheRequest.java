@@ -15,8 +15,7 @@ public class TaoBienTheRequest {
     @NotBlank(message = "Tên sản phẩm không được để trống")
     private String tenSanPham;
 
-    @NotBlank(message = "Trọng lượng không được để trống")
-    private String trongLuong;
+    private Integer trongLuong;
 
     @NotNull(message = "Nhà sản xuất không được để trống")
     private Integer idNhaSanXuat;

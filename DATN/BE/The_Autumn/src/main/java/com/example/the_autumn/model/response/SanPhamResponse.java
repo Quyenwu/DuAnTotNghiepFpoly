@@ -32,7 +32,7 @@ public class SanPhamResponse {
     private String tenChatLieu;
     private String maKieuDang;
     private String tenKieuDang;
-    private String trongLuong;
+    private Integer trongLuong;
     private String maCoAo;
     private String tenCoAo;
     private String maTayAo;

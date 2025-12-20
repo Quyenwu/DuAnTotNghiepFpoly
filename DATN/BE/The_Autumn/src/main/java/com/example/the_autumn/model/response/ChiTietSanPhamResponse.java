@@ -47,7 +47,7 @@ public class ChiTietSanPhamResponse {
 
     private String tenKichThuoc;
 
-    private String tenTrongLuong;
+    private Integer tenTrongLuong;
 
     private BigDecimal giaSauGiam;
 
