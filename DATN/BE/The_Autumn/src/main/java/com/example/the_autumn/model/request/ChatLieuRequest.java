@@ -10,7 +10,6 @@ public class ChatLieuRequest {
 
     private Integer id;
 
-    @NotBlank(message = "Mã chất liệu không được để trống")
     private String maChatLieu;
 
     @NotBlank(message = "Tên chất liệu không được để trống")
