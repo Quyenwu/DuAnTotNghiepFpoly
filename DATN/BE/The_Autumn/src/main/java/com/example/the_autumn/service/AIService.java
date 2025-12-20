@@ -1,9 +1,10 @@
 package com.example.the_autumn.service;
 
+import com.example.the_autumn.entity.Anh;
 import com.example.the_autumn.entity.ChiTietSanPham;
 import com.example.the_autumn.entity.SanPham;
 import com.example.the_autumn.repository.SanPhamRepository;
-import org.springframework.cache.annotation.Cacheable;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -17,6 +18,7 @@ public class AIService {
     private final DeepSeekService deepSeekService;
     private final KnowledgeBaseService knowledgeBaseService;
     private final SanPhamRepository sanPhamRepo;
+    private final ObjectMapper objectMapper;
 
     // Lưu thời gian hỏi và số lần hỏi mỗi room
     private final Map<Integer, Long> lastAskTime = new ConcurrentHashMap<>();
@@ -30,9 +32,10 @@ public class AIService {
         this.deepSeekService = deepSeekService;
         this.knowledgeBaseService = knowledgeBaseService;
         this.sanPhamRepo = sanPhamRepo;
+        this.objectMapper = new ObjectMapper();
     }
 
-    // 🚨 XÓA @Cacheable - KHÔNG cache câu trả lời AI
+    // 🚨 THAY ĐỔI: Luôn trả về String
     public String ask(String message, Integer roomId) {
         if (message == null || message.isEmpty()) {
             return "Xin lỗi, tôi không hiểu câu hỏi của bạn.";
@@ -57,28 +60,214 @@ public class AIService {
         // 🚨 TRƯỚC TIÊN: Kiểm tra nếu là câu hỏi tìm sản phẩm
         if (isProductSearchQuestion(message)) {
             System.out.println("🔍 AIService: Đây là câu hỏi tìm sản phẩm: " + message);
-            String directResult = searchProductDirectly(message);
+            Map<String, Object> directResult = searchProductDirectly(message);
             if (directResult != null) {
-                return directResult;
+                try {
+                    // 🚨 Convert Map thành JSON string
+                    String jsonResponse = objectMapper.writeValueAsString(directResult);
+                    System.out.println("✅ Direct search response: " + jsonResponse.substring(0, Math.min(100, jsonResponse.length())) + "...");
+                    return jsonResponse;
+                } catch (Exception e) {
+                    System.err.println("❌ Lỗi convert Map to JSON: " + e.getMessage());
+                    return "Có lỗi xảy ra khi tìm sản phẩm. Vui lòng thử lại.";
+                }
             }
         }
 
         // Detect topic
         String topic = knowledgeBaseService.detectTopic(message);
 
-        // Lấy KB summary - CÁI NÀY vẫn cache được
+        // Lấy KB summary
         String kbSummary = knowledgeBaseService.getKBSummary(topic);
 
-        // 🚨 THÊM LOG để debug
-        System.out.println("📋 AIService: KB Summary length = " + kbSummary.length());
-        System.out.println("📋 AIService: KB Summary contains sản phẩm mới? " +
-                kbSummary.contains("Áo thun basic trắng Cotton 20%"));
-
         // Gọi AI trả lời
-        return deepSeekService.getAnswer(message, kbSummary);
+        String aiResponse = deepSeekService.getAnswer(message, kbSummary);
+
+        // Kiểm tra nếu AI trả về JSON sản phẩm
+        if (isProductResponse(aiResponse)) {
+            try {
+                // Parse JSON và bổ sung thông tin
+                Map<String, Object> enhancedResponse = enhanceProductResponse(aiResponse);
+                // 🚨 Convert lại thành JSON string
+                String jsonResponse = objectMapper.writeValueAsString(enhancedResponse);
+                System.out.println("✅ Enhanced AI response: " + jsonResponse.substring(0, Math.min(100, jsonResponse.length())) + "...");
+                return jsonResponse;
+            } catch (Exception e) {
+                System.err.println("❌ Lỗi khi xử lý response AI: " + e.getMessage());
+                return aiResponse; // Trả về nguyên bản nếu có lỗi
+            }
+        }
+
+        System.out.println("✅ Plain AI response: " + (aiResponse.length() > 100 ? aiResponse.substring(0, 100) + "..." : aiResponse));
+        return aiResponse; // Trả về text thông thường
     }
 
-    // 🚨 THÊM: Kiểm tra câu hỏi tìm sản phẩm
+    // Kiểm tra nếu response có chứa dữ liệu sản phẩm
+    private boolean isProductResponse(String response) {
+        try {
+            if (response == null || response.trim().isEmpty()) {
+                return false;
+            }
+            String trimmed = response.trim();
+            return trimmed.startsWith("{") && trimmed.endsWith("}");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    // Bổ sung thông tin sản phẩm cho response từ AI
+    private Map<String, Object> enhanceProductResponse(String aiJsonResponse) {
+        try {
+            Map<String, Object> responseMap = objectMapper.readValue(aiJsonResponse, Map.class);
+
+            List<Map<String, Object>> products = (List<Map<String, Object>>) responseMap.get("products");
+            if (products != null && !products.isEmpty()) {
+                List<Map<String, Object>> enhancedProducts = new ArrayList<>();
+
+                for (Map<String, Object> product : products) {
+                    Object idObj = product.get("id");
+                    Integer productId = null;
+
+                    if (idObj != null) {
+                        try {
+                            // Xử lý nhiều kiểu dữ liệu cho ID
+                            if (idObj instanceof Integer) {
+                                productId = (Integer) idObj;
+                            } else if (idObj instanceof Long) {
+                                productId = ((Long) idObj).intValue();
+                            } else if (idObj instanceof Number) {
+                                // Xử lý các kiểu Number khác
+                                productId = ((Number) idObj).intValue();
+                            } else if (idObj instanceof String) {
+                                String idStr = ((String) idObj).trim();
+                                if (!idStr.isEmpty() && idStr.matches("\\d+")) {
+                                    productId = Integer.parseInt(idStr);
+                                }
+                            }
+                        } catch (Exception e) {
+                            System.err.println("⚠️ Không parse được ID: " + idObj + " - " + e.getMessage());
+                        }
+                    }
+
+                    if (productId != null) {
+                        // Tìm sản phẩm trong DB để lấy thông tin chi tiết
+                        Optional<SanPham> sanPhamOpt = sanPhamRepo.findById(productId);
+                        if (sanPhamOpt.isPresent()) {
+                            SanPham sanPham = sanPhamOpt.get();
+                            Map<String, Object> enhancedProduct = new LinkedHashMap<>(product);
+
+                            // ✅ THÊM: đúng tên trường FE mong đợi
+                            enhancedProduct.put("tenSanPham", sanPham.getTenSanPham());
+
+                            // ✅ THÊM: lấy hình ảnh sản phẩm - QUAN TRỌNG!
+                            List<String> images = new ArrayList<>();
+                            if (sanPham.getChiTietSanPham() != null) {
+                                for (ChiTietSanPham ctsp : sanPham.getChiTietSanPham()) {
+                                    if (ctsp.getAnhs() != null) {
+                                        for (Anh anh : ctsp.getAnhs()) {
+                                            if (anh.getDuongDanAnh() != null && !anh.getDuongDanAnh().isEmpty()) {
+                                                images.add(anh.getDuongDanAnh());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Nếu không có ảnh, dùng placeholder
+                            if (images.isEmpty()) {
+                                images.add("/placeholder.png");
+                            }
+
+                            // ✅ QUAN TRỌNG: trường này phải trùng với FE
+                            enhancedProduct.put("hinhAnhSanPham", images);
+
+                            // Giữ trường image cho tương thích
+                            if (!enhancedProduct.containsKey("image") ||
+                                    enhancedProduct.get("image") == null ||
+                                    enhancedProduct.get("image").toString().isEmpty()) {
+                                enhancedProduct.put("image", images.get(0));
+                            }
+
+                            // Lấy màu sắc nếu chưa có
+                            if (!enhancedProduct.containsKey("color") ||
+                                    enhancedProduct.get("color") == null ||
+                                    enhancedProduct.get("color").toString().isEmpty()) {
+
+                                String colors = "";
+                                if (sanPham.getChiTietSanPham() != null) {
+                                    colors = sanPham.getChiTietSanPham().stream()
+                                            .filter(ctsp -> ctsp.getMauSac() != null)
+                                            .map(ctsp -> ctsp.getMauSac().getTenMauSac())
+                                            .distinct()
+                                            .collect(Collectors.joining(", "));
+                                }
+                                enhancedProduct.put("color", colors);
+                            }
+
+                            // Lấy giá nếu chưa có hoặc bằng 0
+                            if (!enhancedProduct.containsKey("price") ||
+                                    enhancedProduct.get("price") == null) {
+
+                                BigDecimal minPrice = BigDecimal.ZERO;
+                                if (sanPham.getChiTietSanPham() != null && !sanPham.getChiTietSanPham().isEmpty()) {
+                                    minPrice = sanPham.getChiTietSanPham().stream()
+                                            .map(ChiTietSanPham::getGiaBan)
+                                            .min(BigDecimal::compareTo)
+                                            .orElse(BigDecimal.ZERO);
+                                }
+                                enhancedProduct.put("price", minPrice);
+                            }
+
+                            // Sửa link cho đúng format FE
+                            if (!enhancedProduct.containsKey("link") ||
+                                    enhancedProduct.get("link") == null ||
+                                    !enhancedProduct.get("link").toString().contains("productDetail")) {
+                                enhancedProduct.put("link", "/productDetail/" + productId);
+                            }
+
+                            enhancedProducts.add(enhancedProduct);
+
+                            // Log để debug
+                            System.out.println("✅ Enhanced product ID: " + productId + " - " + sanPham.getTenSanPham());
+                            System.out.println("   Images count: " + images.size());
+
+                        } else {
+                            // Nếu không tìm thấy sản phẩm, giữ nguyên
+                            enhancedProducts.add(product);
+                            System.out.println("⚠️ Không tìm thấy sản phẩm ID: " + productId);
+                        }
+                    } else {
+                        // Nếu không parse được ID, giữ nguyên product
+                        enhancedProducts.add(product);
+                        System.out.println("⚠️ Không parse được ID từ: " + idObj);
+                    }
+                }
+
+                responseMap.put("products", enhancedProducts);
+                System.out.println("✅ Enhanced " + enhancedProducts.size() + " products");
+            }
+
+            return responseMap;
+
+        } catch (Exception e) {
+            System.err.println("❌ Error enhancing product response: " + e.getMessage());
+            e.printStackTrace();
+
+            // Trả về response gốc nếu có lỗi
+            try {
+                return objectMapper.readValue(aiJsonResponse, Map.class);
+            } catch (Exception ex) {
+                Map<String, Object> fallback = new LinkedHashMap<>();
+                fallback.put("message", aiJsonResponse);
+                fallback.put("products", List.of());
+                fallback.put("follow_up_question", "");
+                fallback.put("need_human_support", true);
+                return fallback;
+            }
+        }
+    }
+
+    // Kiểm tra câu hỏi tìm sản phẩm
     private boolean isProductSearchQuestion(String question) {
         String q = question.toLowerCase();
         return q.contains("có sản phẩm") ||
@@ -88,11 +277,12 @@ public class AIService {
                 q.contains("kiếm sản phẩm") ||
                 q.contains("tìm kiếm") ||
                 q.contains("có không") ||
+                q.contains("sản phẩm nào") ||
                 (q.contains("áo") && q.contains("cotton") && q.contains("20%"));
     }
 
-    // 🚨 THÊM: Tìm sản phẩm trực tiếp từ DB
-    private String searchProductDirectly(String question) {
+    // Tìm sản phẩm trực tiếp từ DB
+    private Map<String, Object> searchProductDirectly(String question) {
         try {
             System.out.println("🔍 AIService: Tìm kiếm trực tiếp sản phẩm với: " + question);
 
@@ -129,7 +319,7 @@ public class AIService {
             }
 
             // Build response
-            return buildProductResponse(foundProducts, question);
+            return buildProductResponseMap(foundProducts, question);
 
         } catch (Exception e) {
             System.err.println("❌ Lỗi khi tìm sản phẩm trực tiếp: " + e.getMessage());
@@ -137,7 +327,7 @@ public class AIService {
         }
     }
 
-    // 🚨 THÊM: Trích xuất keyword
+    // Trích xuất keyword
     private String[] extractKeywords(String question) {
         // Loại bỏ stop words
         String cleaned = question.toLowerCase()
@@ -153,81 +343,98 @@ public class AIService {
                 .replace("em", "")
                 .replace("anh", "")
                 .replace("chị", "")
+                .replace("nào", "")
+                .replace("gì", "")
                 .replaceAll("\\s+", " ")
                 .trim();
 
         return cleaned.split(" ");
     }
 
-    // 🚨 THÊM: Build response
-    private String buildProductResponse(List<SanPham> products, String originalQuestion) {
-        StringBuilder sb = new StringBuilder();
+    // Build response map (không phải JSON string)
+    private Map<String, Object> buildProductResponseMap(List<SanPham> products, String originalQuestion) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        List<Map<String, Object>> productList = new ArrayList<>();
 
-        if (products.size() == 1) {
-            SanPham sp = products.get(0);
-            sb.append("{\n");
-            sb.append("  \"message\": \"Dạ có ạ! Bên em có mẫu ").append(sp.getTenSanPham()).append(" đấy ạ. Chất liệu cao cấp, mặc rất thoải mái. Anh/chị muốn em tư vấn thêm về size hay màu sắc không ạ?\",\n");
-            sb.append("  \"products\": [\n");
-            sb.append("    {\n");
-            sb.append("      \"id\": ").append(sp.getId()).append(",\n");
-            sb.append("      \"name\": \"").append(sp.getTenSanPham()).append("\",\n");
+        for (SanPham sp : products) {
+            Map<String, Object> product = new LinkedHashMap<>();
 
-            // Lấy giá
+            // ✅ ĐÚNG CẤU TRÚC FE CẦN
+            product.put("id", sp.getId());
+            product.put("tenSanPham", sp.getTenSanPham());  // TRÙNG VỚI FE
+            product.put("name", sp.getTenSanPham());        // Giữ cho tương thích
+
+            // Lấy giá nhỏ nhất từ chi tiết sản phẩm
+            BigDecimal minPrice = BigDecimal.ZERO;
             if (sp.getChiTietSanPham() != null && !sp.getChiTietSanPham().isEmpty()) {
-                BigDecimal minPrice = sp.getChiTietSanPham().stream()
+                minPrice = sp.getChiTietSanPham().stream()
                         .map(ChiTietSanPham::getGiaBan)
                         .min(BigDecimal::compareTo)
                         .orElse(BigDecimal.ZERO);
-                sb.append("      \"price\": ").append(minPrice).append(",\n");
-            } else {
-                sb.append("      \"price\": 0,\n");
             }
+            product.put("price", minPrice);
 
-            sb.append("      \"image\": \"\",\n");
-            sb.append("      \"link\": \"/product/").append(sp.getId()).append("\",\n");
-            sb.append("      \"color\": \"\",\n");
-            sb.append("      \"size_suggestion\": \"\"\n");
-            sb.append("    }\n");
-            sb.append("  ],\n");
-            sb.append("  \"follow_up_question\": \"Anh/chị cần tư vấn size nào ạ?\",\n");
-            sb.append("  \"need_human_support\": false\n");
-            sb.append("}");
-        } else {
-            sb.append("{\n");
-            sb.append("  \"message\": \"Dạ có ạ! Em tìm thấy ").append(products.size()).append(" sản phẩm phù hợp. Anh/chị muốn xem chi tiết sản phẩm nào ạ?\",\n");
-            sb.append("  \"products\": [\n");
-
-            for (int i = 0; i < products.size(); i++) {
-                SanPham sp = products.get(i);
-                sb.append("    {\n");
-                sb.append("      \"id\": ").append(sp.getId()).append(",\n");
-                sb.append("      \"name\": \"").append(sp.getTenSanPham()).append("\",\n");
-
-                if (sp.getChiTietSanPham() != null && !sp.getChiTietSanPham().isEmpty()) {
-                    BigDecimal minPrice = sp.getChiTietSanPham().stream()
-                            .map(ChiTietSanPham::getGiaBan)
-                            .min(BigDecimal::compareTo)
-                            .orElse(BigDecimal.ZERO);
-                    sb.append("      \"price\": ").append(minPrice).append(",\n");
-                } else {
-                    sb.append("      \"price\": 0,\n");
+            // ✅ Lấy hình ảnh - TRÙNG TÊN TRƯỜNG VỚI FE
+            List<String> images = new ArrayList<>();
+            if (sp.getChiTietSanPham() != null) {
+                for (ChiTietSanPham ctsp : sp.getChiTietSanPham()) {
+                    if (ctsp.getAnhs() != null && !ctsp.getAnhs().isEmpty()) {
+                        for (Anh anh : ctsp.getAnhs()) {
+                            if (anh.getDuongDanAnh() != null && !anh.getDuongDanAnh().isEmpty()) {
+                                images.add(anh.getDuongDanAnh());
+                            }
+                        }
+                    }
                 }
-
-                sb.append("      \"image\": \"\",\n");
-                sb.append("      \"link\": \"/product/").append(sp.getId()).append("\",\n");
-                sb.append("      \"color\": \"\",\n");
-                sb.append("      \"size_suggestion\": \"\"\n");
-                sb.append("    }");
-                if (i < products.size() - 1) sb.append(",");
-                sb.append("\n");
             }
 
-            sb.append("  ],\n");
-            sb.append("  \"follow_up_question\": \"Anh/chị quan tâm đến sản phẩm nào nhất ạ?\",\n");
-            sb.append("  \"need_human_support\": false\n");
-            sb.append("}");
+            // Nếu không có ảnh, thêm placeholder
+            if (images.isEmpty()) {
+                images.add("/placeholder.png");
+            }
+
+            product.put("hinhAnhSanPham", images);  // QUAN TRỌNG: đúng tên FE dùng
+            product.put("image", images.get(0));    // Giữ cho tương thích
+
+            // Thêm thông tin khác
+            product.put("link", "/productDetail/" + sp.getId());
+
+            // Lấy màu sắc từ chi tiết sản phẩm
+            String colors = "";
+            if (sp.getChiTietSanPham() != null) {
+                colors = sp.getChiTietSanPham().stream()
+                        .filter(ctsp -> ctsp.getMauSac() != null)
+                        .map(ctsp -> ctsp.getMauSac().getTenMauSac())
+                        .distinct()
+                        .collect(Collectors.joining(", "));
+            }
+            product.put("color", colors.isEmpty() ? "" : colors);
+
+            product.put("size_suggestion", ""); // Có thể tính toán sau
+
+            productList.add(product);
+
+            // Log để debug
+            System.out.println("✅ Product: " + sp.getTenSanPham());
+            System.out.println("   Images count: " + images.size());
+            System.out.println("   Price: " + minPrice);
         }
 
-        return sb.toString();
+        // Set message và các trường khác
+        if (products.size() == 1) {
+            response.put("message", "Dạ có ạ! Bên em có mẫu " + products.get(0).getTenSanPham() +
+                    ". Chất liệu cao cấp, mặc rất thoải mái. Anh/chị muốn em tư vấn thêm về size hay màu sắc không ạ?");
+        } else {
+            response.put("message", "Dạ có ạ! Em tìm thấy " + products.size() +
+                    " sản phẩm phù hợp. Anh/chị muốn xem chi tiết sản phẩm nào ạ?");
+        }
+
+        response.put("products", productList);
+        response.put("follow_up_question", "Anh/chị quan tâm đến sản phẩm nào nhất ạ?");
+        response.put("need_human_support", false);
+
+        System.out.println("✅ Built response with " + productList.size() + " products");
+
+        return response;
     }
 }
