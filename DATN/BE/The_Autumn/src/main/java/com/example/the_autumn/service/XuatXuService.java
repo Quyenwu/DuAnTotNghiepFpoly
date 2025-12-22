@@ -33,6 +33,7 @@ public class XuatXuService {
     public void add(XuatXuRequest request) {
         XuatXu xuatXu = MapperUtils.map(request, XuatXu.class);
         xuatXu.setTrangThai(true);
+        xuatXu.setNgayTao(new Date());
         xxRepo.save(xuatXu);
     }
 
