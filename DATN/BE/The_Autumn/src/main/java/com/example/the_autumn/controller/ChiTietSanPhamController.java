@@ -276,7 +276,7 @@ public class ChiTietSanPhamController {
     }
 
     @GetMapping
-    public ResponseObject<?> getAllChucVu(){
+    public ResponseObject<?> getAllCTPS(){
         return new ResponseObject<>(chiTietSanPhamService.findAll());
     }
 
