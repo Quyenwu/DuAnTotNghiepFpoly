@@ -3198,13 +3198,13 @@ public class HoaDonService {
                         .orElseThrow(() -> new RuntimeException("Không tìm thấy chi tiết sản phẩm ID: " + ctReq.getIdChiTietSanPham()));
 
                 // Kiểm tra tồn kho
-                if (ctsp.getSoLuongTon() < ctReq.getSoLuong()) {
-                    throw new RuntimeException("Sản phẩm " + ctsp.getSanPham().getTenSanPham() +
-                            " chỉ còn " + ctsp.getSoLuongTon() + " sản phẩm trong kho");
-                }
+//                if (ctsp.getSoLuongTon() < ctReq.getSoLuong()) {
+//                    throw new RuntimeException("Sản phẩm " + ctsp.getSanPham().getTenSanPham() +
+//                            " chỉ còn " + ctsp.getSoLuongTon() + " sản phẩm trong kho");
+//                }
 
                 // Cập nhật tồn kho
-                ctsp.setSoLuongTon(ctsp.getSoLuongTon() - ctReq.getSoLuong());
+//                ctsp.setSoLuongTon(ctsp.getSoLuongTon() - ctReq.getSoLuong());
                 chiTietSanPhamRepository.save(ctsp);
 
                 // Tính giá bán
